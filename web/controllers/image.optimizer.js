@@ -1,50 +1,15 @@
-import fs from "fs";
 import shopify from "../shopify.js";
 
-import {
-  bulkOperationMutaion,
-  createStagedUploadMutation,
-} from "../graphql/bulk_operation.js";
-import { error } from "console";
-
-const fetchAllProducts = async (session) => {
-  let allProducts = [];
+const fetchAllFromDataSource = async ({ session, query, datasource }) => {
+  let allData = [];
   let hasNextPage = true;
   let variables = {
     first: 200,
     after: null,
   };
 
-  const query = `
-      query ($first: Int!, $after: String) {
-        products(first: $first, after: $after, reverse: true) {
-          edges {
-            node {
-              id
-              title
-              productType
-              vendor
-              tags
-              media(first: 250) {
-                edges {
-                  node {
-                    id
-                    alt
-                    mediaContentType
-                  }
-                }
-              }
-            }
-            cursor
-          }
-          pageInfo {
-            hasNextPage
-            hasPreviousPage
-          }
-        }
-      }
-    `;
   const client = new shopify.api.clients.Graphql({
+    apiVersion: "2024-10",
     session: session,
   });
 
@@ -57,17 +22,17 @@ const fetchAllProducts = async (session) => {
         },
       });
 
-      const products = response.body.data.products.edges.map(
+      const products = response.body.data[`${datasource}`].edges.map(
         (edge) => edge.node
       );
-      const pageInfo = response.body.data.products.pageInfo;
+      const pageInfo = response.body.data[`${datasource}`].pageInfo;
       const endCursor =
-        response.body.data.products.edges.length > 0
-          ? response.body.data.products.edges[
-              response.body.data.products.edges.length - 1
+        response.body.data[`${datasource}`].edges.length > 0
+          ? response.body.data[`${datasource}`].edges[
+              response.body.data[`${datasource}`].edges.length - 1
             ].cursor
           : null;
-      allProducts = allProducts.concat(products);
+      allData = allData.concat(products);
 
       // Check if there is a next page
       const hasNext = pageInfo.hasNextPage;
@@ -82,12 +47,10 @@ const fetchAllProducts = async (session) => {
     }
   }
 
-  return allProducts;
+  return allData;
 };
 
-const fetchAllCollections = async (session) => {};
-
-const translateAltText = (altTextSettings, owner, shop) => {
+const translateAltText = (altTextSettings, owner, type, shop) => {
   const keywords = [
     "product.title",
     "product.vendor",
@@ -119,7 +82,10 @@ const translateAltText = (altTextSettings, owner, shop) => {
           ownerData = "";
           break;
       }
-    } else if (ownerType.toLocaleLowerCase() == "product") {
+    } else if (
+      ownerType.toLocaleLowerCase() == "product" &&
+      type == "product"
+    ) {
       switch (property.toLocaleLowerCase()) {
         case "title":
           ownerData = owner.title;
@@ -137,17 +103,23 @@ const translateAltText = (altTextSettings, owner, shop) => {
           ownerData = "";
           break;
       }
-    } else if (ownerType.toLocaleLowerCase() == "collection") {
+    } else if (
+      ownerType.toLocaleLowerCase() == "collection" &&
+      type == "collection"
+    ) {
       if (property.toLocaleLowerCase() == "title") {
         ownerData = owner.title;
       }
-    } else if (ownerType.toLocaleLowerCase() == "article") {
+    } else if (
+      ownerType.toLocaleLowerCase() == "article" &&
+      type == "article"
+    ) {
       switch (property.toLocaleLowerCase()) {
         case "title":
           ownerData = owner.title;
           break;
         case "author":
-          ownerData = owner.author;
+          ownerData = owner.author.name;
           break;
         case "tags":
           ownerData = owner.tags.join(", ");
@@ -164,76 +136,68 @@ const translateAltText = (altTextSettings, owner, shop) => {
   return altText;
 };
 
-const wirteMutationVariablesToJsonlFile = (data) => {
-  const jsonData = data
-    .map((item) => {
-      const ret = JSON.stringify(item).replace(/[\r\n]+/gm, "");
-      return ret;
-    })
-    .join("\n");
-
-  fs.truncateSync("./uploads/mutation_variables.jsonl", 0);
-  fs.writeFileSync("./uploads/mutation_variables.jsonl", jsonData);
-};
-
-const uploadMutationVariablesFile = async (session, imagesToUpdate) => {
-  const client = new shopify.api.clients.Graphql({
-    session: session,
-  });
-
-  const stagedUploadResponse = await client.query({
-    data: {
-      query: createStagedUploadMutation,
-    },
-  });
-
-  if (
-    stagedUploadResponse.body.data.stagedUploadsCreate.userErrors.length > 0
-  ) {
-    throw new Error({
-      message: "Error creating staged upload",
-      errors: stagedUploadResponse.body.data.stagedUploadsCreate.userErrors,
+const updateImageAltManually = async ({
+  session,
+  shopData,
+  datasource,
+  metafieldData,
+  type,
+}) => {
+  try {
+    const client = new shopify.api.clients.Graphql({
+      apiVersion: "2024-10",
+      session,
     });
-  }
+    const batchSize = 10;
+    let start = 0,
+      hasNextSlice = true;
 
-  const { url, parameters } =
-    stagedUploadResponse.body.data.stagedUploadsCreate.stagedTargets[0];
+    while (hasNextSlice) {
+      const slice = datasource.slice(
+        start,
+        start + batchSize < datasource.length
+          ? start + batchSize
+          : datasource.length
+      );
 
-  const formData = new FormData();
-  parameters.forEach(({ name, value }) => {
-    formData.append(name, value);
-  });
+      let mutation_query = ``;
+      slice.forEach((data, index) => {
+        const altText = translateAltText(
+          metafieldData.altText[`${type}`],
+          data,
+          type,
+          shopData
+        );
 
-  const jsonData = imagesToUpdate
-    .map((item) => {
-      const ret = JSON.stringify(item).replace(/[\r\n]+/gm, "");
-      return ret;
-    })
-    .join("\n");
+        if (type == "collection") {
+          mutation_query += `collection_${index}: collectionUpdate(input: { id: "${data.id}", image: { altText: "${altText}" } }) {
+                                userErrors {
+                                  field
+                                  message
+                                }
+                              }`;
+        } else if (type == "article" && data.image) {
+          mutation_query += `article_${index}: articleUpdate(article: { image: { altText: "${altText}", url: "${data.image.url}" } }, id: "${data.id}") {
+                              userErrors {
+                                field
+                                message
+                              }
+                            }`;
+        }
+      });
 
-  const file = new File([jsonData], "mutation_variables.jsonl", {
-    type: "text/jsonl",
-  });
+      const response = await client.query({
+        data: {
+          query: `mutation { ${mutation_query} }`,
+        },
+      });
 
-  formData.append("file", file);
-
-  // Send the fetch request
-  const fetchResponse = await fetch(url, {
-    method: "POST",
-    body: formData,
-    redirect: "follow",
-  });
-
-  const xmlRes = await fetchResponse.text();
-  const locationRegex = /<Location>(.*?)<\/Location>/;
-  const match = xmlRes.match(locationRegex);
-  console.log(match);
-
-  if (match && match[1]) {
-    const location = match[1];
-    console.log("Location:", location);
-  } else {
-    console.error("Location not found in the XML response.");
+      if (start + batchSize >= datasource.length) {
+        hasNextSlice = false;
+      } else start += batchSize;
+    }
+  } catch (error) {
+    throw error;
   }
 };
 
@@ -276,41 +240,163 @@ export const BulkUpdateAltText = async (req, res, next) => {
         .json({ message: "No optimization settings was specified" });
     }
 
-    console.log("got metafield data", metafieldData);
+    console.log("got metafield data");
 
-    const imagesToUpdate = [];
-    const allProducts = await fetchAllProducts(res.locals.shopify.session);
+    const input = [];
+    const allProducts = await fetchAllFromDataSource({
+      datasource: "products",
+      session: res.locals.shopify.session,
+      query: `
+      query ($first: Int!, $after: String) {
+        products(first: $first, after: $after, reverse: true) {
+          edges {
+            node {
+              id
+              title
+              productType
+              vendor
+              tags
+              media(first: 250) {
+                edges {
+                  node {
+                    id
+                    alt
+                    mediaContentType
+                  }
+                }
+              }
+            }
+            cursor
+          }
+          pageInfo {
+            hasNextPage
+            hasPreviousPage
+          }
+        }
+      }
+    `,
+    });
 
     console.log("got all products");
+
+    const allCollections = await fetchAllFromDataSource({
+      datasource: "collections",
+      session: res.locals.shopify.session,
+      query: `
+      query ($first: Int!, $after: String) {
+        collections(first: $first, after: $after, reverse: true) {
+          edges {
+            node {
+              id
+              title
+              image {
+                id
+                altText
+              }
+            }
+            cursor
+          }
+          pageInfo {
+            hasNextPage
+            hasPreviousPage
+          }
+        }
+      }
+    `,
+    });
+
+    console.log("got all collections");
+
+    const allArticles = await fetchAllFromDataSource({
+      datasource: "articles",
+      session: res.locals.shopify.session,
+      query: `
+      query ($first: Int!, $after: String) {
+        articles(first: $first, after: $after) {
+          edges {
+            node {
+              id
+              title
+              author {
+                name
+              }
+              tags
+              image {
+                id
+                altText
+                url
+              }
+            }
+            cursor
+          }
+          pageInfo {
+            hasNextPage
+            hasPreviousPage
+          }
+        }
+      }
+      `,
+    });
+
+    console.log("got all articles");
 
     allProducts.forEach((productData) => {
       const productAltText = translateAltText(
         metafieldData.altText.product,
         productData,
+        "product",
         shopData.body.data.shop
       );
 
       productData.media.edges.forEach(({ node }) => {
-        if (productAltText !== node.alt) {
-          // add this id and new alt text to an array
-          imagesToUpdate.push({
-            input: {
-              id: node.id,
-              alt: productAltText,
-            },
-          });
-        }
+        input.push({
+          id: node.id,
+          alt: productAltText,
+        });
       });
     });
 
-    console.log("got images To Update");
-    wirteMutationVariablesToJsonlFile(imagesToUpdate);
-    console.log("wrote to file");
+    const productImageUpdateResponse = await client.query({
+      data: {
+        query: `
+        mutation FileUpdate($input: [FileUpdateInput!]!) {
+          fileUpdate(files: $input) {
+            userErrors {
+              code
+              field
+              message
+            }
+            files {
+              alt
+            }
+          }
+        }
+        `,
+        variables: { input },
+      },
+    });
 
-    await uploadMutationVariablesFile(
-      res.locals.shopify.session,
-      imagesToUpdate
-    );
+    console.log("product image alt updated successfully");
+
+    await updateImageAltManually({
+      session: res.locals.shopify.session,
+      shopData: shopData.body.data.shop,
+      datasource: allCollections,
+      type: "collection",
+      metafieldData,
+    });
+
+    console.log("collection image alt updated successfully");
+
+    await updateImageAltManually({
+      session: res.locals.shopify.session,
+      shopData: shopData.body.data.shop,
+      datasource: allArticles,
+      type: "article",
+      metafieldData,
+    });
+
+    console.log("article image alt updated successfully");
 
     return res.status(200).json({ message: "Bulk update alt text" });
   } catch (error) {

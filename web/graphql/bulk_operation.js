@@ -23,7 +23,7 @@ mutation CreateStagedUploadUrl {
 `;
 
 export const bulkOperationMutaion = `
-mutation {
+mutation BulkUpdate($uploadPath: String!){
   bulkOperationRunMutation(
     mutation: """
       mutation FileUpdate($input: [FileUpdateInput!]!) {
@@ -39,7 +39,7 @@ mutation {
         }
       }
     """
-    stagedUploadPath: "tmp/83475562783/bulk/38299101-3916-4ac9-a842-2d0713fdc332/products_update.jsonl"
+    stagedUploadPath: $uploadPath
   ) {
     bulkOperation {
       id
@@ -48,6 +48,43 @@ mutation {
     userErrors {
       message
       field
+    }
+  }
+}
+`;
+
+export const FileUpdate = `
+mutation FileUpdate($input: [FileUpdateInput!]!) {
+  fileUpdate(files: $input) {
+    userErrors {
+      code
+      field
+      message
+    }
+    files {
+      alt
+    }
+  }
+}
+`;
+
+export const UpdateCollectiob = `
+mutation updateCollectionRules($input: CollectionInput!) {
+  collectionUpdate(input: $input) {
+    userErrors {
+      field
+      message
+    }
+  }
+}
+`;
+
+export const UpdateArticle = `
+mutation articleUpdate($article: ArticleUpdateInput!, $id: ID!) {
+  articleUpdate(article: $article, id: $id) {
+    userErrors {
+      field
+      message
     }
   }
 }
