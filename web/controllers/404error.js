@@ -77,7 +77,6 @@ export const updateErrorInsightsSeo = async (req, res) => {
     );
     const list = responseList?.value ? JSON.parse(responseList?.value) : [];
     const newList = [...list, req.body];
-    console.log("🚀 ~ updateErrorInsightsSeo ~ newList:", newList);
 
     await fetch(`${shop}/admin/api/2024-07/metafields.json`, {
       method: "POST",
@@ -104,18 +103,62 @@ export const updateErrorInsightsSeo = async (req, res) => {
   }
 };
 
-export const updateImageSeoAltController = async (req, res, next) => {
+export const autoRedirectListController = async (req, res, next) => {
   try {
-    const { id, blogId, image } = req.body;
+    const redirectList = await shopify.api.rest.Redirect.all({
+      session: res.locals.shopify.session,
+      limit: 250,
+    });
 
-    const article = new shopify.api.rest.Article({
+    return res
+      .status(200)
+      .json({ status: "Success", redirectList: redirectList?.data });
+  } catch (err) {
+    console.log(
+      "🚀 ~ file: description.js:73 ~ descriptionController ~ err:",
+      err
+    );
+    res.status(400).json({ err });
+  }
+};
+
+export const createAutoRedirectController = async (req, res, next) => {
+  try {
+    const { path, target } = req.body;
+
+    const redirect = new shopify.api.rest.Redirect({
       session: res.locals.shopify.session,
     });
-    article.blog_id = blogId;
-    article.id = id;
-    article.image = image;
+    redirect.path = path;
+    redirect.target = target;
+    await redirect.save({
+      update: true,
+    });
 
-    await article.save({
+    return res
+      .status(200)
+      .json({ status: "Success", message: "Successfully updated" });
+  } catch (err) {
+    console.log(
+      "🚀 ~ file: description.js:73 ~ descriptionController ~ err:",
+      err
+    );
+    res.status(400).json({ err });
+  }
+};
+
+export const editAutoRedirectController = async (req, res, next) => {
+  try {
+    const { path, target } = req.body;
+
+    const redirect = new shopify.api.rest.Redirect({
+      session: res.locals.shopify.session,
+    });
+
+    redirect.id = req.params.id;
+    redirect.path = path;
+    redirect.target = target;
+    await redirect.save({
       update: true,
     });
 
