@@ -1,53 +1,65 @@
-import React, { useState } from "react";
-import { FormLayout, Button, Form, InlineError } from "@shopify/polaris";
+import React, { useEffect, useState } from "react";
+import { Button, Form, InlineError } from "@shopify/polaris";
 import { InputField } from "./commonUI/InputField";
-import { useAutoRedirectQuery } from "../hooks/useErrorInsightsQuery";
+import {
+  useAutoRedirectQuery,
+  useCreateAutoRedirect,
+  useUpdateAutoRedirect,
+} from "../hooks/useErrorInsightsQuery";
 
 export function AutoRedirect() {
+  const [editOptions, setEditOptions] = useState({
+    title: "Add auto redirect",
+    isEdit: false,
+  });
   const { data } = useAutoRedirectQuery({
     url: "/api/error/auto-redirect/list",
   });
-  console.log("🚀 ~ AutoRedirect ~ data:", data);
+
+  const {
+    mutate: createAutoRedirect,
+    isError,
+    isSuccess: isCreateSuccess,
+  } = useCreateAutoRedirect();
+  const { mutate: updateAutoRedirect, isSuccess } = useUpdateAutoRedirect();
 
   const [formData, setFormData] = useState({
-    seo_title: "",
-    seo_description: "",
+    path: "",
+    target: "",
   });
 
   const [errors, setErrors] = useState({
-    seo_title: "",
-    seo_description: "",
+    path: "",
+    target: "",
   });
 
   const handleSubmit = (obj) => {
-    if (!obj?.seo_title) {
+    if (!obj?.path) {
       return setErrors({
         ...errors,
-        seo_title: `Please enter SEO title`,
+        path: `Please enter path`,
       });
-    } else if (obj?.seo_title?.length > 70) {
+    } else if (!obj?.target) {
       return setErrors({
         ...errors,
-        seo_title: `SEO title must be 70 characters or fewer. Currently, it is ${obj.seo_title.length} characters.`,
-      });
-    } else if (!obj?.seo_description) {
-      return setErrors({
-        ...errors,
-        seo_description: `Please enter SEO description`,
-      });
-    } else if (obj?.seo_description?.length > 160) {
-      return setErrors({
-        ...errors,
-        seo_description: `SEO description must be 160 characters or fewer. Currently, it is ${obj.seo_description.length} characters.`,
+        target: `Please enter target`,
       });
     }
 
-    const info = {
-      id: modal?.data?.info?.id,
-      seoTitle: obj?.seo_title,
-      seoDescription: obj?.seo_description,
-    };
-    createOrUpdateSeo(info);
+    if (editOptions?.isEdit) {
+      const info = {
+        path: obj?.path,
+        target: obj?.target,
+        id: editOptions?.id,
+      };
+      updateAutoRedirect(info);
+    } else {
+      const info = {
+        path: obj?.path,
+        target: obj?.target,
+      };
+      createAutoRedirect(info);
+    }
   };
 
   const handleChange = (value, name) => {
@@ -55,29 +67,73 @@ export function AutoRedirect() {
     setErrors({ ...errors, [name]: "" });
   };
 
+  useEffect(() => {
+    if (isSuccess) {
+      setEditOptions({
+        title: `Add auto redirect`,
+        isEdit: false,
+        id: null,
+      });
+      setFormData({
+        path: "",
+        target: "",
+      });
+    }
+
+    if (isCreateSuccess) {
+      setFormData({
+        path: "",
+        target: "",
+      });
+    }
+  }, [isSuccess, isCreateSuccess]);
+
   return (
     <div className="seo_auto_redirect_page">
       <div className="seo_auto_redirect_form_container">
-        <div className="seo_auto_redirect_list_title">Add auto redirect </div>
+        <div className="seo_auto_redirect_list_title_container">
+          <label className="seo_auto_redirect_list_title">
+            {editOptions?.title}
+          </label>
+          {editOptions?.isEdit && (
+            <label
+              className="seo_auto_redirect_reset"
+              onClick={() => {
+                setEditOptions({
+                  title: `Add auto redirect`,
+                  isEdit: false,
+                  id: null,
+                });
+                setFormData({
+                  path: "",
+                  target: "",
+                });
+              }}
+            >
+              Reset
+            </label>
+          )}
+        </div>
+        {isError && <InlineError message={"Something went wrong"} />}
         <Form onSubmit={() => handleSubmit(formData)}>
           <div className="seo_auto_redirect_form">
             <InputField
-              value={formData?.seo_title}
+              value={formData?.path}
               onChange={handleChange}
               label={"Enter path"}
               type="text"
-              name="seo_title"
-              placeholder={"Enter path"}
-              error={errors?.seo_title}
+              name="path"
+              placeholder={"/example"}
+              error={errors?.path}
             />
             <InputField
-              value={formData?.seo_title}
+              value={formData?.target}
               onChange={handleChange}
               label={"Enter target"}
               type="text"
-              name="seo_title"
-              placeholder={"Enter target"}
-              error={errors?.seo_title}
+              name="target"
+              placeholder={"/example"}
+              error={errors?.target}
             />
             <div className="seo_auto_redirect_button">
               <Button primary submit>
@@ -90,10 +146,32 @@ export function AutoRedirect() {
       <div className="seo_auto_redirect_list_container">
         <div className="seo_auto_redirect_list_title">Redirect List</div>
         <div>
+          <div className="seo_auto_redirect_item">
+            <div className="bold_title">Path</div>
+            <div className="bold_title">Target</div>
+            <div className="bold_title">Action</div>
+          </div>
           {data?.redirectList?.map((list) => (
-            <div>
+            <div className="seo_auto_redirect_item">
               <div>{list?.path}</div>
               <div>{list?.target}</div>
+              <Button
+                className="cursor_pointer"
+                primary
+                onClick={(e) => {
+                  setFormData({
+                    path: list?.path,
+                    target: list?.target,
+                  });
+                  setEditOptions({
+                    title: `Edit path ${list?.path} target ${list?.target}`,
+                    isEdit: true,
+                    id: list?.id,
+                  });
+                }}
+              >
+                Edit
+              </Button>
             </div>
           ))}
         </div>

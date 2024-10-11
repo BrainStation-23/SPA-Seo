@@ -146,3 +146,30 @@ export const createAutoRedirectController = async (req, res, next) => {
     res.status(400).json({ err });
   }
 };
+
+export const editAutoRedirectController = async (req, res, next) => {
+  try {
+    const { path, target } = req.body;
+
+    const redirect = new shopify.api.rest.Redirect({
+      session: res.locals.shopify.session,
+    });
+
+    redirect.id = req.params.id;
+    redirect.path = path;
+    redirect.target = target;
+    await redirect.save({
+      update: true,
+    });
+
+    return res
+      .status(200)
+      .json({ status: "Success", message: "Successfully updated" });
+  } catch (err) {
+    console.log(
+      "🚀 ~ file: description.js:73 ~ descriptionController ~ err:",
+      err
+    );
+    res.status(400).json({ err });
+  }
+};

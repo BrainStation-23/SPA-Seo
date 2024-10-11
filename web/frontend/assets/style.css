@@ -331,6 +331,7 @@
   border-radius: 12px;
   flex: 1;
   gap: 12px;
+  height: 100%;
 }
 
 .seo_auto_redirect_form {
@@ -339,8 +340,8 @@
 }
 
 .seo_auto_redirect_button {
-  display: flex;
-  align-items: end;
+  height: 100%;
+  padding-top: 23px;
 }
 
 .seo_auto_redirect_list_container {
@@ -351,7 +352,27 @@
   gap: 16px;
 }
 
+.seo_auto_redirect_reset {
+  cursor: pointer;
+  padding: 4px 12px;
+  border: 1px solid rgba(221, 224, 228, 1);
+  border-radius: 12px;
+}
+
+.seo_auto_redirect_list_title_container {
+  display: flex;
+  gap: 12px;
+}
+
 .seo_auto_redirect_list_title {
   font-size: 16px;
   font-weight: 500;
+}
+
+.seo_auto_redirect_item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px;
+  border-bottom: 1px solid rgba(221, 224, 228, 1);
 }
