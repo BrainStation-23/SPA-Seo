@@ -24,7 +24,7 @@ export const useErrorInsightsQuery = ({
   });
 };
 
-export const useArticlesQuery = ({
+export const useAutoRedirectQuery = ({
   url,
   fetchInit = {},
   reactQueryOptions,
@@ -37,7 +37,7 @@ export const useArticlesQuery = ({
     };
   }, [url, JSON.stringify(fetchInit)]);
 
-  return useQuery("articleList", fetch, {
+  return useQuery("auto-redirect", fetch, {
     ...reactQueryOptions,
     onSuccess: (data) => {},
     refetchOnWindowFocus: false,
@@ -49,58 +49,12 @@ export const useArticlesQuery = ({
   });
 };
 
-export const useSingleArticleQuery = ({
-  url,
-  fetchInit = {},
-  reactQueryOptions,
-}) => {
-  const authenticatedFetch = useAuthenticatedFetch();
-  const fetch = useMemo(() => {
-    return async () => {
-      const response = await authenticatedFetch(url, fetchInit);
-      return response.json();
-    };
-  }, [url, JSON.stringify(fetchInit)]);
-
-  return useQuery("singleArticle", fetch, {
-    ...reactQueryOptions,
-    onSuccess: (data) => {},
-    refetchOnWindowFocus: false,
-    cacheTime: 0,
-    staleTime: 0,
-    // enabled: Object.keys(shop).length === 0,
-  });
-};
-
-export const useArticlesSeoQuery = ({
-  url,
-  fetchInit = {},
-  reactQueryOptions,
-}) => {
-  const authenticatedFetch = useAuthenticatedFetch();
-  const fetch = useMemo(() => {
-    return async () => {
-      const response = await authenticatedFetch(url, fetchInit);
-      return response.json();
-    };
-  }, [url, JSON.stringify(fetchInit)]);
-
-  return useQuery("articleSeo", fetch, {
-    ...reactQueryOptions,
-    onSuccess: (data) => {},
-    refetchOnWindowFocus: false,
-    cacheTime: 0,
-    staleTime: 0,
-    // enabled: Object.keys(shop).length === 0,
-  });
-};
-
-export const useUpdateBlogSeo = () => {
+export const useCreateAutoRedirect = () => {
   const fetch = useAuthenticatedFetch();
   const { setToggleToast } = useUI();
   const queryClient = useQueryClient();
   async function createStatus(status) {
-    return await fetch("/api/blog/update-article-seo", {
+    return await fetch("/api/error/auto-redirect/create", {
       method: "POST",
       body: JSON.stringify(status),
       headers: {
@@ -118,7 +72,7 @@ export const useUpdateBlogSeo = () => {
         });
       }
 
-      queryClient.invalidateQueries("articleSeo");
+      queryClient.invalidateQueries("auto-redirect");
 
       setToggleToast({
         active: true,
@@ -135,12 +89,12 @@ export const useUpdateBlogSeo = () => {
   });
 };
 
-export const useUpdateArticleSeoImgAlt = () => {
+export const useUpdateAutoRedirect = () => {
   const fetch = useAuthenticatedFetch();
   const { setToggleToast } = useUI();
   const queryClient = useQueryClient();
   async function createStatus(status) {
-    return await fetch(`/api/blog/update-article-image-alt`, {
+    return await fetch(`/api/error/auto-redirect/edit/${status?.id}`, {
       method: "POST",
       body: JSON.stringify(status),
       headers: {
@@ -157,11 +111,12 @@ export const useUpdateArticleSeoImgAlt = () => {
           message: `Something went wrong`,
         });
       }
-      queryClient.invalidateQueries("singleArticle");
+
+      queryClient.invalidateQueries("auto-redirect");
 
       setToggleToast({
         active: true,
-        message: `Submit Successfully`,
+        message: `Update Successfully`,
       });
     },
     onError: async () => {
