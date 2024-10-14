@@ -14,7 +14,7 @@ import {
   Button,
   HorizontalStack,
 } from "@shopify/polaris";
-import { SaveIcon, RefreshIcon, ImageAltIcon } from "@shopify/polaris-icons";
+import { RefreshIcon } from "@shopify/polaris-icons";
 import Switch from "./commonUI/Switch/Switch";
 import { Spinners } from "./Spinner";
 import {
@@ -31,6 +31,7 @@ export function ImageAltOptimizer() {
   const {
     mutate: saveImageOptimizerSettings,
     isLoading: isSavingImageOptimizerSettings,
+    isSuccess: isSuccessSavingImageOptimizerSettings,
   } = useSaveImageOptimizerSettings();
   const { mutate: runBulkImageUpdate, isLoading: isBulkAltUpdating } =
     useBulkUpdateAltText();
@@ -47,7 +48,7 @@ export function ImageAltOptimizer() {
   const [productAltStatus, setProductAltStatus] = useState(false);
   const [collectionAltStatus, setCollectionAltStatus] = useState(false);
   const [articleAltStatus, setArticleAltStatus] = useState(false);
-  const [lazyLoadImages, setLazyLoadImages] = useState(true);
+  const [isChanged, setIsChanged] = useState(false);
 
   useEffect(() => {
     if (isSuccess) {
@@ -65,36 +66,45 @@ export function ImageAltOptimizer() {
       setProductAltStatus(metadata?.altText?.productStatus || false);
       setCollectionAltStatus(metadata?.altText?.collectionStatus || false);
       setArticleAltStatus(metadata?.altText?.articleStatus || false);
-      setLazyLoadImages(metadata?.altText?.lazyLoadImages || true);
     }
   }, [isSuccess]);
 
+  useEffect(() => {
+    if (isSuccessSavingImageOptimizerSettings) {
+      setIsChanged(false);
+    }
+  }, [isSuccessSavingImageOptimizerSettings]);
+
   const handleParoductAltStatusChange = () => {
     setProductAltStatus((prev) => !prev);
+    setIsChanged(true);
   };
   const handleCollectionAltStatusChange = () => {
     setCollectionAltStatus((prev) => !prev);
+    setIsChanged(true);
   };
   const handleArticleAltStatusChange = () => {
     setArticleAltStatus((prev) => !prev);
+    setIsChanged(true);
   };
-  const handleLazyLoadImagesChange = () => setLazyLoadImages((prev) => !prev);
 
   const handleProductImageAltChange = useCallback((value) => {
     setProductImageAlt(value);
+    setIsChanged(true);
   }, []);
   const handleCollectionImageAltChange = useCallback((value) => {
     setCollectionImageAlt(value);
+    setIsChanged(true);
   }, []);
   const handleArticleImageAltChange = useCallback((value) => {
     setArticleImageAlt(value);
+    setIsChanged(true);
   }, []);
 
   const handleSubmit = () => {
     saveImageOptimizerSettings({
       type: "altText",
       data: {
-        lazyLoadImages,
         product: productImageAlt,
         productStatus: productAltStatus,
         collection: collectionImgeAlt,
@@ -130,6 +140,7 @@ export function ImageAltOptimizer() {
               </Button>
               <Button
                 primary
+                disabled={!isChanged}
                 loading={isSavingImageOptimizerSettings}
                 onClick={handleSubmit}
               >
