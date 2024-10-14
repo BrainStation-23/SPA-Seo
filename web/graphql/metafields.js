@@ -1,5 +1,5 @@
 const SHOP_NAME_SPACE = "bs-23-seo-app";
-const SHOP_META_FIELD_KEY = "json-ld";
+const JSONLD_META_FIELD_KEY = "json-ld";
 
 export const GetShopId = `
     query GetShopId {
@@ -11,7 +11,7 @@ export const GetShopId = `
 export const GetShopMetafield = `
     query GetShopMetafield {
         shop {
-            metafield(key: "${SHOP_META_FIELD_KEY}", namespace: "${SHOP_NAME_SPACE}") {
+            metafield(key: "${JSONLD_META_FIELD_KEY}", namespace: "${SHOP_NAME_SPACE}") {
                 id
                 namespace
                 key
@@ -24,7 +24,7 @@ export const GetProductMetafield = (ownerId) => `
 query GetProductMetafield {
   product(id: "${ownerId}") {
     title
-    metafield(key: "${SHOP_META_FIELD_KEY}", namespace: "${SHOP_NAME_SPACE}") {
+    metafield(key: "${JSONLD_META_FIELD_KEY}", namespace: "${SHOP_NAME_SPACE}") {
       id
       namespace
       key
@@ -38,7 +38,7 @@ export const GetCollectionMetafield = (ownerId) => `
 query GetCollectionMetafield {
   collection(id: "${ownerId}") {
     title
-    metafield(key: "${SHOP_META_FIELD_KEY}", namespace: "${SHOP_NAME_SPACE}") {
+    metafield(key: "${JSONLD_META_FIELD_KEY}", namespace: "${SHOP_NAME_SPACE}") {
       id
       namespace
       key
@@ -48,26 +48,12 @@ query GetCollectionMetafield {
 }
 `;
 
-export const GetArticleMetafield = (ownerId) => `
-query GetArticleMetafield {
-  collection(id: "${ownerId}") {
-    title
-    metafield(key: "${SHOP_META_FIELD_KEY}", namespace: "${SHOP_NAME_SPACE}") {
-      id
-      namespace
-      key
-      value
-    }
-  }
-}
-`;
-
-export const CheckShopMetafieldDefinition = (type) => `
+export const CheckShopMetafieldDefinition = (type, namespace, key) => `
     query CheckShopMetafieldDefinition {
         metafieldDefinitions( 
             first: 1, 
-            namespace: "${SHOP_NAME_SPACE}", 
-            key: "${SHOP_META_FIELD_KEY}", 
+            namespace: "${namespace}", 
+            key: "${key}", 
             ownerType: ${type}
         ) {
             edges {
@@ -81,14 +67,19 @@ export const CheckShopMetafieldDefinition = (type) => `
         }
     }`;
 
-export const CreateShopMetafieldDefinition = (type) => `
+export const CreateShopMetafieldDefinition = (
+  type,
+  namespace,
+  key,
+  description
+) => `
         mutation CreateShopMetafieldDefinition {
             metafieldDefinitionCreate(definition: {
-                namespace: "${SHOP_NAME_SPACE}",
-                key: "${SHOP_META_FIELD_KEY}",
+                namespace: "${namespace}",
+                key: "${key}",
                 type: "json",
                 name: "SEO app metafield",
-                description: "Metafield for generating json-ld for SEO",
+                description: "${description}",
                 ownerType: ${type}
             }) {
                 createdDefinition {
