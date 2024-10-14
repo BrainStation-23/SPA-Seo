@@ -13,10 +13,8 @@ async function createProductSnippet(session) {
   try {
     console.log("🚀 ~ file: ok gg inside function");
     const updatedProductSnippet = `
-{% assign data = product.metafields['bs-23-seo-app']['json-ld'].value.product %}
-{% assign org_data = shop.metafields['bs-23-seo-app']['json-ld'].value.organization %}
 <script type="application/ld+json">
-  {% if product.variants.size > 1 %}
+  {% if product.variants.size > 0 %}
     {
       "@context": "https://schema.org",
       "@type": "ProductGroup",
@@ -103,7 +101,7 @@ async function createProductSnippet(session) {
         {% for image in product.images %}"https:{{ image.src | image_url }}"{% if forloop.last == false %},{% endif %}
         {% endfor %}
       ],
-      "sku": {{ product.variants.first.sku | json | remove: "\n" | remove: "\r" }},
+      "sku": {{ product.variants.first.sku | json | remove: "\\n" | remove: "\\r" }},
       "mpn": "{{ product.variants.first.barcode | escape }}",
       "brand": {
         "@type": "Brand",
@@ -125,7 +123,7 @@ async function createProductSnippet(session) {
           "priceCurrency": "{{ shop.currency | escape }}",
           "price": {{ variant.price | money_without_currency | remove: ',' }},
           "availability": "{% if variant.available %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}",
-          "sku": {{ variant.sku | json | remove: "\n" | remove: "\r" }},
+          "sku": {{ variant.sku | json | remove: "\\n" | remove: "\\r" }},
           "mpn": "{{ variant.barcode | escape }}",
           "url": "{{ shop.url }}/products/{{ product.handle }}?variant={{ variant.id }}",
           "seller": {
@@ -168,8 +166,6 @@ async function createProductSnippet(session) {
       await asset.save({
         update: true,
       });
-    } else {
-      return;
     }
 
     const assetFile = await shopify.api.rest.Asset.all({
@@ -178,27 +174,45 @@ async function createProductSnippet(session) {
       asset: { key: "sections/main-product.liquid" },
     });
 
-    console.log(assetFile);
-
     const assetFileContent = assetFile?.data?.[0]?.value;
     const productSnippetRegExp =
       /<script\s+type="application\/ld\+json">\s*{{\s*product\s*\|\s*structured_data\s*}}\s*<\/script>/g;
 
     console.log("🚀 ~ file: before check");
 
-    if (!assetFileContent.includes("{% render 'seofy-product-snippet' %}")) {
+    if (
+      !assetFileContent.includes(
+        "{% render 'seofy-product-snippet', data: data.product, org_data: shop_data.organization %}"
+      )
+    ) {
       console.log("🚀 ~ file: pay nai");
       let updatedContent = assetFileContent;
-      if (assetFileContent.test(productSnippetRegExp)) {
-        updatedContent = assetFileContent.replace(
+      if (productSnippetRegExp.test(assetFileContent)) {
+        const prev_code = assetFileContent.match(productSnippetRegExp)[0];
+        updatedContent = updatedContent.replace(
           productSnippetRegExp,
           `
-          {% render 'seofy-product-snippet' %}`
+          {% assign data = product.metafields['bs-23-seo-app']['json-ld'].value %}
+          {% assign shop_data = shop.metafields['bs-23-seo-app']['json-ld'].value %}
+          {% if data != null and data.active %}
+            {% render 'seofy-product-snippet', data: data.product, org_data: shop_data.organization %}
+          {% else %}
+          ${prev_code}
+          {% endif %}  
+          `
         );
       } else {
-        updatedContent += `
-        {% render 'seofy-product-snippet' %}`;
+        updatedContent =
+          `
+          {% assign data = product.metafields['bs-23-seo-app']['json-ld'].value %}
+          {% assign shop_data = shop.metafields['bs-23-seo-app']['json-ld'].value %}
+          {% if data != null and data.active %}
+            {% render 'seofy-product-snippet', data: data.product, org_data: shop_data.organization %}
+          {% endif %}
+          ` + assetFileContent;
       }
+
+      console.log("🚀 ~ file: updated content", updatedContent);
 
       const layout = new shopify.api.rest.Asset({
         session,
