@@ -1,14 +1,14 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "fddd9dc89a2aed1a91a8455b44b41c49"
-name = "app-development"
-application_url = "https://developing-concert-dana-geography.trycloudflare.com"
+client_id = "695da14ec05f37f6cdd63a2b3c20b444"
+name = "SEOfy - Complete SEO Expert"
+handle = "seofy-complete-seo-expert"
+application_url = "https://crash-votes-informative-leaders.trycloudflare.com"
 embedded = true
 
 [build]
 automatically_update_urls_on_dev = true
 dev_store_url = "demo-store-kazi.myshopify.com"
-include_config_on_deploy = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
@@ -16,13 +16,13 @@ scopes = "read_content,read_customers,read_products,read_themes,write_content,wr
 
 [auth]
 redirect_urls = [
-  "https://developing-concert-dana-geography.trycloudflare.com/auth/callback",
-  "https://developing-concert-dana-geography.trycloudflare.com/auth/shopify/callback",
-  "https://developing-concert-dana-geography.trycloudflare.com/api/auth/callback"
+  "https://crash-votes-informative-leaders.trycloudflare.com/auth/callback",
+  "https://crash-votes-informative-leaders.trycloudflare.com/auth/shopify/callback",
+  "https://crash-votes-informative-leaders.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
-api_version = "2024-07"
+api_version = "2024-10"
 
 [pos]
 embedded = false

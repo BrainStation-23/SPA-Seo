@@ -33,7 +33,6 @@ export function GenerateJsonld({ obj_type }) {
     ? JSON.parse(owner?.metafield?.value)
     : null;
   const ownerMetaData = metaData?.[`${obj_type?.toLowerCase()}`] || null;
-  console.log("modal", images, owner);
 
   const invalidationTarget =
     obj_type?.toLowerCase() == "product"

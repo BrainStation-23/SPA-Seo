@@ -52,19 +52,6 @@ async function initializeMetafield(client, type) {
   }
 }
 
-function generateJsonldFromPayload(payload) {
-  const socialMedia = Object.entries(payload.socialMedia)
-    .map(([key, val]) => `"${val}"`)
-    .join(",\n");
-  const jsonld = {
-    "@context": "http://schema.org/",
-    "@type": "Organization",
-    ...payload,
-    socialMedia,
-  };
-  return jsonld;
-}
-
 async function manageArticleMetafield(session, ownerId, blogId, data, active) {
   try {
     const metafield = new shopify.api.rest.Metafield({
