@@ -129,23 +129,12 @@ export function ImageAltOptimizer() {
               <Button
                 plain
                 onClick={() => {
-                  let shouldChange = false;
-                  setProductImageAlt((prev) => {
-                    if (prev !== "{{ product.title }} {{ shop.name }}")
-                      shouldChange = true;
-                    return "{{ product.title }} {{ shop.name }}";
-                  });
-                  setArticleImageAlt((prev) => {
-                    if (prev !== "{{ product.title }} {{ shop.name }}")
-                      shouldChange = true;
-                    return "{{ product.title }} {{ shop.name }}";
-                  });
-                  setCollectionImageAlt((prev) => {
-                    if (prev !== "{{ collection.title }} {{ shop.name }}")
-                      shouldChange = true;
-                    return "{{ collection.title }} {{ shop.name }}";
-                  });
-                  setIsChanged(!shouldChange);
+                  setProductImageAlt("{{ product.title }} {{ shop.name }}");
+                  setArticleImageAlt("{{ product.title }} {{ shop.name }}");
+                  setCollectionImageAlt(
+                    "{{ collection.title }} {{ shop.name }}"
+                  );
+                  setIsChanged(true);
                 }}
               >
                 Restore default
@@ -161,6 +150,7 @@ export function ImageAltOptimizer() {
               <Button
                 primary
                 icon={RefreshIcon}
+                disabled={isChanged}
                 loading={isBulkAltUpdating}
                 onClick={runBulkImageUpdate}
               >
