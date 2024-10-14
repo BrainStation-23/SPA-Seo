@@ -13,6 +13,7 @@ import BlogPage from "./Blog";
 import { ImageAltOptimizer } from "./ImageOptimizer";
 import { ErrorInsights } from "./ErrorInsights";
 import { useCreateGlobalFileSeo } from "../hooks/useHomeSEOQuery";
+import HTMLSitemap from "./htmlSitemap";
 
 export function Dashboard() {
   useShopQuery({
@@ -41,6 +42,7 @@ export function Dashboard() {
           {selectedSidebar === 8 && <BlogPage />}
           {selectedSidebar === 9 && <ImageAltOptimizer />}
           {selectedSidebar === 10 && <ErrorInsights />}
+          {selectedSidebar === 11 && <HTMLSitemap />}
         </div>
       </div>
     </>

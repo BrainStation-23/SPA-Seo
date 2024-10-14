@@ -12,6 +12,7 @@ export default function Sidebar({ selectedSidebar, setSelectedSidebar }) {
     { id: 8, title: "Blog page" },
     { id: 9, title: "Image alt optimizer" },
     { id: 10, title: "404 Error" },
+    { id: 11, title: "HTML Sitemap" },
   ];
 
   return (
