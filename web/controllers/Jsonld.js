@@ -4,6 +4,8 @@ export const testApi = async (req, res, next) => {
     console.log("🚀 ~ file: innnnnnnnnn");
     await createProductSnippet(res.locals.shopify.session);
     await createArticleSnippet(res.locals.shopify.session);
+    await createCollectionSnippet(res.locals.shopify.session);
+    await createCompanySnippet(res.locals.shopify.session);
     return res.status(200).json({ message: "GG" });
   } catch (error) {
     console.error(error);
@@ -384,8 +386,6 @@ async function createArticleSnippet(session) {
           ` + assetFileContent;
       }
 
-      console.log("🚀 ~ file: updated content", updatedContent);
-
       const layout = new shopify.api.rest.Asset({
         session,
       });
@@ -409,6 +409,326 @@ async function isArticleSnippetsAvailable(session, id) {
       session: session,
       theme_id: id,
       asset: { key: "snippets/seofy-article-snippet.liquid" },
+    });
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+async function createCollectionSnippet(session) {
+  try {
+    console.log("🚀 ~ file: ok gg inside function");
+    const updatedArticleSnippet = `
+<script id="collection-snippet" type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ProductCollection",
+    "name": "{{ collection.title | escape }}",
+    "description": {{ collection.description | strip_html | strip_newlines | json }},
+    "keywords": "{{ data.keywords | escape }}",
+    "provider": {
+      "@type": "Organization",
+      "name": "{{ shop.name | escape }}",
+      "url": "{{ shop.url | escape }}"
+    }{% if collection.products.size > 0 %},{% endif %}
+    {% if collection.products.size > 0 %}"hasItem": [
+    {% for product in collection.products %}
+      {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": "{{ product.title | strip_html | strip_newlines | escape }}",
+        "description": {{ product.description | strip_html | strip_newlines | json }},
+        "image": [
+          {% for image in product.images %}"https:{{ image.src | image_url }}"{% if forloop.last == false %},{% endif %}
+          {% endfor %}
+        ],
+        "sku": {{ product.variants.first.sku | json | remove: "\n" | remove: "\r" }},
+        "mpn": "{{ product.variants.first.barcode | escape }}",
+        "brand": {
+          "@type": "Brand",
+          {% if product.vendor %}"name": "{{ product.vendor | escape }}"{% else %}"name": "{{ org_data.brand.name | escape }}"{% endif %}
+        },
+        {% if product.metafields['bs-23-seo-app']['json-ld'].value != null %}"aggregateRating": {
+          {% assign product_metadata = product.metafields['bs-23-seo-app']['json-ld'].value %}
+          "@type": "AggregateRating",
+          "itemReviewed": {
+            "@type": "Thing",
+            "name": "{{ product.title | strip_html | strip_newlines | escape }}"
+          },
+          "ratingValue": {{ product_metadata.product.rating }},
+          "reviewCount": {{ product_metadata.product.reviewCount }}
+        },{% endif %}
+        "offers": [
+          {% assign first_variant = product.variants.first %}{
+            "@type": "Offer",
+            "priceCurrency": "{{ shop.currency | escape }}",
+            "price": {{ first_variant.price | money_without_currency | remove: ',' }},
+            "availability": "{% if first_variant.available %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}",
+            "mpn": "{{ first_variant.barcode | escape }}",
+            "url": "{{ shop.url }}/products/{{ product.handle }}?variant={{ first_variant.id }}",
+            "seller": {
+              "@type": "Organization",
+              "name": "{{ shop.name | escape }}",
+              "url": "{{ shop.url | escape }}"
+            }
+          }
+        ]
+      }{% if forloop.last == false %},{% endif %}{% endfor %}
+    ]{% endif %}
+  }
+</script>
+`;
+
+    const themeList = await shopify.api.rest.Theme.all({
+      session,
+      fields: "id,name,role",
+    });
+
+    console.log("🚀 ~ file: after getting all theme");
+
+    const mainTheme = themeList?.data?.find(
+      (theme) => theme?.role === "development"
+    );
+
+    console.log("🚀 ~ file: after finding theme");
+
+    const isPresent = await isCollectionSnippetsAvailable(
+      session,
+      mainTheme?.id
+    );
+
+    console.log("🚀 ~ file: after is article snippet available call");
+
+    //Create snippets if not found
+    if (!isPresent) {
+      console.log("🚀 ~ file: could not find snippet");
+      const asset = new shopify.api.rest.Asset({
+        session,
+      });
+      asset.theme_id = mainTheme?.id;
+      asset.key = "snippets/seofy-collection-snippet.liquid";
+      asset.value = updatedArticleSnippet;
+      await asset.save({
+        update: true,
+      });
+    }
+
+    const assetFile = await shopify.api.rest.Asset.all({
+      session,
+      theme_id: mainTheme?.id,
+      asset: { key: "sections/main-collection-product-grid.liquid" },
+    });
+
+    const assetFileContent = assetFile?.data?.[0]?.value;
+    const articleSnippetRegExp =
+      /<script\s+type="application\/ld\+json">\s*{{\s*collection\s*\|\s*structured_data\s*}}\s*<\/script>/g;
+
+    console.log("🚀 ~ file: before check");
+
+    if (
+      !assetFileContent.includes(
+        "{% render 'seofy-collection-snippet', data: data.collection, org_data: shop_data.organization %}"
+      )
+    ) {
+      console.log("🚀 ~ file: pay nai");
+      let updatedContent = assetFileContent;
+      if (articleSnippetRegExp.test(assetFileContent)) {
+        const prev_code = assetFileContent.match(articleSnippetRegExp)[0];
+        updatedContent = updatedContent.replace(
+          articleSnippetRegExp,
+          `
+          {% assign data = collection.metafields['bs-23-seo-app']['json-ld'].value %}
+          {% assign shop_data = shop.metafields['bs-23-seo-app']['json-ld'].value %}
+          {% if data != null and data.active %}
+            {% render 'seofy-collection-snippet', data: data.collection, org_data: shop_data.organization %}
+          {% else %}
+            ${prev_code}
+          {% endif %}  
+          `
+        );
+      } else {
+        updatedContent =
+          `
+          {% assign data = collection.metafields['bs-23-seo-app']['json-ld'].value %}
+          {% assign shop_data = shop.metafields['bs-23-seo-app']['json-ld'].value %}
+          {% if data != null and data.active %}
+            {% render 'seofy-collection-snippet', data: data.collection, org_data: shop_data.organization %}
+          {% endif %}
+          ` + assetFileContent;
+      }
+
+      const layout = new shopify.api.rest.Asset({
+        session,
+      });
+      layout.theme_id = mainTheme?.id;
+      layout.key = "sections/main-collection-product-grid.liquid";
+      layout.value = updatedContent;
+      await layout.save({
+        update: true,
+      });
+    }
+
+    console.log(200, "success", "collection");
+  } catch (err) {
+    console.log(err);
+  }
+}
+
+async function isCollectionSnippetsAvailable(session, id) {
+  try {
+    await shopify.api.rest.Asset.all({
+      session: session,
+      theme_id: id,
+      asset: { key: "snippets/seofy-collection-snippet.liquid" },
+    });
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+async function createCompanySnippet(session) {
+  try {
+    console.log("🚀 ~ file: ok gg inside function");
+    const updatedCompanySnippet = `
+<script id="org-snippet" type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "{{ data.businessType }}",
+    "name": "{{ shop.name | escape }}",
+    "description": "{{ shop.description | escape }}",
+    "url": "{{ shop.url }}",
+    "brand": "{{ data.brand.name }}",
+    {% if data.businessType == "LocalBusiness" %}"image": "{{ data.brand.logo }}",{% endif %}
+    "logo": {% if data.logo %} "{{ data.logo }}" {% else %} "{{ shop.logo | default: shop.url }}" {% endif %},
+    "keywords": "{{ data.industry | escape }}",
+    {% if data.businessType == "LocalBusiness" %}"priceRange": "{{ data.priceRange[0] }} - {{ data.priceRange[1] }}",{% endif %}
+    "sameAs": [
+      "{% if data.socialLinks.facebook %}{{ data.socialLinks.facebook | escape }}{% endif %}",
+      "{% if data.socialLinks.twitter %}{{ data.socialLinks.twitter | escape }}{% endif %}",
+      "{% if data.socialLinks.instagram %}{{ data.socialLinks.instagram | escape }}{% endif %}",
+      "{% if data.socialLinks.youtube %}{{ data.socialLinks.youtube | escape }}{% endif %}",
+      "{% if data.socialLinks.pinterest %}{{ data.socialLinks.pinterest | escape }}{% endif %}",
+      "{% if data.socialLinks.linkedin %}{{ data.socialLinks.linkedin | escape }}{% endif %}",
+      "{% if data.socialLinks.snapchat %}{{ data.socialLinks.snapchat | escape }}{% endif %}",
+      "{% if data.socialLinks.tiktok %}{{ data.socialLinks.tiktok | escape }}{% endif %}"
+    ],
+    {% if data.showContact %}
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "{{ shop.phone | escape }}",
+        "contactType": "Customer Service"
+      },
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "{{ shop.address.address1 | escape }}{% if shop.address.address2 %}, {{ shop.address.address2 | escape }}{% endif %}",
+        "addressLocality": "{{ shop.address.city | escape }}",
+        "addressRegion": "{{ shop.address.province | escape }}",
+        "postalCode": "{{ shop.address.zip | escape }}",
+        "addressCountry": "{{ shop.address.country_code | escape }}"
+      }
+    {% endif %}
+  }
+</script>
+`;
+
+    const themeList = await shopify.api.rest.Theme.all({
+      session,
+      fields: "id,name,role",
+    });
+
+    console.log("🚀 ~ file: after getting all theme");
+
+    const mainTheme = themeList?.data?.find(
+      (theme) => theme?.role === "development"
+    );
+
+    console.log("🚀 ~ file: after finding theme");
+
+    const isPresent = await isCompanySnippetsAvailable(session, mainTheme?.id);
+
+    console.log("🚀 ~ file: after is article snippet available call");
+
+    //Create snippets if not found
+    if (!isPresent) {
+      console.log("🚀 ~ file: could not find snippet");
+      const asset = new shopify.api.rest.Asset({
+        session,
+      });
+      asset.theme_id = mainTheme?.id;
+      asset.key = "snippets/seofy-company-snippet.liquid";
+      asset.value = updatedCompanySnippet;
+      await asset.save({
+        update: true,
+      });
+    }
+
+    const assetFile = await shopify.api.rest.Asset.all({
+      session,
+      theme_id: mainTheme?.id,
+      asset: { key: "sections/header.liquid" },
+    });
+
+    const assetFileContent = assetFile?.data?.[0]?.value;
+    const companySnippetRegExp =
+      /<script\s+type="application\/ld\+json">\s*[^]*?"@type"\s*:\s*"Organization"[^]*?<\/script>/g;
+
+    console.log("🚀 ~ file: before check");
+
+    if (
+      !assetFileContent.includes(
+        "{% render 'seofy-company-snippet', data: shop_data.organization %}"
+      )
+    ) {
+      console.log("🚀 ~ file: pay nai");
+      let updatedContent = assetFileContent;
+      if (companySnippetRegExp.test(assetFileContent)) {
+        const prev_code = assetFileContent.match(companySnippetRegExp)[0];
+        updatedContent = updatedContent.replace(
+          companySnippetRegExp,
+          `
+          {% assign shop_data = shop.metafields['bs-23-seo-app']['json-ld'].value %}
+          {% if shop_data != null and shop_data.organization.status %}
+            {% render 'seofy-company-snippet', data: shop_data.organization %}
+          {% else %}
+            ${prev_code}
+          {% endif %}  
+          `
+        );
+      } else {
+        updatedContent =
+          `
+          {% assign shop_data = shop.metafields['bs-23-seo-app']['json-ld'].value %}
+          {% if shop_data != null and shop_data.organization.status %}
+            {% render 'seofy-company-snippet', data: shop_data.organization %}
+          {% endif %}
+          ` + assetFileContent;
+      }
+
+      const layout = new shopify.api.rest.Asset({
+        session,
+      });
+      layout.theme_id = mainTheme?.id;
+      layout.key = "sections/header.liquid";
+      layout.value = updatedContent;
+      await layout.save({
+        update: true,
+      });
+    }
+
+    console.log(200, "success", "company");
+  } catch (err) {
+    console.log(err);
+  }
+}
+
+async function isCompanySnippetsAvailable(session, id) {
+  try {
+    await shopify.api.rest.Asset.all({
+      session: session,
+      theme_id: id,
+      asset: { key: "snippets/seofy-company-snippet.liquid" },
     });
     return true;
   } catch (error) {
