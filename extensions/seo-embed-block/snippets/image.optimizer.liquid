@@ -91,38 +91,3 @@
     });
   </script>
 {% endif %}
-{% comment %}
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      const cond = JSON.parse('{{ settings.altText.lazyLoadImages }}');
-      const imageTags = document.querySelectorAll('img');
-      imageTags.forEach((img) => {
-        if (cond) img.setAttribute('loading', 'lazy');
-        else img.removeAttribute('loading');
-      });
-    });
-  </script>
-{% endcomment %}
-<script>
-  console.log('Image optimizer snippet loaded!');
-</script>
-<img
-  {% if settings.altText.lazyLoadImages %}
-    loading="lazy"
-  {% else %}
-    loading="eager"
-  {% endif %}
->
-{% comment %}
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      const productImages = document.querySelectorAll('img'); // Collect all images
-      productImages.forEach(function (image) {
-        const imageUrl = image.src;
-        console.log('Image URL: ' + imageUrl);
-        console.log('Shop url: ' + '{{ shop.url }}', `secure url: {{ shop.secure_url }}`, `domain: {{ shop.domain }}`); // This is the shop URL
-        // Now, you'll want to match this URL to a product
-      });
-    });
-  </script>
-{% endcomment %}
