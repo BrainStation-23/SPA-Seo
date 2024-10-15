@@ -9,9 +9,12 @@ import {
   Button,
   VerticalStack,
 } from "@shopify/polaris";
-import { useCreateHomeSeo, useHomeSEOQuery } from "../hooks/useHomeSEOQuery";
 import Switch from "./commonUI/Switch/Switch";
 import { InputField } from "./commonUI/InputField";
+import {
+  useCreateHtmlSitemapSeo,
+  useHtmlSitemapQuery,
+} from "../hooks/useHtmlsitemap";
 
 export default function HTMLSitemap() {
   const [formData, setFormData] = useState({
@@ -20,10 +23,9 @@ export default function HTMLSitemap() {
     limit: 0,
   });
 
-  const handleSelectChange = useCallback(
-    (value) => setFormData({ ...formData, category: value }),
-    []
-  );
+  const handleSelectChange = (value) =>
+    setFormData({ ...formData, category: value });
+
   const handleIsChecked = () =>
     setFormData({
       ...formData,
@@ -33,18 +35,17 @@ export default function HTMLSitemap() {
   const handleChange = (value) => {
     setFormData({ ...formData, limit: value });
   };
-  const { data } = useHomeSEOQuery({ url: "/api/home/get-home-seo" });
-  const { mutate: createOrUpdateSeo, isError } = useCreateHomeSeo();
+  const { data } = useHtmlSitemapQuery({ url: "/api/html-sitemap/info" });
+  const { mutate: createOrUpdateHtmlSitemap, isError } =
+    useCreateHtmlSitemapSeo();
 
-  const handleSubmit = (value) => {
-    const obj = {
-      homeSeo: value,
-    };
-    createOrUpdateSeo(obj);
+  const handleSubmit = (htmlSitemap) => {
+    createOrUpdateHtmlSitemap(htmlSitemap);
   };
 
   useEffect(() => {
     if (data) {
+      setFormData(data);
     }
   }, [data]);
 

@@ -11,6 +11,7 @@ import seoInsightsRoute from "./routes/seoInsights.js";
 import homeRoute from "./routes/home.js";
 import blogRoute from "./routes/blog.js";
 import ImageOptimizerRoute from "./routes/image.optimizer.js";
+import sitemapRoute from "./routes/htmlsitemap.js";
 import { errorRouter, updateErrorInsightsRouter } from "./routes/404error.js";
 
 const PORT = parseInt(
@@ -69,6 +70,7 @@ app.use("/api/home", homeRoute);
 app.use("/api/blog", blogRoute);
 app.use("/api/image-optimizer", ImageOptimizerRoute);
 app.use("/api/error", errorRouter);
+app.use("/api/html-sitemap", sitemapRoute);
 
 app.use(shopify.cspHeaders());
 app.use(serveStatic(STATIC_PATH, { index: false }));
