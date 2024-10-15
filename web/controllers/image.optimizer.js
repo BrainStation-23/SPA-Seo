@@ -407,3 +407,64 @@ export const BulkUpdateAltText = async (req, res, next) => {
     console.error(error);
   }
 };
+
+export const updateProductImageFilename = async (req, res, next) => {
+  try {
+    const client = new shopify.api.clients.Graphql({
+      session: res.locals.shopify.session,
+    });
+    const { id, fileNameSettings, fileExt, product, shop } = req.body;
+    const filename = translateAltText(
+      fileNameSettings,
+      product,
+      "product",
+      shop
+    );
+
+    const input = [
+      {
+        id,
+        filename: filename + fileExt,
+      },
+    ];
+
+    const productImageFilenameUpdateResponse = await client.query({
+      data: {
+        query: `
+        mutation FileUpdate($input: [FileUpdateInput!]!) {
+          fileUpdate(files: $input) {
+            userErrors {
+              code
+              field
+              message
+            }
+          }
+        }
+        `,
+        variables: { input },
+      },
+    });
+
+    if (
+      productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors
+        .length > 0
+    ) {
+      throw new Error(
+        productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors
+      );
+    }
+
+    return res.status(200).json({ message: "Product image filename updated" });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(400)
+      .json({ message: "Error updating product image filename" });
+  }
+};
+
+export const bulkUpdateProductImageFilename = async (req, res, next) => {
+  return res
+    .status(200)
+    .json({ message: "Bulk Product image filename updated" });
+};
