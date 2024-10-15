@@ -54,7 +54,6 @@ export const useCreateMetafield = (invalidationTarget) => {
 
   return useMutation((status) => createStatus(status), {
     onSuccess: async (data, obj) => {
-      console.log("hi", obj, invalidationTarget);
       if (data?.status !== 200) {
         return setToggleToast({
           active: true,

@@ -11,6 +11,7 @@ import seoInsightsRoute from "./routes/seoInsights.js";
 import homeRoute from "./routes/home.js";
 import blogRoute from "./routes/blog.js";
 import jsonLdRoute from "./routes/Jsonld.js";
+import ImageOptimizerRoute from "./routes/image.optimizer.js";
 import { errorRouter, updateErrorInsightsRouter } from "./routes/404error.js";
 
 const PORT = parseInt(
@@ -67,6 +68,7 @@ app.use("/api/metafields", metafieldsRoute);
 app.use("/api/seo", seoInsightsRoute);
 app.use("/api/home", homeRoute);
 app.use("/api/blog", blogRoute);
+app.use("/api/image-optimizer", ImageOptimizerRoute);
 app.use("/api/error", errorRouter);
 app.use("/api/jsonld", jsonLdRoute);
 

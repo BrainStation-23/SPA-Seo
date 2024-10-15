@@ -1,4 +1,5 @@
 {% assign shop_data = shop.metafields['bs-23-seo-app']['json-ld'].value %}
+{% render 'image.optimizer', settings: shop.metafields['bs-23-seo-app']['image-optimizer'].value %}
 
 {% if shop_data != null and shop_data.organization.status %}
   {% render 'organization', data: shop_data.organization %}
