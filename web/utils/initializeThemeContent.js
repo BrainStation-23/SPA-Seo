@@ -35,16 +35,23 @@ export async function initializeThemeFileContent({
       });
     }
 
-    const assetFile = await shopify.api.rest.Asset.all({
-      session,
-      theme_id: mainTheme?.id,
-      asset: { key: assetKey },
-    });
+    if (assetKey) {
+      const assetFile = await shopify.api.rest.Asset.all({
+        session,
+        theme_id: mainTheme?.id,
+        asset: { key: assetKey },
+      });
 
-    return {
-      assetFileContent: assetFile?.data?.[0]?.value,
-      themeId: mainTheme?.id,
-    };
+      return {
+        assetFileContent: assetFile?.data?.[0]?.value,
+        themeId: mainTheme?.id,
+      };
+    } else {
+      return {
+        themeId: mainTheme?.id,
+        snippetKey,
+      };
+    }
   } catch (error) {
     console.log(error);
   }
