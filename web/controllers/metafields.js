@@ -72,6 +72,24 @@ async function initializeMetafield(client, type, functionType) {
   }
 }
 
+async function manageArticleMetafield(session, ownerId, blogId, data, active) {
+  try {
+    const metafield = new shopify.api.rest.Metafield({
+      session,
+    });
+    metafield.article_id = ownerId;
+    metafield.namespace = "bs-23-seo-app";
+    metafield.key = "json-ld";
+    metafield.type = "json";
+    metafield.value = JSON.stringify({ article: data, active });
+    await metafield.save({
+      update: true,
+    });
+  } catch (error) {
+    console.error(error);
+  }
+}
+
 export const MetafieldCreate = async (req, res, next) => {
   try {
     let { type, data, owner, ownerId, blogId } = req.body;
