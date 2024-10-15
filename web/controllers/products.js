@@ -38,7 +38,7 @@ const fetchAllProducts = async (session) => {
               title
               description
             }
-            images(first: 100) {
+            images(first: 250) {
               edges {
                 node {
                   id

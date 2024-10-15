@@ -1,44 +1,19 @@
-{% assign shop_data = shop.metafields['bs-23-seo-app']['json-ld'].value %}
-{% render 'image.optimizer', settings: shop.metafields['bs-23-seo-app']['image-optimizer'].value %}
-
-{% if shop_data != null and shop_data.organization.status %}
-  {% render 'organization', data: shop_data.organization %}
-{% endif %}
-
-{% if request.page_type == 'product' %}
-  {% assign data = product.metafields['bs-23-seo-app']['json-ld'].value %}
-  {% if data != null and data.active %}
-    {% render 'product', org_data: shop_data.organization, data: data.product %}
-  {% endif %}
-{% elsif request.page_type == 'collection' %}
-  {% assign data = collection.metafields['bs-23-seo-app']['json-ld'].value %}
-  {% if data != null and data.active %}
-    {% render 'collection', org_data: shop_data.organization, data: data.collection %}
-  {% endif %}
-{% elsif request.page_type == 'article' %}
-  {% assign data = article.metafields['bs-23-seo-app']['json-ld'].value %}
-  {% if data != null and data.active %}
-    {% render 'blog', org_data: shop_data.organization, data: data.article %}
-  {% endif %}
-{% endif %}
-  
 {% if template == '404' %}
   <script>
     fetch('https://identity-urls-cartoon-group.trycloudflare.com/api/404-error/update-error-insights', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            shop: "{{ shop.url }}",
-            url: window.location.href,
-            referrer: document.referrer,
-            timestamp: new Date().toISOString(),
-        })
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        shop: '{{ shop.url }}',
+        url: window.location.href,
+        referrer: document.referrer,
+        timestamp: new Date().toISOString(),
+      }),
     });
   </script>
-  {% endif %}
+{% endif %}
 
-  
-  {% schema %}
+{% schema %}
 {
   "name": "SEO app",
   "target": "head"

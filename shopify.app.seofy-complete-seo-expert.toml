@@ -1,0 +1,24 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "695da14ec05f37f6cdd63a2b3c20b444"
+name = "SEOfy - Complete SEO Expert"
+handle = "seofy-complete-seo-expert"
+application_url = "https://dv-defendant-detector-joel.trycloudflare.com"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "demo-store-kazi.myshopify.com"
+
+[auth]
+redirect_urls = [
+  "https://dv-defendant-detector-joel.trycloudflare.com/auth/callback",
+  "https://dv-defendant-detector-joel.trycloudflare.com/auth/shopify/callback",
+  "https://dv-defendant-detector-joel.trycloudflare.com/api/auth/callback"
+]
+
+[webhooks]
+api_version = "2024-10"
+
+[pos]
+embedded = false
