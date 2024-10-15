@@ -12,9 +12,71 @@ export const testApi = async (req, res, next) => {
   }
 };
 
+async function initializeThemeFileContent({
+  session,
+  themeRole,
+  assetKey,
+  snippetKey,
+  snippetCode,
+}) {
+  try {
+    const themeList = await shopify.api.rest.Theme.all({
+      session,
+      fields: "id,name,role",
+    });
+
+    const mainTheme = themeList?.data?.find(
+      (theme) => theme?.role === themeRole
+    );
+
+    const isPresent = await isSnippetsAvailable(
+      session,
+      mainTheme?.id,
+      snippetKey
+    );
+
+    if (!isPresent) {
+      const asset = new shopify.api.rest.Asset({
+        session,
+      });
+      asset.theme_id = mainTheme?.id;
+      asset.key = snippetKey;
+      asset.value = snippetCode;
+      await asset.save({
+        update: true,
+      });
+    }
+
+    const assetFile = await shopify.api.rest.Asset.all({
+      session,
+      theme_id: mainTheme?.id,
+      asset: { key: assetKey },
+    });
+
+    return {
+      assetFileContent: assetFile?.data?.[0]?.value,
+      themeId: mainTheme?.id,
+    };
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+async function isSnippetsAvailable(session, id, snippetKey) {
+  try {
+    await shopify.api.rest.Asset.all({
+      session: session,
+      theme_id: id,
+      asset: { key: snippetKey },
+    });
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
 async function createProductSnippet(session) {
   try {
-    console.log("🚀 ~ file: ok gg inside function");
     const updatedProductSnippet = `
 <script type="application/ld+json">
   {% if product.variants.size > 0 %}
@@ -140,55 +202,22 @@ async function createProductSnippet(session) {
 </script>
 `;
 
-    const themeList = await shopify.api.rest.Theme.all({
+    const { assetFileContent, themeId } = await initializeThemeFileContent({
       session,
-      fields: "id,name,role",
+      themeRole: "development",
+      assetKey: "sections/main-product.liquid",
+      snippetKey: "snippets/seofy-product-snippet.liquid",
+      snippetCode: updatedProductSnippet,
     });
 
-    console.log("🚀 ~ file: after getting all theme");
-
-    const mainTheme = themeList?.data?.find(
-      (theme) => theme?.role === "development"
-    );
-
-    console.log("🚀 ~ file: after finding theme");
-
-    const isPresent = await isProductSnippetsAvailable(session, mainTheme?.id);
-
-    console.log("🚀 ~ file: after is product snippet available call");
-
-    //Create snippets if not found
-    if (!isPresent) {
-      console.log("🚀 ~ file: could not find snippet");
-      const asset = new shopify.api.rest.Asset({
-        session,
-      });
-      asset.theme_id = mainTheme?.id;
-      asset.key = "snippets/seofy-product-snippet.liquid";
-      asset.value = updatedProductSnippet;
-      await asset.save({
-        update: true,
-      });
-    }
-
-    const assetFile = await shopify.api.rest.Asset.all({
-      session,
-      theme_id: mainTheme?.id,
-      asset: { key: "sections/main-product.liquid" },
-    });
-
-    const assetFileContent = assetFile?.data?.[0]?.value;
     const productSnippetRegExp =
       /<script\s+type="application\/ld\+json">\s*{{\s*product\s*\|\s*structured_data\s*}}\s*<\/script>/g;
-
-    console.log("🚀 ~ file: before check");
 
     if (
       !assetFileContent.includes(
         "{% render 'seofy-product-snippet', data: data.product, org_data: shop_data.organization %}"
       )
     ) {
-      console.log("🚀 ~ file: pay nai");
       let updatedContent = assetFileContent;
       if (productSnippetRegExp.test(assetFileContent)) {
         const prev_code = assetFileContent.match(productSnippetRegExp)[0];
@@ -215,12 +244,10 @@ async function createProductSnippet(session) {
           ` + assetFileContent;
       }
 
-      console.log("🚀 ~ file: updated content", updatedContent);
-
       const layout = new shopify.api.rest.Asset({
         session,
       });
-      layout.theme_id = mainTheme?.id;
+      layout.theme_id = themeId;
       layout.key = "sections/main-product.liquid";
       layout.value = updatedContent;
       await layout.save({
@@ -234,24 +261,10 @@ async function createProductSnippet(session) {
   }
 }
 
-async function isProductSnippetsAvailable(session, id) {
-  try {
-    await shopify.api.rest.Asset.all({
-      session: session,
-      theme_id: id,
-      asset: { key: "snippets/seofy-product-snippet.liquid" },
-    });
-    return true;
-  } catch (error) {
-    return false;
-  }
-}
-
 async function createArticleSnippet(session) {
   try {
-    console.log("🚀 ~ file: ok gg inside function");
     const updatedArticleSnippet = `
-<script id="blog-snippet" type="application/ld+json">
+<script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@id": "{{ article.url }}",
@@ -310,49 +323,16 @@ async function createArticleSnippet(session) {
   }
 </script>
 `;
-
-    const themeList = await shopify.api.rest.Theme.all({
+    const { assetFileContent, themeId } = await initializeThemeFileContent({
       session,
-      fields: "id,name,role",
+      themeRole: "development",
+      assetKey: "sections/main-article.liquid",
+      snippetKey: "snippets/seofy-article-snippet.liquid",
+      snippetCode: updatedArticleSnippet,
     });
 
-    console.log("🚀 ~ file: after getting all theme");
-
-    const mainTheme = themeList?.data?.find(
-      (theme) => theme?.role === "development"
-    );
-
-    console.log("🚀 ~ file: after finding theme");
-
-    const isPresent = await isArticleSnippetsAvailable(session, mainTheme?.id);
-
-    console.log("🚀 ~ file: after is article snippet available call");
-
-    //Create snippets if not found
-    if (!isPresent) {
-      console.log("🚀 ~ file: could not find snippet");
-      const asset = new shopify.api.rest.Asset({
-        session,
-      });
-      asset.theme_id = mainTheme?.id;
-      asset.key = "snippets/seofy-article-snippet.liquid";
-      asset.value = updatedArticleSnippet;
-      await asset.save({
-        update: true,
-      });
-    }
-
-    const assetFile = await shopify.api.rest.Asset.all({
-      session,
-      theme_id: mainTheme?.id,
-      asset: { key: "sections/main-article.liquid" },
-    });
-
-    const assetFileContent = assetFile?.data?.[0]?.value;
     const articleSnippetRegExp =
       /<script\s+type="application\/ld\+json">\s*{{\s*article\s*\|\s*structured_data\s*}}\s*<\/script>/g;
-
-    console.log("🚀 ~ file: before check");
 
     if (
       !assetFileContent.includes(
@@ -389,7 +369,7 @@ async function createArticleSnippet(session) {
       const layout = new shopify.api.rest.Asset({
         session,
       });
-      layout.theme_id = mainTheme?.id;
+      layout.theme_id = themeId;
       layout.key = "sections/main-article.liquid";
       layout.value = updatedContent;
       await layout.save({
@@ -403,24 +383,10 @@ async function createArticleSnippet(session) {
   }
 }
 
-async function isArticleSnippetsAvailable(session, id) {
-  try {
-    await shopify.api.rest.Asset.all({
-      session: session,
-      theme_id: id,
-      asset: { key: "snippets/seofy-article-snippet.liquid" },
-    });
-    return true;
-  } catch (error) {
-    return false;
-  }
-}
-
 async function createCollectionSnippet(session) {
   try {
-    console.log("🚀 ~ file: ok gg inside function");
-    const updatedArticleSnippet = `
-<script id="collection-snippet" type="application/ld+json">
+    const updatedCollectionSnippet = `
+<script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "ProductCollection",
@@ -480,51 +446,16 @@ async function createCollectionSnippet(session) {
 </script>
 `;
 
-    const themeList = await shopify.api.rest.Theme.all({
+    const { assetFileContent, themeId } = await initializeThemeFileContent({
       session,
-      fields: "id,name,role",
+      themeRole: "development",
+      assetKey: "sections/main-collection-product-grid.liquid",
+      snippetKey: "snippets/seofy-collection-snippet.liquid",
+      snippetCode: updatedCollectionSnippet,
     });
 
-    console.log("🚀 ~ file: after getting all theme");
-
-    const mainTheme = themeList?.data?.find(
-      (theme) => theme?.role === "development"
-    );
-
-    console.log("🚀 ~ file: after finding theme");
-
-    const isPresent = await isCollectionSnippetsAvailable(
-      session,
-      mainTheme?.id
-    );
-
-    console.log("🚀 ~ file: after is article snippet available call");
-
-    //Create snippets if not found
-    if (!isPresent) {
-      console.log("🚀 ~ file: could not find snippet");
-      const asset = new shopify.api.rest.Asset({
-        session,
-      });
-      asset.theme_id = mainTheme?.id;
-      asset.key = "snippets/seofy-collection-snippet.liquid";
-      asset.value = updatedArticleSnippet;
-      await asset.save({
-        update: true,
-      });
-    }
-
-    const assetFile = await shopify.api.rest.Asset.all({
-      session,
-      theme_id: mainTheme?.id,
-      asset: { key: "sections/main-collection-product-grid.liquid" },
-    });
-
-    const assetFileContent = assetFile?.data?.[0]?.value;
-    const articleSnippetRegExp =
+    const collectionSnippetRegExp =
       /<script\s+type="application\/ld\+json">\s*{{\s*collection\s*\|\s*structured_data\s*}}\s*<\/script>/g;
-
-    console.log("🚀 ~ file: before check");
 
     if (
       !assetFileContent.includes(
@@ -533,10 +464,10 @@ async function createCollectionSnippet(session) {
     ) {
       console.log("🚀 ~ file: pay nai");
       let updatedContent = assetFileContent;
-      if (articleSnippetRegExp.test(assetFileContent)) {
-        const prev_code = assetFileContent.match(articleSnippetRegExp)[0];
+      if (collectionSnippetRegExp.test(assetFileContent)) {
+        const prev_code = assetFileContent.match(collectionSnippetRegExp)[0];
         updatedContent = updatedContent.replace(
-          articleSnippetRegExp,
+          collectionSnippetRegExp,
           `
           {% assign data = collection.metafields['bs-23-seo-app']['json-ld'].value %}
           {% assign shop_data = shop.metafields['bs-23-seo-app']['json-ld'].value %}
@@ -561,7 +492,7 @@ async function createCollectionSnippet(session) {
       const layout = new shopify.api.rest.Asset({
         session,
       });
-      layout.theme_id = mainTheme?.id;
+      layout.theme_id = themeId;
       layout.key = "sections/main-collection-product-grid.liquid";
       layout.value = updatedContent;
       await layout.save({
@@ -575,24 +506,10 @@ async function createCollectionSnippet(session) {
   }
 }
 
-async function isCollectionSnippetsAvailable(session, id) {
-  try {
-    await shopify.api.rest.Asset.all({
-      session: session,
-      theme_id: id,
-      asset: { key: "snippets/seofy-collection-snippet.liquid" },
-    });
-    return true;
-  } catch (error) {
-    return false;
-  }
-}
-
 async function createCompanySnippet(session) {
   try {
-    console.log("🚀 ~ file: ok gg inside function");
     const updatedCompanySnippet = `
-<script id="org-snippet" type="application/ld+json">
+<script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "{{ data.businessType }}",
@@ -633,48 +550,16 @@ async function createCompanySnippet(session) {
 </script>
 `;
 
-    const themeList = await shopify.api.rest.Theme.all({
+    const { assetFileContent, themeId } = await initializeThemeFileContent({
       session,
-      fields: "id,name,role",
+      themeRole: "development",
+      assetKey: "sections/header.liquid",
+      snippetKey: "snippets/seofy-company-snippet.liquid",
+      snippetCode: updatedCompanySnippet,
     });
 
-    console.log("🚀 ~ file: after getting all theme");
-
-    const mainTheme = themeList?.data?.find(
-      (theme) => theme?.role === "development"
-    );
-
-    console.log("🚀 ~ file: after finding theme");
-
-    const isPresent = await isCompanySnippetsAvailable(session, mainTheme?.id);
-
-    console.log("🚀 ~ file: after is article snippet available call");
-
-    //Create snippets if not found
-    if (!isPresent) {
-      console.log("🚀 ~ file: could not find snippet");
-      const asset = new shopify.api.rest.Asset({
-        session,
-      });
-      asset.theme_id = mainTheme?.id;
-      asset.key = "snippets/seofy-company-snippet.liquid";
-      asset.value = updatedCompanySnippet;
-      await asset.save({
-        update: true,
-      });
-    }
-
-    const assetFile = await shopify.api.rest.Asset.all({
-      session,
-      theme_id: mainTheme?.id,
-      asset: { key: "sections/header.liquid" },
-    });
-
-    const assetFileContent = assetFile?.data?.[0]?.value;
     const companySnippetRegExp =
       /<script\s+type="application\/ld\+json">\s*[^]*?"@type"\s*:\s*"Organization"[^]*?<\/script>/g;
-
-    console.log("🚀 ~ file: before check");
 
     if (
       !assetFileContent.includes(
@@ -709,7 +594,7 @@ async function createCompanySnippet(session) {
       const layout = new shopify.api.rest.Asset({
         session,
       });
-      layout.theme_id = mainTheme?.id;
+      layout.theme_id = themeId;
       layout.key = "sections/header.liquid";
       layout.value = updatedContent;
       await layout.save({
@@ -720,18 +605,5 @@ async function createCompanySnippet(session) {
     console.log(200, "success", "company");
   } catch (err) {
     console.log(err);
-  }
-}
-
-async function isCompanySnippetsAvailable(session, id) {
-  try {
-    await shopify.api.rest.Asset.all({
-      session: session,
-      theme_id: id,
-      asset: { key: "snippets/seofy-company-snippet.liquid" },
-    });
-    return true;
-  } catch (error) {
-    return false;
   }
 }
