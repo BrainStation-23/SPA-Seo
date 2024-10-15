@@ -13,6 +13,7 @@ import BlogPage from "./Blog";
 import { ImageAltOptimizer } from "./ImageOptimizer";
 import { ErrorInsights } from "./ErrorInsights";
 import { useCreateGlobalFileSeo } from "../hooks/useHomeSEOQuery";
+import { useJsonldQuery } from "../hooks/useJsonLdQuery";
 
 export function Dashboard() {
   useShopQuery({
@@ -20,6 +21,7 @@ export function Dashboard() {
   });
   useCreateGlobalFileSeo({ url: "/api/home/create-seo-file" });
   useMetafieldsQuery({ url: "/api/metafields" });
+  useJsonldQuery();
 
   const [selectedSidebar, setSelectedSidebar] = useState(1);
 
