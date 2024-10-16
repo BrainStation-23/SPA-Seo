@@ -408,6 +408,11 @@ export const BulkUpdateAltText = async (req, res, next) => {
   }
 };
 
+function sanitizeFilename(filename) {
+  const sanitized = filename.replace(/[^a-zA-Z0-9._-]+/g, "-");
+  return sanitized.replace(/^-+|-+$/g, "");
+}
+
 export const updateProductImageFilename = async (req, res, next) => {
   try {
     const client = new shopify.api.clients.Graphql({
@@ -451,7 +456,7 @@ export const updateProductImageFilename = async (req, res, next) => {
     const input = [
       {
         id,
-        filename: filename + fileExt,
+        filename: sanitizeFilename(filename + fileExt),
       },
     ];
 
@@ -476,8 +481,14 @@ export const updateProductImageFilename = async (req, res, next) => {
       productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors
         .length > 0
     ) {
-      throw new Error(
+      console.log(
+        "Errors:",
         productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors
+      );
+      throw new Error(
+        JSON.stringify(
+          productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors
+        )
       );
     }
 
