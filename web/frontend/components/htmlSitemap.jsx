@@ -19,7 +19,7 @@ import { Spinners } from "./Spinner";
 
 export default function HTMLSitemap() {
   const [formData, setFormData] = useState({
-    category: ["hidden"],
+    category: [],
     isActiveSitemap: false,
     limit: 0,
   });

@@ -81,6 +81,7 @@ export const createSEOSnippetController = async (req, res, next) => {
 
     //For home sitemap conditions
     await createHomeSnippets(res, themeRole);
+
     console.log("Successfully created sitemap");
     return res.status(200).json({
       status: "success",

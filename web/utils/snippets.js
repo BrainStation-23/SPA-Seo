@@ -1,41 +1,41 @@
-export const seofySitemap = `<div class="page-width page-width--narrow">
-<h1 class="page-title">HTML sitemap</h1>
-{% assign seofy_sitemap = shop.metafields.seo-app-bs23.seo-htmlsitemap-article %}
+export const seofySitemap = `{% assign seofy_sitemap = shop.metafields.seo-app-bs23.seo-htmlsitemap-article.value %}
+{% assign sitemap_limit_show = seofy_sitemap.limit %}
 {% if seofy_sitemap.isActiveSitemap == true %}
+  <style>
+    .seofy-page-title{
+      text-align: center;  
+      margin: 12px 0;
+    }
+    
+    .seofy-sitemap-container{
+      width: 100%;
+    }
+
+    .seofy-sitemap-options{
+      display: flex;
+      gap: 16px;
+    }
+
+    .seofy-sitemap-item{
+      padding: 8px 20px;
+      border: 1px solid rgba(221, 224, 228, 1);
+      border-radius: 8px;
+      cursor: pointer;
+    }
+  </style>
+<div class="page-width">
+   <h1 class="seofy-page-title">HTML sitemap</h1>
   {% assign sitemap_options = seofy_sitemap.category %}
-  {% assign sitemap_blogs = seofy_sitemap.sitemap_blogs %}
-  {% assign sitemap_additional_link = seofy_sitemap.sitemap_additional_link %}
-  {% assign sitemap_additional_link_size = sitemap_additional_link | size %}
-  <div class="row">
-    <div class="col-md-6">
-      <ul>
-        <li>{{ pages["autoketing-sitemap"].title | link_to: pages["autoketing-sitemap"].url }}</li>
+  <div class="seofy-sitemap-container">
+    <div class="seofy-sitemap-options">
         {%- for option in sitemap_options -%}
-          {% if option == "Collections" %}
-            <li>{{ pages["autoketing-sitemap-collections"].title | link_to: pages["autoketing-sitemap-collections"].url }}</li>
-          {% endif %}
-          {% if option == "Products" %}
-            <li>{{ pages["autoketing-sitemap-products"].title | link_to: pages["autoketing-sitemap-products"].url }}</li>
-          {% endif %}
-          {% if option == "Blog Posts" %}
-            {% assign blog_posts_url = pages["autoketing-sitemap-articles"].url | append: "?page=1&blog=0" %}
-            <li>{{ pages["autoketing-sitemap-articles"].title | link_to: blog_posts_url }}</li>
-          {% endif %}
-          {% if option == "Blogs" %}
-            <li>{{ pages["autoketing-sitemap-blogs"].title | link_to: pages["autoketing-sitemap-blogs"].url }}</li>
-          {% endif %}
-          {% if option == "Pages" %}
-            <li>{{ pages["autoketing-sitemap-pages"].title | link_to: pages["autoketing-sitemap-pages"].url }}</li>
-          {% endif %}
+          <div class="seofy-sitemap-item">{{ option }}</div>
         {%- endfor -%}
-        {% if sitemap_additional_link_size > 0 %}
-          <li>{{ pages["autoketing-sitemap-additional-links"].title | link_to: pages["autoketing-sitemap-additional-links"].url }}</li>
-        {% endif %}
-      </ul>
     </div>
   </div>
-{% endif %}
-</div>`;
+
+</div>
+{% endif %}`;
 
 export const updatedTitleMeta = `
     {% if request.page_type == 'index' %}
