@@ -100,7 +100,7 @@ export const useSaveImageOptimizerSettings = () => {
 
 export const useSingleImageFilenameUpdate = () => {
   const fetch = useAuthenticatedFetch();
-  const { setToggleToast } = useUI();
+  const { setCloseModal, setToggleToast } = useUI();
   const queryClient = useQueryClient();
   async function saveImageOptimizerSettings(status) {
     return await fetch("/api/image-optimizer/filename", {
@@ -126,6 +126,8 @@ export const useSingleImageFilenameUpdate = () => {
         active: true,
         message: `Saved Successfully`,
       });
+
+      setCloseModal();
     },
     onError: async () => {
       setToggleToast({

@@ -481,10 +481,6 @@ export const updateProductImageFilename = async (req, res, next) => {
       productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors
         .length > 0
     ) {
-      console.log(
-        "Errors:",
-        productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors
-      );
       throw new Error(
         JSON.stringify(
           productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors
