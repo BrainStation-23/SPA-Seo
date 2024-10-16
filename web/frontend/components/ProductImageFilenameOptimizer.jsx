@@ -27,7 +27,7 @@ function parseFilenameFromSrc(url) {
 
 function ImageTextField({ image, product, shop }) {
   const { filename: prev_filename, fileExt } = parseFilenameFromSrc(image?.url);
-  const { mutate: updateFilename } = useSingleImageFilenameUpdate();
+  const { mutate: updateFilename, isLoading } = useSingleImageFilenameUpdate();
   const [filename, setFilename] = useState(prev_filename);
 
   const handleFilenameChange = useCallback((value) => {
@@ -44,13 +44,13 @@ function ImageTextField({ image, product, shop }) {
             value={filename}
             type="text"
           />
-        </Box>{" "}
+        </Box>
         <Text>{fileExt}</Text>
       </HorizontalStack>
       <Button
+        loading={isLoading}
         primary
         onClick={() => {
-          // id, fileNameSettings, fileExt, product, shop
           updateFilename({
             id: image.id,
             fileNameSettings: filename,

@@ -101,7 +101,7 @@ export const useSaveImageOptimizerSettings = () => {
 export const useSingleImageFilenameUpdate = () => {
   const fetch = useAuthenticatedFetch();
   const { setToggleToast } = useUI();
-  // const queryClient = useQueryClient();
+  const queryClient = useQueryClient();
   async function saveImageOptimizerSettings(status) {
     return await fetch("/api/image-optimizer/filename", {
       method: "POST",
@@ -113,14 +113,14 @@ export const useSingleImageFilenameUpdate = () => {
   }
 
   return useMutation((status) => saveImageOptimizerSettings(status), {
-    onSuccess: async (data, obj) => {
+    onSuccess: async (data) => {
       if (data?.status === 400) {
         return setToggleToast({
           active: true,
           message: `Something went wrong`,
         });
       }
-      // queryClient.invalidateQueries("ImageOptimizerSettings");
+      queryClient.invalidateQueries("productList");
 
       setToggleToast({
         active: true,
