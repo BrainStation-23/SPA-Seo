@@ -33,6 +33,7 @@ export async function initializeThemeFileContent({
       await asset.save({
         update: true,
       });
+      console.log(snippetKey, "Snippet created");
     }
 
     if (assetKey) {

@@ -1,14 +1,7 @@
 import shopify from "../shopify.js";
-import {
-  updatedTitleMeta,
-  seofySitemap,
-  productSitemap,
-  pageSitemap,
-  collectionsSitemap,
-  blogSitemap,
-  articleSitemap,
-} from "../utils/snippets.js";
+import { updatedTitleMeta, seofySitemap } from "../utils/snippets.js";
 import { initializeThemeFileContent } from "../utils/initializeThemeContent.js";
+import { templates } from "../utils/templates.js";
 
 export const createHomeSEOController = async (req, res, next) => {
   try {
@@ -63,72 +56,32 @@ export const getHomeSEOController = async (req, res, next) => {
 export const createSEOSnippetController = async (req, res, next) => {
   try {
     const session = res.locals.shopify.session;
+    const themeRole = "main";
 
     //for home seo create sitemap
     await initializeThemeFileContent({
       session,
-      themeRole: "development",
+      themeRole: themeRole,
       assetKey: "",
-      snippetKey: "snippets/seofy-complete-seo-expert.liquid",
+      snippetKey: templates["seoHome"],
       snippetCode: updatedTitleMeta,
-    });
-
-    //For products sitemap
-    await initializeThemeFileContent({
-      session,
-      themeRole: "development",
-      assetKey: "",
-      snippetKey: "templates/seofy-products-sitemap.liquid",
-      snippetCode: productSitemap,
-    });
-
-    //For collections sitemap
-    await initializeThemeFileContent({
-      session,
-      themeRole: "development",
-      assetKey: "",
-      snippetKey: "templates/seofy-collections-sitemap.liquid",
-      snippetCode: collectionsSitemap,
-    });
-
-    //For blogs sitemap
-    await initializeThemeFileContent({
-      session,
-      themeRole: "development",
-      assetKey: "",
-      snippetKey: "templates/seofy-blogs-sitemap.liquid",
-      snippetCode: blogSitemap,
-    });
-
-    //For article sitemap
-    await initializeThemeFileContent({
-      session,
-      themeRole: "development",
-      assetKey: "",
-      snippetKey: "templates/seofy-article-sitemap.liquid",
-      snippetCode: articleSitemap,
-    });
-
-    //For page sitemap
-    await initializeThemeFileContent({
-      session,
-      themeRole: "development",
-      assetKey: "",
-      snippetKey: "templates/seofy-page-sitemap.liquid",
-      snippetCode: pageSitemap,
     });
 
     //For home sitemap
     await initializeThemeFileContent({
       session,
-      themeRole: "development",
+      themeRole: themeRole,
       assetKey: "",
-      snippetKey: "templates/seofy-home-sitemap.liquid",
+      snippetKey: templates["seoSitemap"],
       snippetCode: seofySitemap,
     });
 
+    //create page with seofy-sitemap template
+    await createSitemapPage(session, "seofy-sitemap");
+
     //For home sitemap conditions
-    await createHomeSnippets(res, "development");
+    await createHomeSnippets(res, themeRole);
+    console.log("Successfully created sitemap");
     return res.status(200).json({
       status: "success",
       message: "successfully updated",
@@ -184,14 +137,40 @@ async function createHomeSnippets(res, role) {
   };
 }
 
-async function isSeoSnippetsAvailable(session, id) {
+async function createSitemapPage(session, template) {
   try {
-    await shopify.api.rest.Asset.all({
+    const isPageExists = await isPageAlreadyExists(session, template);
+    if (!isPageExists) {
+      const page = new shopify.api.rest.Page({ session: session });
+      page.title = "Seofy Customer Sitemap";
+      page.body_html = "";
+      page.template_suffix = template;
+      await page.save({
+        update: true,
+      });
+      return page;
+    }
+    return isPageExists;
+  } catch (error) {
+    return false;
+  }
+}
+
+async function isPageAlreadyExists(session, template) {
+  try {
+    const response = await shopify.api.rest.Page.all({
       session: session,
-      theme_id: id,
-      asset: { key: "snippets/seofy-complete-seo-expert.liquid" },
     });
-    return true;
+    let isExists = response.data.find(
+      (data) =>
+        data.title === "Seofy Customer Sitemap" &&
+        data.template_suffix === template
+    );
+    if (isExists) {
+      return isExists;
+    } else {
+      return false;
+    }
   } catch (error) {
     return false;
   }
