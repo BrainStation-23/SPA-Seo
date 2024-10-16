@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useCallback } from "react";
 import {
   Box,
   Layout,
@@ -13,6 +13,7 @@ import {
   Button,
 } from "@shopify/polaris";
 import { useUI } from "../contexts/ui.context";
+import { useSingleImageFilenameUpdate } from "../hooks/useImageOptimizer";
 
 function parseFilenameFromSrc(url) {
   const full_filename = url.substring(url.lastIndexOf("/") + 1).split("?")[0];
@@ -24,10 +25,62 @@ function parseFilenameFromSrc(url) {
   return { filename: filename_without_extension, fileExt: fileExtension };
 }
 
+function ImageTextField({ image, product, shop }) {
+  const { filename: prev_filename, fileExt } = parseFilenameFromSrc(image?.url);
+  const { mutate: updateFilename } = useSingleImageFilenameUpdate();
+  const [filename, setFilename] = useState(prev_filename);
+
+  const handleFilenameChange = useCallback((value) => {
+    setFilename(value);
+  }, []);
+
+  return (
+    <HorizontalStack gap={"2"} blockAlign="center">
+      <Thumbnail source={image?.url ? image?.url : image?.src} />
+      <HorizontalStack gap={"1"}>
+        <Box width="400px">
+          <TextField
+            onChange={handleFilenameChange}
+            value={filename}
+            type="text"
+          />
+        </Box>{" "}
+        <Text>{fileExt}</Text>
+      </HorizontalStack>
+      <Button
+        primary
+        onClick={() => {
+          // id, fileNameSettings, fileExt, product, shop
+          updateFilename({
+            id: image.id,
+            fileNameSettings: filename,
+            fileExt: fileExt,
+            productId: product.id,
+            shop: shop,
+          });
+        }}
+      >
+        Save
+      </Button>
+    </HorizontalStack>
+  );
+}
+
 export function ProductImageFilenameOptimizer() {
   const { modal, shop } = useUI();
+
   const product = modal?.data?.info;
-  const images = product?.images.edges.map((e) => e.node);
+  const images = product?.media.edges
+    .filter((e) => e.node.mediaContentType === "IMAGE")
+    .map((e) => {
+      const node = e.node;
+      return {
+        id: node.id,
+        url: node.preview.image.url,
+        altText: node.alt,
+        originalSrc: node.preview.image.url,
+      };
+    });
   console.log("product", product, shop);
   return (
     <Box paddingBlockStart={"2"}>
@@ -36,25 +89,14 @@ export function ProductImageFilenameOptimizer() {
         <Layout.Section>
           <Box paddingBlockStart={"4"}>
             <VerticalStack gap={"4"}>
-              {images?.map((image) => {
-                const { filename, fileExt } = parseFilenameFromSrc(image?.url);
-                return (
-                  <HorizontalStack gap={"2"} blockAlign="center">
-                    <Thumbnail source={image?.url ? image?.url : image?.src} />
-                    <HorizontalStack gap={"1"}>
-                      <Box width="400px">
-                        <TextField
-                          minLength={"100px"}
-                          value={filename}
-                          type="text"
-                        />
-                      </Box>{" "}
-                      <Text>{fileExt}</Text>
-                    </HorizontalStack>
-                    <Button primary>Save</Button>
-                  </HorizontalStack>
-                );
-              })}
+              {images?.map((image, index) => (
+                <ImageTextField
+                  key={index}
+                  image={image}
+                  product={product}
+                  shop={shop}
+                />
+              ))}
             </VerticalStack>
           </Box>
         </Layout.Section>

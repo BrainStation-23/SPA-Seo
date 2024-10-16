@@ -413,7 +413,34 @@ export const updateProductImageFilename = async (req, res, next) => {
     const client = new shopify.api.clients.Graphql({
       session: res.locals.shopify.session,
     });
-    const { id, fileNameSettings, fileExt, product, shop } = req.body;
+    const { id, fileNameSettings, fileExt, productId } = req.body;
+
+    const queryData = await client.query({
+      data: {
+        query: `
+          query QueryData{
+            shop {
+              name
+              primaryDomain {
+                id
+                host
+                url
+              }
+            }
+            product(id: "${productId}") {
+              id
+              title
+              productType
+              vendor
+              tags
+            }          
+          }`,
+      },
+    });
+
+    const shop = queryData.body.data.shop,
+      product = queryData.body.data.product;
+
     const filename = translateAltText(
       fileNameSettings,
       product,

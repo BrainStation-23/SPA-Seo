@@ -97,3 +97,42 @@ export const useSaveImageOptimizerSettings = () => {
     refetchOnWindowFocus: false,
   });
 };
+
+export const useSingleImageFilenameUpdate = () => {
+  const fetch = useAuthenticatedFetch();
+  const { setToggleToast } = useUI();
+  // const queryClient = useQueryClient();
+  async function saveImageOptimizerSettings(status) {
+    return await fetch("/api/image-optimizer/filename", {
+      method: "POST",
+      body: JSON.stringify(status),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  }
+
+  return useMutation((status) => saveImageOptimizerSettings(status), {
+    onSuccess: async (data, obj) => {
+      if (data?.status === 400) {
+        return setToggleToast({
+          active: true,
+          message: `Something went wrong`,
+        });
+      }
+      // queryClient.invalidateQueries("ImageOptimizerSettings");
+
+      setToggleToast({
+        active: true,
+        message: `Saved Successfully`,
+      });
+    },
+    onError: async () => {
+      setToggleToast({
+        active: true,
+        message: `Something went wrong`,
+      });
+    },
+    refetchOnWindowFocus: false,
+  });
+};

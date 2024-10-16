@@ -3,7 +3,7 @@
 client_id = "5979b1355fc1fc33469e698f5e91dabe"
 name = "app-development-kazi"
 handle = "new-testing-app-9"
-application_url = "https://uniform-discounts-screenshot-please.trycloudflare.com"
+application_url = "https://athletes-columnists-completion-uploaded.trycloudflare.com"
 embedded = true
 
 [build]
@@ -12,9 +12,9 @@ dev_store_url = "demo-store-kazi.myshopify.com"
 
 [auth]
 redirect_urls = [
-  "https://uniform-discounts-screenshot-please.trycloudflare.com/auth/callback",
-  "https://uniform-discounts-screenshot-please.trycloudflare.com/auth/shopify/callback",
-  "https://uniform-discounts-screenshot-please.trycloudflare.com/api/auth/callback"
+  "https://athletes-columnists-completion-uploaded.trycloudflare.com/auth/callback",
+  "https://athletes-columnists-completion-uploaded.trycloudflare.com/auth/shopify/callback",
+  "https://athletes-columnists-completion-uploaded.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
