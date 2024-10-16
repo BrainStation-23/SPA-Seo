@@ -409,8 +409,18 @@ export const BulkUpdateAltText = async (req, res, next) => {
 };
 
 function sanitizeFilename(filename) {
-  const sanitized = filename.replace(/[^a-zA-Z0-9._-]+/g, "-");
-  return sanitized.replace(/^-+|-+$/g, "");
+  const substrings = filename.split(/[^a-zA-Z0-9._-]+/);
+  const filteredSubstrings = substrings.filter(Boolean);
+  return filteredSubstrings.join("-");
+}
+function parseFilenameFromSrc(url) {
+  const full_filename = url.substring(url.lastIndexOf("/") + 1).split("?")[0];
+  const filename_without_extension = full_filename.substring(
+    0,
+    full_filename.lastIndexOf(".")
+  );
+  const fileExtension = full_filename.substring(full_filename.lastIndexOf("."));
+  return { filename: filename_without_extension, fileExt: fileExtension };
 }
 
 export const updateProductImageFilename = async (req, res, next) => {
@@ -498,7 +508,129 @@ export const updateProductImageFilename = async (req, res, next) => {
 };
 
 export const bulkUpdateProductImageFilename = async (req, res, next) => {
-  return res
-    .status(200)
-    .json({ message: "Bulk Product image filename updated" });
+  try {
+    const { fileNameSettings } = req.body;
+    const client = new shopify.api.clients.Graphql({
+      apiVersion: "2024-10",
+      session: res.locals.shopify.session,
+    });
+    const queryData = await client.query({
+      data: {
+        query: `
+          query QueryData{
+            shop {
+              name
+              primaryDomain {
+                id
+                host
+                url
+              }
+            }          
+          }`,
+      },
+    });
+    const shop = queryData.body.data.shop;
+
+    const allProducts = await fetchAllFromDataSource({
+      datasource: "products",
+      session: res.locals.shopify.session,
+      query: `
+      query ($first: Int!, $after: String) {
+        products(first: $first, after: $after, reverse: true) {
+          edges {
+            node {
+              id
+              title
+              productType
+              vendor
+              tags
+              media(first: 250) {
+                edges {
+                  node {
+                    id
+                    alt
+                    mediaContentType
+                    preview {
+                      status
+                      image {
+                        url
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            cursor
+          }
+          pageInfo {
+            hasNextPage
+            hasPreviousPage
+          }
+        }
+      }
+    `,
+    });
+
+    const input = [],
+      map = new Map();
+    allProducts.forEach((productData) => {
+      productData.media.edges
+        .filter((e) => e.node.mediaContentType === "IMAGE")
+        .forEach(({ node }) => {
+          const { fileExt } = parseFilenameFromSrc(node.preview.image.url);
+          const filename = sanitizeFilename(
+            translateAltText(fileNameSettings, productData, "product", shop)
+          );
+
+          if (map.has(filename)) {
+            map.set(filename, map.get(filename) + 1);
+            input.push({
+              id: node.id,
+              filename: filename + `-${map.get(filename)}` + fileExt,
+            });
+          } else {
+            map.set(filename, 0);
+            input.push({
+              id: node.id,
+              filename: filename + fileExt,
+            });
+          }
+        });
+    });
+
+    const productImageFilenameUpdateResponse = await client.query({
+      data: {
+        query: `
+        mutation FileUpdate($input: [FileUpdateInput!]!) {
+          fileUpdate(files: $input) {
+            userErrors {
+              code
+              field
+              message
+            }
+          }
+        }
+        `,
+        variables: { input },
+      },
+    });
+
+    if (
+      productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors
+        .length > 0
+    ) {
+      throw new Error(
+        JSON.stringify(
+          productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors
+        )
+      );
+    }
+
+    return res.status(200).json({ message: "Product image filename updated" });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(400)
+      .json({ message: "Error updating product image filename" });
+  }
 };
