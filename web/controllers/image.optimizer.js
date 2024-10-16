@@ -507,6 +507,53 @@ export const updateProductImageFilename = async (req, res, next) => {
   }
 };
 
+async function batchUpdateImageFileName({ input, client }) {
+  try {
+    const batchSize = 10;
+    let start = 0,
+      hasNextSlice = true;
+
+    while (hasNextSlice) {
+      const slice = input.slice(start, start + batchSize);
+      console.log(`Current batch ${start} to ${start + batchSize}`);
+      const productImageFilenameUpdateResponse = await client.query({
+        data: {
+          query: `
+        mutation FileUpdate($input: [FileUpdateInput!]!) {
+          fileUpdate(files: $input) {
+            userErrors {
+              code
+              field
+              message
+            }
+          }
+        }
+        `,
+          variables: { input: slice },
+        },
+      });
+
+      if (
+        productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors
+          .length > 0
+      ) {
+        throw productImageFilenameUpdateResponse.body.data.fileUpdate
+          .userErrors;
+      }
+
+      if (start + batchSize >= input.length) {
+        hasNextSlice = false;
+      } else start += batchSize;
+      console.log("done");
+    }
+
+    return true;
+  } catch (error) {
+    throw error;
+    return false;
+  }
+}
+
 export const bulkUpdateProductImageFilename = async (req, res, next) => {
   try {
     const { fileNameSettings } = req.body;
@@ -598,33 +645,7 @@ export const bulkUpdateProductImageFilename = async (req, res, next) => {
         });
     });
 
-    const productImageFilenameUpdateResponse = await client.query({
-      data: {
-        query: `
-        mutation FileUpdate($input: [FileUpdateInput!]!) {
-          fileUpdate(files: $input) {
-            userErrors {
-              code
-              field
-              message
-            }
-          }
-        }
-        `,
-        variables: { input },
-      },
-    });
-
-    if (
-      productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors
-        .length > 0
-    ) {
-      throw new Error(
-        JSON.stringify(
-          productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors
-        )
-      );
-    }
+    await batchUpdateImageFileName({ input, client });
 
     return res.status(200).json({ message: "Product image filename updated" });
   } catch (error) {
