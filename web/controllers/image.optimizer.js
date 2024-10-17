@@ -1,4 +1,5 @@
 import shopify from "../shopify.js";
+import { extname, basename } from "path";
 
 const fetchAllFromDataSource = async ({ session, query, datasource }) => {
   let allData = [];
@@ -509,13 +510,13 @@ export const updateProductImageFilename = async (req, res, next) => {
 
 async function batchUpdateImageFileName({ input, client }) {
   try {
-    const batchSize = 10;
+    console.log("starting batch update");
+    const batchSize = 20;
     let start = 0,
       hasNextSlice = true;
 
     while (hasNextSlice) {
       const slice = input.slice(start, start + batchSize);
-      console.log(`Current batch ${start} to ${start + batchSize}`);
       const productImageFilenameUpdateResponse = await client.query({
         data: {
           query: `
@@ -537,21 +538,33 @@ async function batchUpdateImageFileName({ input, client }) {
         productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors
           .length > 0
       ) {
-        throw productImageFilenameUpdateResponse.body.data.fileUpdate
-          .userErrors;
+        console.log("something happened");
+        console.log(
+          productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors
+        );
+        // throw productImageFilenameUpdateResponse.body.data.fileUpdate
+        //   .userErrors;
       }
 
       if (start + batchSize >= input.length) {
         hasNextSlice = false;
       } else start += batchSize;
-      console.log("done");
     }
 
+    console.log("All product image filename updated successfully");
     return true;
   } catch (error) {
+    console.log("Error updating product image filename");
     throw error;
     return false;
   }
+}
+
+function generateFileName(originalName) {
+  const timestamp = Date.now();
+  const ext = extname(originalName);
+  const baseName = basename(originalName, ext);
+  return `${baseName}-${timestamp}${ext}`;
 }
 
 export const bulkUpdateProductImageFilename = async (req, res, next) => {
@@ -633,7 +646,7 @@ export const bulkUpdateProductImageFilename = async (req, res, next) => {
             map.set(filename, map.get(filename) + 1);
             input.push({
               id: node.id,
-              filename: filename + `-${map.get(filename)}` + fileExt,
+              filename: generateFileName(filename + fileExt),
             });
           } else {
             map.set(filename, 0);

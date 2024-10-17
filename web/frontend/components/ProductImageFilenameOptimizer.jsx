@@ -49,6 +49,7 @@ function ImageTextField({ image, product, shop }) {
       </HorizontalStack>
       <Button
         loading={isLoading}
+        disabled={filename === prev_filename}
         primary
         onClick={() => {
           updateFilename({
