@@ -2,7 +2,7 @@
 
 client_id = "695da14ec05f37f6cdd63a2b3c20b444"
 name = "SEOfy - Complete SEO Expert"
-application_url = "https://baseball-sandra-shapes-paxil.trycloudflare.com"
+application_url = "https://fold-je-beast-compliance.trycloudflare.com"
 embedded = true
 
 [build]
@@ -16,9 +16,9 @@ scopes = "read_content,read_customers,read_products,read_themes,write_content,wr
 
 [auth]
 redirect_urls = [
-  "https://baseball-sandra-shapes-paxil.trycloudflare.com/auth/callback",
-  "https://baseball-sandra-shapes-paxil.trycloudflare.com/auth/shopify/callback",
-  "https://baseball-sandra-shapes-paxil.trycloudflare.com/api/auth/callback"
+  "https://fold-je-beast-compliance.trycloudflare.com/auth/callback",
+  "https://fold-je-beast-compliance.trycloudflare.com/auth/shopify/callback",
+  "https://fold-je-beast-compliance.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]

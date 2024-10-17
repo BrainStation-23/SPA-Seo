@@ -24,14 +24,25 @@ export const getHtmlSitemap = async (req, res, next) => {
 
 export const createHtmlSitemapSeo = async (req, res) => {
   try {
+    const blogs = await shopify.api.rest.Blog.all({
+      session: res.locals.shopify.session,
+    });
+
+    const blogHandle = blogs?.data?.map((data) => data?.handle);
+
+    let sitemapData = {
+      ...req.body,
+      seofy_blogs: blogHandle,
+    };
     const metafield = new shopify.api.rest.Metafield({
       session: res.locals.shopify.session,
     });
 
     metafield.namespace = "seo-app-bs23";
     metafield.key = "seo-htmlsitemap-article";
+
     metafield.type = "json";
-    metafield.value = JSON.stringify(req.body);
+    metafield.value = JSON.stringify(sitemapData);
     await metafield.save({
       update: true,
     });
