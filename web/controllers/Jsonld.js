@@ -3,12 +3,12 @@ import { initializeThemeFileContent } from "../utils/initializeThemeContent.js";
 
 export const testApi = async (req, res, next) => {
   try {
-    console.log("🚀 ~ file: innnnnnnnnn");
+    console.log("🚀 ~ file: start snippets configuration");
     await createProductSnippet(res.locals.shopify.session);
     await createArticleSnippet(res.locals.shopify.session);
     await createCollectionSnippet(res.locals.shopify.session);
     await createCompanySnippet(res.locals.shopify.session);
-    return res.status(200).json({ message: "GG" });
+    return res.status(200).json({ message: "Snippets created successfully" });
   } catch (error) {
     console.error(error);
   }
