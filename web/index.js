@@ -41,6 +41,11 @@ app.post(
   shopify.config.webhooks.path,
   shopify.processWebhooks({ webhookHandlers: GDPRWebhookHandlers })
 );
+app.post("/api/cleanup", async (req, res) => {
+  console.log("cleanup");
+  console.log(req.body);
+  return res.status(200).send("cleanup");
+});
 
 // If you are adding routes outside of the /api path, remember to
 // also add a proxy rule for them in web/frontend/vite.config.js
