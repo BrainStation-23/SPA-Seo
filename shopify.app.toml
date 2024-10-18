@@ -2,7 +2,7 @@
 
 client_id = "695da14ec05f37f6cdd63a2b3c20b444"
 name = "seofy-complete-seo-expert"
-application_url = "https://conferences-australia-supporters-durham.trycloudflare.com"
+application_url = "https://8a35-182-160-98-82.ngrok-free.app"
 embedded = true
 
 [build]
@@ -16,9 +16,9 @@ scopes = "read_content,read_customers,read_products,read_themes,write_content,wr
 
 [auth]
 redirect_urls = [
-  "https://conferences-australia-supporters-durham.trycloudflare.com/auth/callback",
-  "https://conferences-australia-supporters-durham.trycloudflare.com/auth/shopify/callback",
-  "https://conferences-australia-supporters-durham.trycloudflare.com/api/auth/callback"
+  "https://8a35-182-160-98-82.ngrok-free.app/auth/callback",
+  "https://8a35-182-160-98-82.ngrok-free.app/auth/shopify/callback",
+  "https://8a35-182-160-98-82.ngrok-free.app/api/auth/callback"
 ]
 
 [webhooks]
