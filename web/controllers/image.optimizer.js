@@ -468,7 +468,7 @@ export const updateProductImageFilename = async (req, res, next) => {
     const input = [
       {
         id,
-        filename: sanitizeFilename(filename + fileExt),
+        filename: generateFileName(sanitizeFilename(filename + fileExt)),
       },
     ];
 
