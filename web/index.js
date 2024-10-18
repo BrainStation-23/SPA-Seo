@@ -13,6 +13,7 @@ import blogRoute from "./routes/blog.js";
 import jsonLdRoute from "./routes/Jsonld.js";
 import ImageOptimizerRoute from "./routes/image.optimizer.js";
 import { errorRouter, updateErrorInsightsRouter } from "./routes/404error.js";
+import sharp from "sharp";
 
 const PORT = parseInt(
   process.env.BACKEND_PORT || process.env.PORT || "3000",
