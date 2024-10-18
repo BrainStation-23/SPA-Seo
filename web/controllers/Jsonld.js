@@ -1,6 +1,6 @@
 import shopify from "../shopify.js";
-import { initializeThemeFileContent } from "../utils/initializeThemeContent.js";
-import { code } from "../utils/jsonld-snippet-code.js";
+import { seofyJsonldSnippet } from "../utils/snippets.js";
+import { templates } from "../utils/templates.js";
 
 export const testApi = async (req, res, next) => {
   try {
@@ -28,8 +28,8 @@ async function updateThemeFiles(session) {
                         node {
                           id
                           files(
-                            first: 4
-                            filenames: ["sections/main-product.liquid", "sections/main-article.liquid", "sections/header.liquid", "sections/main-collection-product-grid.liquid", "snippets/seofy-jsonld.liquid"]
+                            first: 5
+                            filenames: ["sections/main-product.liquid", "sections/main-article.liquid", "sections/header.liquid", "sections/main-collection-product-grid.liquid", "${templates.seoJsonld}"]
                           ) {
                             edges {
                               node {
@@ -67,9 +67,6 @@ async function updateThemeFiles(session) {
       }
     );
 
-    const updatedProductBody = updateProductThemeBody(
-      themeFilesMap.get("sections/main-product.liquid").body
-    );
     const variables = {
       themeId: themeId,
       files: [
@@ -113,12 +110,12 @@ async function updateThemeFiles(session) {
       ],
     };
 
-    if (!themeFilesMap.has("snippets/seofy-jsonld.liquid"))
+    if (!themeFilesMap.has(templates.seoJsonld))
       variables.files.push({
-        filename: "snippets/seofy-jsonld.liquid",
+        filename: templates.seoJsonld,
         body: {
           type: "TEXT",
-          value: code,
+          value: seofyJsonldSnippet,
         },
       });
 

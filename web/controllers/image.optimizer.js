@@ -414,6 +414,7 @@ function sanitizeFilename(filename) {
   const filteredSubstrings = substrings.filter(Boolean);
   return filteredSubstrings.join("-");
 }
+
 function parseFilenameFromSrc(url) {
   const full_filename = url.substring(url.lastIndexOf("/") + 1).split("?")[0];
   const filename_without_extension = full_filename.substring(
