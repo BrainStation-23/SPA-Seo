@@ -1,13 +1,13 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "695da14ec05f37f6cdd63a2b3c20b444"
-name = "SEOfy - Complete SEO Expert"
-application_url = "https://fold-je-beast-compliance.trycloudflare.com"
+name = "seofy-complete-seo-expert"
+application_url = "https://8a35-182-160-98-82.ngrok-free.app"
 embedded = true
 
 [build]
 automatically_update_urls_on_dev = true
-dev_store_url = "algorithm-with-shop.myshopify.com"
+dev_store_url = "grocery-shop-23.myshopify.com"
 include_config_on_deploy = true
 
 [access_scopes]
@@ -16,9 +16,9 @@ scopes = "read_content,read_customers,read_products,read_themes,write_content,wr
 
 [auth]
 redirect_urls = [
-  "https://fold-je-beast-compliance.trycloudflare.com/auth/callback",
-  "https://fold-je-beast-compliance.trycloudflare.com/auth/shopify/callback",
-  "https://fold-je-beast-compliance.trycloudflare.com/api/auth/callback"
+  "https://8a35-182-160-98-82.ngrok-free.app/auth/callback",
+  "https://8a35-182-160-98-82.ngrok-free.app/auth/shopify/callback",
+  "https://8a35-182-160-98-82.ngrok-free.app/api/auth/callback"
 ]
 
 [webhooks]
