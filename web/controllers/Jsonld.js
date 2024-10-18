@@ -8,6 +8,7 @@ export const testApi = async (req, res, next) => {
     return res.status(200).json({ message: "GG" });
   } catch (error) {
     console.error(error);
+    return res.status(400).json({ message: "Something went wrong" });
   }
 };
 

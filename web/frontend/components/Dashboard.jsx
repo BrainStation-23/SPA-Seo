@@ -13,6 +13,7 @@ import BlogPage from "./Blog";
 import { ImageAltOptimizer } from "./ImageOptimizer";
 import { ErrorInsights } from "./ErrorInsights";
 import { useCreateGlobalFileSeo } from "../hooks/useHomeSEOQuery";
+import HTMLSitemap from "./htmlSitemap";
 import { useJsonldQuery } from "../hooks/useJsonLdQuery";
 import {} from "./";
 import { BulkProductImageFilename } from "./BulkProductImageFilename";
@@ -46,6 +47,7 @@ export function Dashboard() {
           {selectedSidebar === 9 && <ImageAltOptimizer />}
           {selectedSidebar === 10 && <BulkProductImageFilename />}
           {selectedSidebar === 11 && <ErrorInsights />}
+          {selectedSidebar === 12 && <HTMLSitemap />}
         </div>
       </div>
     </>
