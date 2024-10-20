@@ -3,7 +3,7 @@ import fetch from "node-fetch";
 import shopify from "../shopify.js";
 
 export const imageCompression = async (req, res) => {
-  const { image, compressionSettings } = req.body;
+  const { image, compressionSettings, replaceOrginalImage } = req.body;
   const { productId, imageId } = req.params;
   const { width, height, quality, format } = compressionSettings;
 
@@ -34,19 +34,31 @@ export const imageCompression = async (req, res) => {
     });
 
     const compressedImageBuffer = await imageSharp.toBuffer();
-    const base64Image = compressedImageBuffer.toString("base64");
-
-    const imageRes = await client.put({
-      path: `/products/${productId}/images/${imageId}.json`,
-      data: {
-        image: {
-          product_id: productId,
-          id: imageId,
-          position: 1,
-          attachment: base64Image,
+    const resultImage = compressedImageBuffer.toString("base64");
+    if (replaceOrginalImage) {
+      await client.put({
+        path: `/products/${productId}/images/${imageId}.json`,
+        data: {
+          image: {
+            product_id: productId,
+            id: imageId,
+            position: 1,
+            attachment: resultImage,
+          },
         },
-      },
-    });
+      });
+    } else {
+      await client.post({
+        path: `/products/${productId}/images.json`,
+        data: {
+          image: {
+            product_id: productId,
+            position: 1,
+            attachment: resultImage,
+          },
+        },
+      });
+    }
 
     res.status(200).json({
       success: true,

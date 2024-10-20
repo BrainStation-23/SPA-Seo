@@ -12,20 +12,12 @@ import {
 } from "@shopify/polaris";
 import { useUI } from "../contexts/ui.context";
 import { useAuthenticatedFetch } from "@shopify/app-bridge-react";
-// import { compressImages } from "../../controllers/imageCompression";
 
 export function ImageCompression() {
   const fetcher = useAuthenticatedFetch();
   const { modal, setToggleToast } = useUI();
-  // console.log("modal", modal.data.info.id);
-  // const productId = modal?.data?.info?.id;
-  function parsId(url) {
-    const product_id = url?.substring(url.lastIndexOf("/") + 1);
-    return product_id;
-  }
-  const productId = modal?.data?.info?.id;
-
-  console.log("productId", productId);
+  console.log("modal", modal);
+  const [replaceOrginalImage, setReplaceOrginalImage] = useState(false);
 
   const images = modal?.data?.info?.images?.edges?.map((data) => data?.node);
 
@@ -51,6 +43,12 @@ export function ImageCompression() {
 
   const { selectedResources, allResourcesSelected, handleSelectionChange } = useIndexResourceState(images || []);
 
+  function parseId(url) {
+    const product_id = url?.substring(url.lastIndexOf("/") + 1);
+    return product_id;
+  }
+  const productId = modal?.data?.info?.id;
+
   const handleFieldChange = (value, field) => {
     setCompressionSettings((prevSettings) => ({
       ...prevSettings,
@@ -68,9 +66,11 @@ export function ImageCompression() {
 
     selectedResources.forEach((imageId) => {
       const image = images.find((img) => img.id === imageId);
+      const imagePosition = image?.position;
+      console.log("imagePosition", imagePosition);
 
       if (image) {
-        fetcher(`/api/product/update-image/${parsId(productId)}/${parsId(imageId)}`, {
+        fetcher(`/api/image-compression/${parseId(productId)}/${parseId(imageId)}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -78,6 +78,7 @@ export function ImageCompression() {
           body: JSON.stringify({
             image,
             compressionSettings,
+            replaceOrginalImage,
           }),
         })
           .then((response) => {
@@ -159,7 +160,12 @@ export function ImageCompression() {
               value={compressionSettings.format}
               onChange={(value) => handleFieldChange(value, "format")}
             />
-            <div style={{ marginTop: "1rem", textAlign: "right" }}>
+            <div style={{ marginTop: "1rem", textAlign: "right", display: "flex", justifyContent: "space-between" }}>
+              <Checkbox
+                label="Replace original image"
+                checked={replaceOrginalImage}
+                onChange={() => setReplaceOrginalImage((prev) => !prev)}
+              />
               <Button primary submit>
                 Save
               </Button>

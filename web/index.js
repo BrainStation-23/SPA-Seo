@@ -61,7 +61,7 @@ app.use("/api/blog", blogRoute);
 app.use("/api/image-optimizer", ImageOptimizerRoute);
 app.use("/api/error", errorRouter);
 app.use("/api/jsonld", jsonLdRoute);
-app.use("/api/product/update-image", imageCompression);
+app.use("/api/image-compression", imageCompression);
 
 app.use(shopify.cspHeaders());
 app.use(serveStatic(STATIC_PATH, { index: false }));
