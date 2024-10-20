@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Button,
   Form,
@@ -82,19 +82,27 @@ export function ImageCompression() {
           }),
         })
           .then((response) => {
-            console.log("response", response);
+            if (response.status === 200) {
+              setToggleToast({
+                active: true,
+                message: "Image compressed and updated successfully",
+              });
+            } else {
+              setToggleToast({
+                active: true,
+                message: "Error during image compression",
+              });
+            }
           })
           .catch((error) => {
-            console.log("error", error);
+            return setToggleToast({
+              active: true,
+              message: "Error during image compression ",
+            });
           });
       }
     });
   };
-
-  console.log("selectedResources", selectedResources);
-  console.log("allResourcesSelected", allResourcesSelected);
-  console.log("images", images);
-  console.log("compressionSettings", compressionSettings);
 
   function parseFilenameFromSrc(url) {
     const full_filename = url.substring(url.lastIndexOf("/") + 1).split("?")[0];

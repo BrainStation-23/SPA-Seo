@@ -62,7 +62,6 @@ export const imageCompression = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      image: imageRes.body.image,
       message: `Image compressed and updated successfully`,
     });
   } catch (err) {

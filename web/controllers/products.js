@@ -76,15 +76,11 @@ const fetchAllProducts = async (session) => {
         },
       });
 
-      const products = response.body.data.products.edges.map(
-        (edge) => edge.node
-      );
+      const products = response.body.data.products.edges.map((edge) => edge.node);
       const pageInfo = response.body.data.products.pageInfo;
       const endCursor =
         response.body.data.products.edges.length > 0
-          ? response.body.data.products.edges[
-              response.body.data.products.edges.length - 1
-            ].cursor
+          ? response.body.data.products.edges[response.body.data.products.edges.length - 1].cursor
           : null;
       allProducts = allProducts.concat(products);
 
@@ -110,15 +106,13 @@ export const productsController = async (req, res, next) => {
 
     return res.status(200).json(products);
   } catch (err) {
-    console.log(
-      "🚀 ~ file: description.js:73 ~ descriptionController ~ err:",
-      err
-    );
+    console.log("🚀 ~ file: description.js:73 ~ descriptionController ~ err:", err);
     res.status(400).json({ err });
   }
 };
 
 export const getProductControllerByID = async (req, res, next) => {
+  console.log("🚀 ~ getProductControllerByID ~ req.params:", req.params);
   try {
     const { id } = req.params;
 
@@ -127,6 +121,8 @@ export const getProductControllerByID = async (req, res, next) => {
       id: id,
       fields: "id,images,title,metafields_global_title_tag",
     });
+
+    console.log("🚀 ~ getProductControllerByID ~ response:", response.Product);
 
     const query = `
     query {
@@ -156,17 +152,11 @@ export const getProductControllerByID = async (req, res, next) => {
     });
 
     const productInfo = await client.query({ data: query });
-    console.log(
-      "🚀 ~ getProductControllerByID ~ metafieldList:",
-      productInfo?.body?.data?.product
-    );
+    console.log("🚀 ~ getProductControllerByID ~ metafieldList:", productInfo?.body?.data?.product);
 
     return res.status(200).json(response);
   } catch (err) {
-    console.log(
-      "🚀 ~ file: description.js:73 ~ descriptionController ~ err:",
-      err
-    );
+    console.log("🚀 ~ file: description.js:73 ~ descriptionController ~ err:", err);
     res.status(400).json({ err });
   }
 };
@@ -217,23 +207,13 @@ export const updateProductSEO = async (req, res, next) => {
 
     if (response.body.data.productUpdate.userErrors.length > 0) {
       console.error("Errors:", response.body.data.productUpdate.userErrors);
-      return res
-        .status(400)
-        .json({ error: response.body.data.productUpdate.userErrors });
+      return res.status(400).json({ error: response.body.data.productUpdate.userErrors });
     } else {
-      console.log(
-        "Updated product SEO:",
-        response.body.data.productUpdate.product
-      );
-      return res
-        .status(200)
-        .json({ product: response.body.data.productUpdate.product });
+      console.log("Updated product SEO:", response.body.data.productUpdate.product);
+      return res.status(200).json({ product: response.body.data.productUpdate.product });
     }
   } catch (error) {
-    console.error(
-      "Failed to update product SEO:",
-      error.response?.errors || error.message
-    );
+    console.error("Failed to update product SEO:", error.response?.errors || error.message);
   }
 };
 
@@ -277,10 +257,7 @@ export const updateProductBulkSeo = async (req, res) => {
     data: mutation,
   });
 
-  console.log(
-    "🚀 ~ updateProductBulkSeo ~ response:",
-    response.body.data?.productUpdate_0?.userErrors
-  );
+  console.log("🚀 ~ updateProductBulkSeo ~ response:", response.body.data?.productUpdate_0?.userErrors);
   if (response.body?.data?.productUpdate_0?.userErrors?.length > 0) {
     return res.status(400).json({ error: response.body.data });
   } else {
@@ -325,23 +302,13 @@ export const updateImageSeoAltController = async (req, res, next) => {
     });
 
     if (response.body.data?.productImageUpdate?.userErrors?.length > 0) {
-      console.error(
-        "Errors:",
-        response.body.data.productImageUpdate.userErrors
-      );
-      return res
-        .status(400)
-        .json({ error: response.body.data?.productImageUpdate?.userErrors });
+      console.error("Errors:", response.body.data.productImageUpdate.userErrors);
+      return res.status(400).json({ error: response.body.data?.productImageUpdate?.userErrors });
     } else {
-      return res
-        .status(200)
-        .json({ product: response.body.data.productImageUpdate.image });
+      return res.status(200).json({ product: response.body.data.productImageUpdate.image });
     }
   } catch (err) {
-    console.log(
-      "🚀 ~ file: description.js:73 ~ descriptionController ~ err:",
-      err
-    );
+    console.log("🚀 ~ file: description.js:73 ~ descriptionController ~ err:", err);
     res.status(400).json({ err });
   }
 };
@@ -364,10 +331,7 @@ export const showOrHideProductHighlightController = async (req, res, next) => {
 
     return res.status(200).json(metafield?.value);
   } catch (err) {
-    console.log(
-      "🚀 ~ file: description.js:73 ~ descriptionController ~ err:",
-      err
-    );
+    console.log("🚀 ~ file: description.js:73 ~ descriptionController ~ err:", err);
     res.status(400).json({ err });
   }
 };
