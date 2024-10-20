@@ -13,17 +13,13 @@ import blogRoute from "./routes/blog.js";
 import jsonLdRoute from "./routes/Jsonld.js";
 import ImageOptimizerRoute from "./routes/image.optimizer.js";
 import { errorRouter, updateErrorInsightsRouter } from "./routes/404error.js";
+import imageCompression from "./routes/imageCompression.js";
 import sharp from "sharp";
 
-const PORT = parseInt(
-  process.env.BACKEND_PORT || process.env.PORT || "3000",
-  10
-);
+const PORT = parseInt(process.env.BACKEND_PORT || process.env.PORT || "3000", 10);
 
 const STATIC_PATH =
-  process.env.NODE_ENV === "production"
-    ? `${process.cwd()}/frontend/dist`
-    : `${process.cwd()}/frontend/`;
+  process.env.NODE_ENV === "production" ? `${process.cwd()}/frontend/dist` : `${process.cwd()}/frontend/`;
 
 const app = express();
 app.use(express.json());
@@ -32,15 +28,8 @@ app.use("/api/404-error", updateErrorInsightsRouter);
 
 // Set up Shopify authentication and webhook handling
 app.get(shopify.config.auth.path, shopify.auth.begin());
-app.get(
-  shopify.config.auth.callbackPath,
-  shopify.auth.callback(),
-  shopify.redirectToShopifyOrAppRoot()
-);
-app.post(
-  shopify.config.webhooks.path,
-  shopify.processWebhooks({ webhookHandlers: GDPRWebhookHandlers })
-);
+app.get(shopify.config.auth.callbackPath, shopify.auth.callback(), shopify.redirectToShopifyOrAppRoot());
+app.post(shopify.config.webhooks.path, shopify.processWebhooks({ webhookHandlers: GDPRWebhookHandlers }));
 
 // If you are adding routes outside of the /api path, remember to
 // also add a proxy rule for them in web/frontend/vite.config.js
@@ -72,6 +61,7 @@ app.use("/api/blog", blogRoute);
 app.use("/api/image-optimizer", ImageOptimizerRoute);
 app.use("/api/error", errorRouter);
 app.use("/api/jsonld", jsonLdRoute);
+app.use("/api/product/update-image", imageCompression);
 
 app.use(shopify.cspHeaders());
 app.use(serveStatic(STATIC_PATH, { index: false }));

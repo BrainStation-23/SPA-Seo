@@ -11,10 +11,22 @@ import {
   useIndexResourceState,
 } from "@shopify/polaris";
 import { useUI } from "../contexts/ui.context";
-// import sharp from "sharp";
+import { useAuthenticatedFetch } from "@shopify/app-bridge-react";
+// import { compressImages } from "../../controllers/imageCompression";
 
 export function ImageCompression() {
+  const fetcher = useAuthenticatedFetch();
   const { modal, setToggleToast } = useUI();
+  // console.log("modal", modal.data.info.id);
+  // const productId = modal?.data?.info?.id;
+  function parsId(url) {
+    const product_id = url?.substring(url.lastIndexOf("/") + 1);
+    return product_id;
+  }
+  const productId = modal?.data?.info?.id;
+
+  console.log("productId", productId);
+
   const images = modal?.data?.info?.images?.edges?.map((data) => data?.node);
 
   const [compressionSettings, setCompressionSettings] = useState({
@@ -56,17 +68,24 @@ export function ImageCompression() {
 
     selectedResources.forEach((imageId) => {
       const image = images.find((img) => img.id === imageId);
+
       if (image) {
-        // sharp(image.originalSrc)
-        //   .resize(compressionSettings.width, compressionSettings.height)
-        //   .jpeg({ quality: compressionSettings.quality })
-        //   .toBuffer()
-        //   .then((data) => {
-        //     console.log("Compressed image data for:", imageId);
-        //   })
-        //   .catch((err) => {
-        //     console.error("Error during image compression:", err);
-        //   });
+        fetcher(`/api/product/update-image/${parsId(productId)}/${parsId(imageId)}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            image,
+            compressionSettings,
+          }),
+        })
+          .then((response) => {
+            console.log("response", response);
+          })
+          .catch((error) => {
+            console.log("error", error);
+          });
       }
     });
   };

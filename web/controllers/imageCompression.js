@@ -1,0 +1,63 @@
+import sharp from "sharp";
+import fetch from "node-fetch";
+import shopify from "../shopify.js";
+
+export const imageCompression = async (req, res) => {
+  const { image, compressionSettings } = req.body;
+  const { productId, imageId } = req.params;
+  const { width, height, quality, format } = compressionSettings;
+
+  try {
+    const response = await fetch(image.originalSrc);
+    const buffer = await response.buffer();
+    let imageSharp = sharp(buffer);
+
+    if (width || height) {
+      imageSharp = imageSharp.resize({
+        width: width ? parseInt(width) : null,
+        height: height ? parseInt(height) : null,
+      });
+    }
+
+    if (format === "jpeg" || format === "jpg") {
+      imageSharp = imageSharp.jpeg({ quality: parseInt(quality) });
+    } else if (format === "png") {
+      imageSharp = imageSharp.png();
+    } else if (format === "webp") {
+      imageSharp = imageSharp.webp({ quality: parseInt(quality) });
+    } else if (format === "gif") {
+      imageSharp = imageSharp.gif();
+    }
+
+    const client = new shopify.api.clients.Rest({
+      session: res.locals.shopify.session,
+    });
+
+    const compressedImageBuffer = await imageSharp.toBuffer();
+    const base64Image = compressedImageBuffer.toString("base64");
+
+    const imageRes = await client.put({
+      path: `/products/${productId}/images/${imageId}.json`,
+      data: {
+        image: {
+          product_id: productId,
+          id: imageId,
+          position: 1,
+          attachment: base64Image,
+        },
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      image: imageRes.body.image,
+      message: `Image compressed and updated successfully`,
+    });
+  } catch (err) {
+    console.error("Error during image compression or update:", err);
+    res.status(500).json({
+      success: false,
+      error: "Image compression or update failed",
+    });
+  }
+};
