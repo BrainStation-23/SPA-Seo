@@ -8,7 +8,10 @@ export const imageCompression = async (req, res) => {
   const { width, height, quality, format } = compressionSettings;
 
   try {
+    // const response = image.originalSrc;\
     const response = await fetch(image.originalSrc);
+
+    console.log("response..............", response);
     const buffer = await response.buffer();
     let imageSharp = sharp(buffer);
 
@@ -28,6 +31,7 @@ export const imageCompression = async (req, res) => {
     } else if (format === "gif") {
       imageSharp = imageSharp.gif();
     }
+    imageSharp = imageSharp.toFormat(format);
 
     const client = new shopify.api.clients.Rest({
       session: res.locals.shopify.session,
