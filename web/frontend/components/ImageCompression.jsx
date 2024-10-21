@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import {
   Button,
@@ -18,7 +19,7 @@ export function ImageCompression() {
   const fetcher = useAuthenticatedFetch();
   const { modal, setToggleToast } = useUI();
   const [productInfoById, setProductInfoById] = useState(null);
-  const [isLoading, setIsLoading] = useState(true); // Loader state
+  const [isLoading, setIsLoading] = useState(true);
   const [replaceOrginalImage, setReplaceOrginalImage] = useState(false);
   const [compressionSettings, setCompressionSettings] = useState({
     width: "",
@@ -26,10 +27,10 @@ export function ImageCompression() {
     quality: 80,
     format: "jpg",
   });
+  const [isSaving, setIsSaving] = useState(false); // Spinner state for Save button
 
   const OPTION = [
     { label: "JPG", value: "jpg" },
-    { label: "JPEG", value: "jpeg" },
     { label: "PNG", value: "png" },
     { label: "GIF", value: "gif" },
     { label: "WEBP", value: "webp" },
@@ -78,12 +79,15 @@ export function ImageCompression() {
       });
     }
 
-    selectedResources.forEach((imageId) => {
+    setIsSaving(true); 
+
+    const requests = selectedResources.map((imageId) => {
       const image = images?.find((img) => img.id === imageId);
       const imagePosition = image?.position;
+      const altText = image?.alt;
       console.log("imagePosition", imagePosition);
       if (image) {
-        fetcher(`/api/image-compression/${parseId(productId)}/${imageId}`, {
+        return fetcher(`/api/image-compression/${parseId(productId)}/${imageId}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -93,6 +97,7 @@ export function ImageCompression() {
             compressionSettings,
             replaceOrginalImage,
             imagePosition,
+            altText,
           }),
         })
           .then((response) => {
@@ -119,7 +124,12 @@ export function ImageCompression() {
           active: true,
           message: "Image not found ",
         });
+        return Promise.reject("Image not found");
       }
+    });
+
+    Promise.all(requests).finally(() => {
+      setIsSaving(false); 
     });
   };
 
@@ -205,7 +215,7 @@ export function ImageCompression() {
                 onChange={() => setReplaceOrginalImage((prev) => !prev)}
               />
               <Button primary submit>
-                Save
+                {isSaving ? <Spinner size="small" /> : "Save"}
               </Button>
             </div>
           </Form>

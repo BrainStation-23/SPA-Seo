@@ -3,7 +3,7 @@ import fetch from "node-fetch";
 import shopify from "../shopify.js";
 
 export const imageCompression = async (req, res) => {
-  const { image, compressionSettings, replaceOrginalImage, imagePosition } = req.body;
+  const { image, compressionSettings, replaceOrginalImage, imagePosition, altText } = req.body;
   const { productId, imageId } = req.params;
   const { width, height, quality, format } = compressionSettings;
 
@@ -56,6 +56,7 @@ export const imageCompression = async (req, res) => {
             product_id: productId,
             position: 1,
             attachment: resultImage,
+            alt: altText,
           },
         },
       });
