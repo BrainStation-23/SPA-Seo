@@ -14,6 +14,7 @@ import jsonLdRoute from "./routes/Jsonld.js";
 import ImageOptimizerRoute from "./routes/image.optimizer.js";
 import sitemapRoute from "./routes/htmlsitemap.js";
 import { errorRouter, updateErrorInsightsRouter } from "./routes/404error.js";
+import { SQLiteSessionStorage } from "@shopify/shopify-app-session-storage-sqlite";
 
 const PORT = parseInt(
   process.env.BACKEND_PORT || process.env.PORT || "3000",
@@ -43,7 +44,44 @@ app.post(
 );
 
 // If you are adding routes outside of the /api path, remember to
-// also add a proxy rule for them in web/frontend/vite.config.js
+// also add a proxy rule for them in web/frontend/vite.config.
+app.post("/api/cleanup", async (req, res) => {
+  console.log("cleanup");
+  const { domain, myshopify_domain } = req.body;
+  const database = new SQLiteSessionStorage(`${process.cwd()}/database.sqlite`);
+  const [session] = await database.findSessionsByShop(myshopify_domain);
+  const client = new shopify.api.clients.Graphql({
+    session,
+  });
+
+  const response = await client.query({
+    data: {
+      variables: {
+        files: [""],
+        themeId: "",
+      },
+      query: `
+        mutation themeFilesDelete($files: [String!]!, $themeId: ID!) {
+          themeFilesDelete(files: $files, themeId: $themeId) {
+            deletedThemeFiles {
+              # OnlineStoreThemeFileOperationResult fields
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `,
+    },
+  });
+
+  console.log(session);
+  console.log(client);
+  console.log(response.body);
+
+  return res.status(200).send("cleanup");
+});
 
 app.use("/api/*", shopify.validateAuthenticatedSession());
 

@@ -2,12 +2,13 @@
 
 client_id = "695da14ec05f37f6cdd63a2b3c20b444"
 name = "SEOfy - Complete SEO Expert"
-application_url = "https://fold-je-beast-compliance.trycloudflare.com"
+handle = "seofy-complete-seo-expert"
+application_url = "https://qualifying-cove-consultant-imaging.trycloudflare.com"
 embedded = true
 
 [build]
 automatically_update_urls_on_dev = true
-dev_store_url = "algorithm-with-shop.myshopify.com"
+dev_store_url = "grocery-shop-23.myshopify.com"
 include_config_on_deploy = true
 
 [access_scopes]
@@ -16,13 +17,13 @@ scopes = "read_content,read_customers,read_products,read_themes,write_content,wr
 
 [auth]
 redirect_urls = [
-  "https://fold-je-beast-compliance.trycloudflare.com/auth/callback",
-  "https://fold-je-beast-compliance.trycloudflare.com/auth/shopify/callback",
-  "https://fold-je-beast-compliance.trycloudflare.com/api/auth/callback"
+  "https://qualifying-cove-consultant-imaging.trycloudflare.com/auth/callback",
+  "https://qualifying-cove-consultant-imaging.trycloudflare.com/auth/shopify/callback",
+  "https://qualifying-cove-consultant-imaging.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
-api_version = "2024-07"
+api_version = "2024-10"
 
 [pos]
 embedded = false
