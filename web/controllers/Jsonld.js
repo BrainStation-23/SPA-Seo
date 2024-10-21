@@ -23,7 +23,7 @@ async function updateThemeFiles(session) {
       data: {
         query: `
                   query GetDevTheme {
-                    themes(first: 1, roles: DEVELOPMENT) {
+                    themes(first: 1, roles: MAIN) {
                       edges {
                         node {
                           id
@@ -110,7 +110,7 @@ async function updateThemeFiles(session) {
       ],
     };
 
-    if (!themeFilesMap.has(templates.seoJsonld))
+    if (!themeFilesMap.has(templates.seoJsonld)) {
       variables.files.push({
         filename: templates.seoJsonld,
         body: {
@@ -118,6 +118,8 @@ async function updateThemeFiles(session) {
           value: seofyJsonldSnippet,
         },
       });
+      console.log("added seo jsonld snippet");
+    }
 
     const response = await client.query({
       data: {

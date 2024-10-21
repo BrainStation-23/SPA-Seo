@@ -424,7 +424,7 @@ export const seofyJsonldSnippet = `
             ]
             }{% endif %}
         </script>
-    {% elsif render_type = "article" %}
+    {% elsif render_type == 'article' %}
         <script type="application/ld+json">
             {
                 "@context": "https://schema.org",

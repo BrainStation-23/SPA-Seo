@@ -4,6 +4,11 @@ import { DeliveryMethod } from "@shopify/shopify-api";
  * @type {{[key: string]: import("@shopify/shopify-api").WebhookHandler}}
  */
 export default {
+  APP_UNINSTALLED: {
+    deliveryMethod: DeliveryMethod.Http,
+    callbackUrl: "/api/cleanup",
+  },
+
   CUSTOMERS_DATA_REQUEST: {
     deliveryMethod: DeliveryMethod.Http,
     callbackUrl: "/api/webhooks",
