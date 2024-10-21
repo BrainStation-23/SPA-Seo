@@ -8,10 +8,10 @@ export const GetShopId = `
         }
     }`;
 
-export const GetShopMetafield = `
+export const GetShopMetafield = ({ namespace, key }) => `
     query GetShopMetafield {
         shop {
-            metafield(key: "${JSONLD_META_FIELD_KEY}", namespace: "${SHOP_NAME_SPACE}") {
+            metafield(key: "${key}", namespace: "${namespace}") {
                 id
                 namespace
                 key

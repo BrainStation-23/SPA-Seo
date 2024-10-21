@@ -14,8 +14,6 @@ import jsonLdRoute from "./routes/Jsonld.js";
 import ImageOptimizerRoute from "./routes/image.optimizer.js";
 import sitemapRoute from "./routes/htmlsitemap.js";
 import { errorRouter, updateErrorInsightsRouter } from "./routes/404error.js";
-
-import sqlite3 from "sqlite3";
 import { SQLiteSessionStorage } from "@shopify/shopify-app-session-storage-sqlite";
 
 const PORT = parseInt(

@@ -117,7 +117,10 @@ export const MetafieldCreate = async (req, res, next) => {
     if (owner == "SHOP") {
       prevData = await client.query({
         data: {
-          query: GetShopMetafield,
+          query: GetShopMetafield({
+            namespace: "bs-23-seo-app",
+            key: "json-ld",
+          }),
         },
       });
     } else if (owner == "PRODUCT") {
@@ -196,17 +199,10 @@ export const GetImageOptimizerSettings = async (req, res, next) => {
 
     let metafieldData = await client.query({
       data: {
-        query: `
-        query GetShopMetafield {
-          shop {
-              metafield(key: "image-optimizer", namespace: "bs-23-seo-app") {
-                  id
-                  namespace
-                  key
-                  value
-              }      
-          }
-        }`,
+        query: GetShopMetafield({
+          namespace: "bs-23-seo-app",
+          key: "image-optimizer",
+        }),
       },
     });
 
@@ -239,17 +235,10 @@ export const SaveImageOptimizerSettings = async (req, res, next) => {
 
     let metafieldData = await client.query({
       data: {
-        query: `
-        query GetShopMetafield {
-          shop {
-              metafield(key: "image-optimizer", namespace: "bs-23-seo-app") {
-                  id
-                  namespace
-                  key
-                  value
-              }      
-          }
-        }`,
+        query: GetShopMetafield({
+          namespace: "bs-23-seo-app",
+          key: "image-optimizer",
+        }),
       },
     });
 
@@ -307,7 +296,10 @@ export const GetMetafields = async (req, res, next) => {
 
     let metafieldData = await client.query({
       data: {
-        query: GetShopMetafield,
+        query: GetShopMetafield({
+          namespace: "bs-23-seo-app",
+          key: "json-ld",
+        }),
       },
     });
 
