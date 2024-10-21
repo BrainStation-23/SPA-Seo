@@ -85,10 +85,29 @@ async function savePreviousThemeCodesToMetafield({ session, payload }) {
       },
     });
 
-    payload.forEach(async (file) => {
-      if (file.prev_code.length > 0) {
+    if (!shopMetafieldQuery.body.data.shop.metafield) {
+      const setMetafieldResponse = await client.query({
+        data: {
+          query: SetShopMetafield,
+          variables: {
+            metafields: [
+              {
+                key: "json-ld-saved-history",
+                namespace: "bs-23-seo-app",
+                ownerId,
+                value: JSON.stringify(payload),
+              },
+            ],
+          },
+        },
+      });
+
+      if (
+        setMetafieldResponse.body.data.metafieldCreate.userErrors.length > 0
+      ) {
+        throw setMetafieldResponse.body.data.metafieldCreate.userErrors;
       }
-    });
+    }
   } catch (error) {
     console.error(error);
     throw error;
@@ -266,7 +285,7 @@ async function updateThemeFiles(session) {
 
 function updateProductThemeBody(body) {
   const productSnippetRegExp =
-    /<script\s+type="application\/ld\+json">\s*{{\s*product\s*\|\s*structured_data\s*}}\s*<\/script>/g;
+    /<script\s+type="application\/ld\+json">\s*({{\s*product\s*\|\s*structured_data\s*}}|[^]*?"@type"\s*:\s*"(Product|ProductGroup)"[^]*?)<\/script>/g;
   let updatedContent = body;
   let hitory = { prev_code: "", updated_code: "" };
 
@@ -325,7 +344,8 @@ function updateProductThemeBody(body) {
 
 function updateArticleThemeBody(assetFileContent) {
   const articleSnippetRegExp =
-    /<script\s+type="application\/ld\+json">\s*{{\s*article\s*\|\s*structured_data\s*}}\s*<\/script>/g;
+    /<script\s+type="application\/ld\+json">\s*({{\s*article\s*\|\s*structured_data\s*}}|[^]*?"@type"\s*:\s*"(Article)"[^]*?)<\/script>/g;
+
   let updatedContent = assetFileContent;
   let history = { prev_code: "", updated_code: "" };
 
