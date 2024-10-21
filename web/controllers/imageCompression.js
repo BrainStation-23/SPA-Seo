@@ -3,15 +3,12 @@ import fetch from "node-fetch";
 import shopify from "../shopify.js";
 
 export const imageCompression = async (req, res) => {
-  const { image, compressionSettings, replaceOrginalImage } = req.body;
+  const { image, compressionSettings, replaceOrginalImage, imagePosition } = req.body;
   const { productId, imageId } = req.params;
   const { width, height, quality, format } = compressionSettings;
 
   try {
-    // const response = image.originalSrc;\
-    const response = await fetch(image.originalSrc);
-
-    console.log("response..............", response);
+    const response = await fetch(image?.src);
     const buffer = await response.buffer();
     let imageSharp = sharp(buffer);
 
@@ -46,7 +43,7 @@ export const imageCompression = async (req, res) => {
           image: {
             product_id: productId,
             id: imageId,
-            position: 1,
+            position: imagePosition,
             attachment: resultImage,
           },
         },
