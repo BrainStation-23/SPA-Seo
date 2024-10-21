@@ -2,7 +2,7 @@ import shopify from "../shopify.js";
 import { seofyJsonldSnippet } from "../utils/snippets.js";
 import { templates } from "../utils/templates.js";
 
-export const testApi = async (req, res, next) => {
+export const InitializeJsonldApi = async (req, res, next) => {
   try {
     await updateThemeFiles(res.locals.shopify.session);
     return res.status(200).json({ message: "GG" });
