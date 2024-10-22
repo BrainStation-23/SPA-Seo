@@ -112,7 +112,6 @@ export const productsController = async (req, res, next) => {
 };
 
 export const getProductControllerByID = async (req, res, next) => {
-  console.log("🚀 ~ getProductControllerByID ~ req.params:", req.params);
   try {
     const { id } = req.params;
 
@@ -121,8 +120,6 @@ export const getProductControllerByID = async (req, res, next) => {
       id: id,
       fields: "id,images,title,metafields_global_title_tag",
     });
-
-    console.log("🚀 ~ getProductControllerByID ~ response:", response.Product);
 
     const query = `
     query {
@@ -152,8 +149,6 @@ export const getProductControllerByID = async (req, res, next) => {
     });
 
     const productInfo = await client.query({ data: query });
-    console.log("🚀 ~ getProductControllerByID ~ metafieldList:", productInfo?.body?.data?.product);
-
     return res.status(200).json(response);
   } catch (err) {
     console.log("🚀 ~ file: description.js:73 ~ descriptionController ~ err:", err);
