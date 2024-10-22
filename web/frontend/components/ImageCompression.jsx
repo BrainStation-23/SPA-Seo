@@ -141,6 +141,7 @@ export function ImageCompression() {
       .then(() => {
         // selectedResources.length = 0;
         setIsLoading(true);
+        setReplaceOrginalImage(false);
         fetchImages();
       })
       .finally(() => {
