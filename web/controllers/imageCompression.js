@@ -3,7 +3,7 @@ import fetch from "node-fetch";
 import shopify from "../shopify.js";
 
 export const imageCompression = async (req, res) => {
-  const { image, compressionSettings, replaceOrginalImage, imagePosition, altText } = req.body;
+  const { image, compressionSettings, replaceOrginalImage, imagePosition, altText, fileName } = req.body;
   const { productId, imageId } = req.params;
   const { width, height, quality, format } = compressionSettings;
 
@@ -36,32 +36,24 @@ export const imageCompression = async (req, res) => {
 
     const compressedImageBuffer = await imageSharp.toBuffer();
     const resultImage = compressedImageBuffer.toString("base64");
+
+    await client.post({
+      path: `/products/${productId}/images.json`,
+      data: {
+        image: {
+          product_id: productId,
+          position: replaceOrginalImage ? imagePosition : 1,
+          attachment: resultImage,
+          alt: altText,
+          filename: fileName,
+        },
+      },
+    });
     if (replaceOrginalImage) {
-      await client.put({
+      await client.delete({
         path: `/products/${productId}/images/${imageId}.json`,
-        data: {
-          image: {
-            product_id: productId,
-            id: imageId,
-            position: imagePosition,
-            attachment: resultImage,
-          },
-        },
-      });
-    } else {
-      await client.post({
-        path: `/products/${productId}/images.json`,
-        data: {
-          image: {
-            product_id: productId,
-            position: 1,
-            attachment: resultImage,
-            alt: altText,
-          },
-        },
       });
     }
-
     res.status(200).json({
       success: true,
       message: `Image compressed and updated successfully`,

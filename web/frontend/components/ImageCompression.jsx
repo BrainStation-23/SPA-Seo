@@ -65,6 +65,13 @@ export function ImageCompression() {
 
   const { selectedResources, allResourcesSelected, handleSelectionChange } = useIndexResourceState(images || []);
 
+  function parseFilenameFromSrc(url) {
+    const full_filename = url?.substring(url.lastIndexOf("/") + 1).split("?")[0];
+    const filename_without_extension = full_filename?.substring(0, full_filename?.lastIndexOf("."));
+    const fileExtension = full_filename?.substring(full_filename?.lastIndexOf("."));
+    return { filename: filename_without_extension, fileExt: fileExtension };
+  }
+
   const handleFieldChange = (value, field) => {
     setCompressionSettings((prevSettings) => ({
       ...prevSettings,
@@ -86,6 +93,7 @@ export function ImageCompression() {
       const image = images?.find((img) => img.id === imageId);
       const imagePosition = image?.position;
       const altText = image?.alt;
+      const fileName = parseFilenameFromSrc(image?.src)?.filename;
       if (image) {
         return fetcher(`/api/image-compression/${parseId(productId)}/${imageId}`, {
           method: "POST",
@@ -98,6 +106,7 @@ export function ImageCompression() {
             replaceOrginalImage,
             imagePosition,
             altText,
+            fileName,
           }),
         })
           .then((response) => {
@@ -130,6 +139,7 @@ export function ImageCompression() {
 
     Promise.all(requests)
       .then(() => {
+        // selectedResources.length = 0;
         setIsLoading(true);
         fetchImages();
       })
@@ -138,19 +148,11 @@ export function ImageCompression() {
       });
   };
 
-  function parseFilenameFromSrc(url) {
-    const full_filename = url?.substring(url.lastIndexOf("/") + 1).split("?")[0];
-    const filename_without_extension = full_filename?.substring(0, full_filename?.lastIndexOf("."));
-    const fileExtension = full_filename?.substring(full_filename?.lastIndexOf("."));
-    return { filename: filename_without_extension, fileExt: fileExtension };
-  }
-
   const rows = images?.map((image) => ({
     id: image?.id,
     src: image?.src,
     fileExtension: parseFilenameFromSrc(image?.src)?.fileExt?.slice(1),
   }));
-
   return (
     <Layout>
       <Layout.Section oneHalf>
