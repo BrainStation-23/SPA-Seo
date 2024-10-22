@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import {
   Button,
@@ -14,10 +13,12 @@ import {
 } from "@shopify/polaris";
 import { useUI } from "../contexts/ui.context";
 import { useAuthenticatedFetch } from "@shopify/app-bridge-react";
+import { useImageCompression } from "../contexts/imageCompression.context";
 
 export function ImageCompression() {
   const fetcher = useAuthenticatedFetch();
   const { modal, setToggleToast } = useUI();
+  const { images, setImages } = useImageCompression();
   const [productInfoById, setProductInfoById] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [replaceOrginalImage, setReplaceOrginalImage] = useState(false);
@@ -27,7 +28,7 @@ export function ImageCompression() {
     quality: 80,
     format: "jpg",
   });
-  const [isSaving, setIsSaving] = useState(false); // Spinner state for Save button
+  const [isSaving, setIsSaving] = useState(false);
 
   const OPTION = [
     { label: "JPG", value: "jpg" },
@@ -43,25 +44,25 @@ export function ImageCompression() {
 
   const productId = modal?.data?.info?.id;
 
-  useEffect(() => {
-    async function fetchImages() {
-      try {
-        const response = await fetcher(`/api/product/${parseId(productId)}`);
-        const data = await response.json();
-        setProductInfoById(data?.images);
-        setIsLoading(false);
-      } catch (error) {
-        console.error("Error fetching images:", error);
-        setIsLoading(false);
-      }
+  async function fetchImages() {
+    try {
+      const response = await fetcher(`/api/product/${parseId(productId)}`);
+      const data = await response.json();
+      setProductInfoById(data?.images);
+      setImages(data?.images); // Store images in context
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error fetching images:", error);
+      setIsLoading(false);
     }
+  }
+
+  useEffect(() => {
     if (productId) {
       fetchImages();
     }
   }, [productId]);
 
-  const images = productInfoById;
-  console.log("images", images);
   const { selectedResources, allResourcesSelected, handleSelectionChange } = useIndexResourceState(images || []);
 
   const handleFieldChange = (value, field) => {
@@ -79,13 +80,12 @@ export function ImageCompression() {
       });
     }
 
-    setIsSaving(true); 
+    setIsSaving(true);
 
     const requests = selectedResources.map((imageId) => {
       const image = images?.find((img) => img.id === imageId);
       const imagePosition = image?.position;
       const altText = image?.alt;
-      console.log("imagePosition", imagePosition);
       if (image) {
         return fetcher(`/api/image-compression/${parseId(productId)}/${imageId}`, {
           method: "POST",
@@ -128,9 +128,14 @@ export function ImageCompression() {
       }
     });
 
-    Promise.all(requests).finally(() => {
-      setIsSaving(false); 
-    });
+    Promise.all(requests)
+      .then(() => {
+        setIsLoading(true);
+        fetchImages();
+      })
+      .finally(() => {
+        setIsSaving(false);
+      });
   };
 
   function parseFilenameFromSrc(url) {

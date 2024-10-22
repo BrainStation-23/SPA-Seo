@@ -3,13 +3,10 @@ import { BrowserRouter } from "react-router-dom";
 import Routes from "./Routes";
 import "./assets/style.css";
 
-import {
-  AppBridgeProvider,
-  QueryProvider,
-  PolarisProvider,
-} from "./components";
+import { AppBridgeProvider, QueryProvider, PolarisProvider } from "./components";
 import { ManagedUIContext } from "./contexts/ui.context";
 import { ManagedHomeSeoContext } from "./contexts/home.context";
+import { ManagedImageCompressionContext } from "./contexts/imageCompression.context";
 import { ModalArea } from "./components/commonUI/Modal";
 import { ToastContainer } from "./components/commonUI/Toast";
 
@@ -20,12 +17,13 @@ export default function App() {
 
   return (
     <ManagedUIContext>
-      <ManagedHomeSeoContext>
-        <PolarisProvider>
-          <BrowserRouter>
-            <AppBridgeProvider>
-              <QueryProvider>
-                {/* <NavigationMenu
+      <ManagedImageCompressionContext>
+        <ManagedHomeSeoContext>
+          <PolarisProvider>
+            <BrowserRouter>
+              <AppBridgeProvider>
+                <QueryProvider>
+                  {/* <NavigationMenu
                 navigationLinks={[
                   {
                     label: "Page name",
@@ -33,14 +31,15 @@ export default function App() {
                   },
                 ]}
               /> */}
-                <Routes pages={pages} />
-                <ModalArea />
-                <ToastContainer />
-              </QueryProvider>
-            </AppBridgeProvider>
-          </BrowserRouter>
-        </PolarisProvider>
-      </ManagedHomeSeoContext>
+                  <Routes pages={pages} />
+                  <ModalArea />
+                  <ToastContainer />
+                </QueryProvider>
+              </AppBridgeProvider>
+            </BrowserRouter>
+          </PolarisProvider>
+        </ManagedHomeSeoContext>
+      </ManagedImageCompressionContext>
     </ManagedUIContext>
   );
 }
