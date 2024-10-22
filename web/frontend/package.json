@@ -16,6 +16,7 @@
     "extends": "@shopify/stylelint-polaris"
   },
   "dependencies": {
+    "@img/sharp-wasm32": "^0.33.5",
     "@shopify/app-bridge": "^3.1.0",
     "@shopify/app-bridge-react": "^3.1.0",
     "@shopify/app-bridge-utils": "^3.1.0",
