@@ -421,15 +421,20 @@
   background: none;
   border: none;
   cursor: pointer;
-  z-index: 1000;
   font-size: 24px;
   display: none;
 }
 .sidebar__toggle_icon {
   height: 36px;
-  width: 40px;
+  width: 36px;
 }
-@media (max-width: 768px) {
+@media (max-width: 850px) {
+  .app__container {
+    gap: 2px;
+  }
+  .app__dashboard_container {
+    padding: 0px;
+  }
   .sidebar__menu {
     position: fixed;
     left: -250px;
@@ -446,7 +451,7 @@
   }
 }
 
-@media (min-width: 769px) {
+@media (min-width: 851px) {
   .sidebar__menu {
     transform: translateX(0);
     position: relative;
