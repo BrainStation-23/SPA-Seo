@@ -382,7 +382,6 @@
 }
 
 /* new */
-
 .app__sidebar {
   position: relative;
 }
@@ -424,17 +423,21 @@
   font-size: 24px;
   display: none;
 }
+
 .sidebar__toggle_icon {
   height: 36px;
   width: 36px;
 }
+
 @media (max-width: 850px) {
   .app__container {
     gap: 2px;
   }
+
   .app__dashboard_container {
     padding: 0px;
   }
+
   .sidebar__menu {
     position: fixed;
     left: -250px;

@@ -7,14 +7,14 @@ export default function Sidebar({ selectedSidebar, setSelectedSidebar }) {
 
   const menuItems = [
     { id: 1, title: "SEO Insights" },
-    { id: 2, title: "Home page" },
-    { id: 3, title: "Product page" },
-    { id: 4, title: "Bulk Product page" },
-    { id: 5, title: "Collection page" },
-    { id: 6, title: "Bulk Collection page" },
+    { id: 2, title: "Home Page" },
+    { id: 3, title: "Product Page" },
+    { id: 4, title: "Bulk Product Page" },
+    { id: 5, title: "Collection Page" },
+    { id: 6, title: "Bulk Collection Page" },
     { id: 7, title: "Company Settings" },
-    { id: 8, title: "Blog page" },
-    { id: 9, title: "Image alt optimizer" },
+    { id: 8, title: "Blog Page" },
+    { id: 9, title: "Image Alt Optimizer" },
     { id: 10, title: "404 Error" },
     { id: 11, title: "HTML Sitemap" },
   ];
