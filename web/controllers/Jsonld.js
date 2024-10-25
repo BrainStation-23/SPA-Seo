@@ -4,8 +4,6 @@ import { templates } from "../utils/templates.js";
 import {
   CheckShopMetafieldDefinition,
   CreateShopMetafieldDefinition,
-  GetShopId,
-  GetShopMetafield,
   SetShopMetafield,
 } from "../graphql/metafields.js";
 
@@ -73,15 +71,22 @@ async function savePreviousThemeCodesToMetafield({ session, payload }) {
   try {
     await initializeMetafield(session);
     console.log("saving previous theme codes to metafield");
-    console.log(payload);
 
     const client = new shopify.api.clients.Graphql({ session });
     const shopMetafieldQuery = await client.query({
       data: {
-        query: GetShopMetafield({
-          namespace: "bs-23-seo-app",
-          key: "json-ld-saved-history",
-        }),
+        query: `
+      query GetShopMetafield {
+        shop {
+            id
+            metafield(key: "json-ld-saved-history", namespace: "bs-23-seo-app") {
+                id
+                namespace
+                key
+                value
+            }      
+        }
+    }`,
       },
     });
 
@@ -94,7 +99,7 @@ async function savePreviousThemeCodesToMetafield({ session, payload }) {
               {
                 key: "json-ld-saved-history",
                 namespace: "bs-23-seo-app",
-                ownerId,
+                ownerId: shopMetafieldQuery.body.data.shop.id,
                 value: JSON.stringify(payload),
               },
             ],
@@ -102,11 +107,11 @@ async function savePreviousThemeCodesToMetafield({ session, payload }) {
         },
       });
 
-      if (
-        setMetafieldResponse.body.data.metafieldCreate.userErrors.length > 0
-      ) {
-        throw setMetafieldResponse.body.data.metafieldCreate.userErrors;
+      if (setMetafieldResponse.body.data.metafieldsSet.userErrors.length > 0) {
+        throw setMetafieldResponse.body.data.metafieldsSet.userErrors;
       }
+
+      console.log("saved previous theme codes to metafield");
     }
   } catch (error) {
     console.error(error);
@@ -266,18 +271,16 @@ async function updateThemeFiles(session) {
       throw response.body.data.themeFilesUpsert.userErrors;
     }
 
-    return [
-      { filename: "sections/main-product.liquid", ...product_history },
-      { filename: "sections/main-article.liquid", ...article_history },
-      {
-        filename: "sections/main-collection-product-grid.liquid",
+    return {
+      ["sections/main-product.liquid"]: { ...product_history },
+      ["sections/main-article.liquid"]: { ...article_history },
+      ["sections/main-collection-product-grid.liquid"]: {
         ...collection_history,
       },
-      {
-        filename: "sections/header.liquid",
+      ["sections/header.liquid"]: {
         ...company_history,
       },
-    ];
+    };
   } catch (error) {
     console.error(error);
   }
