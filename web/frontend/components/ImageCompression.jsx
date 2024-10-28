@@ -21,6 +21,7 @@ export function ImageCompression() {
   const { images, setImages } = useImageCompression();
   const [productInfoById, setProductInfoById] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [errors, setErrors] = useState(false);
   const [replaceOrginalImage, setReplaceOrginalImage] = useState(false);
   const [compressionSettings, setCompressionSettings] = useState({
     width: "",
@@ -77,6 +78,7 @@ export function ImageCompression() {
       ...prevSettings,
       [field]: value,
     }));
+    setErrors({ ...errors, width: "", height: "", quality: "" });
   };
 
   const handleSubmit = () => {
@@ -84,6 +86,26 @@ export function ImageCompression() {
       return setToggleToast({
         active: true,
         message: "No images selected.",
+      });
+    }
+
+    if (compressionSettings.width === "") {
+      return setErrors({
+        ...errors,
+        width: "Image width is required.",
+      });
+    }
+    if (compressionSettings.height === "") {
+      return setErrors({
+        ...errors,
+        height: "Image height is required.",
+      });
+    }
+
+    if (compressionSettings.quality === "") {
+      return setErrors({
+        ...errors,
+        quality: "Image quality is required.",
       });
     }
 
@@ -197,18 +219,23 @@ export function ImageCompression() {
               value={compressionSettings.width}
               type="number"
               onChange={(value) => handleFieldChange(value, "width")}
+              error={errors?.width}
             />
             <TextField
               label="Image Height"
               value={compressionSettings.height}
               type="number"
               onChange={(value) => handleFieldChange(value, "height")}
+              error={errors?.height}
             />
             <TextField
               label="Image Quality (1-100)"
               value={compressionSettings.quality}
               type="number"
               onChange={(value) => handleFieldChange(value, "quality")}
+              min={1}
+              max={100}
+              error={errors?.quality}
             />
             <Select
               label="Image Format"
@@ -222,7 +249,7 @@ export function ImageCompression() {
                 checked={replaceOrginalImage}
                 onChange={() => setReplaceOrginalImage((prev) => !prev)}
               />
-              <Button primary submit>
+              <Button primary submit disabled={isLoading}>
                 {isSaving ? <Spinner size="small" /> : "Save"}
               </Button>
             </div>
