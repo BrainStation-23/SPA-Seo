@@ -1,7 +1,5 @@
 import shopify from "../shopify.js";
 import { templates } from "../utils/templates.js";
-import { GetShopMetafield } from "../graphql/metafields.js";
-import { getAccessTokenForShop } from "../utils/getShopAccessToken.js";
 
 export const uninstallCleanup = async (req, res) => {
   try {
@@ -269,7 +267,8 @@ export const uninstallCleanup = async (req, res) => {
     console.log("ok");
     console.log(JSON.stringify(cleanupResponse.body));
 
-    await wait(2000);
+    await wait(5000);
+    console.log(filesToBeDeleted);
     const themeFilesDelete = await client.query({
       data: {
         variables: {
