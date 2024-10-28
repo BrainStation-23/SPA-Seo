@@ -181,7 +181,6 @@ export const updateProductSEO = async (req, res, next) => {
     const { id, seoTitle, seoDescription } = req.body;
 
     const productID = id?.split("/").pop();
-    console.log("idid ", productID);
     const mutation = `
     mutation productUpdate($input: ProductInput!) {
       productUpdate(input: $input) {
@@ -285,7 +284,7 @@ export const updateProductBulkSeo = async (req, res) => {
 export const updateImageSeoAltController = async (req, res, next) => {
   try {
     const { id, imageId, altText } = req.body;
-
+    const productID = id?.split("/").pop();
     const mutation = `mutation productImageUpdate($productId: ID!, $image: ImageInput!) {
       productImageUpdate(productId: $productId, image: $image) {
         image {
@@ -322,7 +321,8 @@ export const updateImageSeoAltController = async (req, res, next) => {
       console.error("Errors:", response.body.data.productImageUpdate.userErrors);
       return res.status(400).json({ error: response.body.data?.productImageUpdate?.userErrors });
     } else {
-      return res.status(200).json({ product: response.body.data.productImageUpdate.image });
+      const productByID = await getProductByID(res.locals.shopify.session, productID);
+      return res.status(200).json({ product: response.body.data.productImageUpdate.image, productByID });
     }
   } catch (err) {
     console.log("🚀 ~ file: description.js:73 ~ descriptionController ~ err:", err);

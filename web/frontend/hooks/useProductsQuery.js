@@ -114,8 +114,9 @@ export const useUpdateProductSeoImgAlt = () => {
       }
       // setCloseModal();
       // await queryClient.invalidateQueries("productList");
-      const updatedInfo = await data.json();
-      console.log("updatedInfo", updatedInfo);
+      const updatedData = await data.json();
+      console.log("updatedInfo", updatedData);
+      const updatedInfo = updatedData?.productByID;
 
       setOpenModal({
         view: "CREATE_PRODUCT_SEO",
