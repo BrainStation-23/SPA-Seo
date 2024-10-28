@@ -91,7 +91,7 @@ export default function manual() {
           </Layout.Section>
         </Layout>
       </Box>
-      <Box>
+      <Box paddingBlockStart={"4"}>
         <Layout>
           <Layout.Section oneHalf>
             <Text variant="headingLg">Reset everything</Text>
@@ -104,7 +104,7 @@ export default function manual() {
             <Box></Box>
           </Layout.Section>
           <Layout.Section oneHalf>
-            <HorizontalStack align="center">
+            <HorizontalStack align="center" blockAlign="center">
               <Button destructive onClick={() => setShowConfirmation(true)}>
                 Reset
               </Button>
