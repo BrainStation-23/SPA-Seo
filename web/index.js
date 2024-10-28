@@ -342,9 +342,9 @@ app.get("/api/uninstall", async (_req, res) => {
 
     return res.status(200).send("uninstall");
   } catch (error) {
-    console.log("error in uninstall");
-    console.log(error);
-    return res.status(400).send("uninstall");
+    // console.log("error in uninstall");
+    // console.log(error);
+    return res.status(200).send("uninstall");
   }
 });
 
