@@ -1,30 +1,45 @@
 import React, { useEffect, useState } from "react";
-import { Button, Form } from "@shopify/polaris";
+import { Button, Form, Spinner } from "@shopify/polaris";
 import { useUI } from "../contexts/ui.context";
 import TextareaField from "./commonUI/TextareaField";
 import { useUpdateProductSeoImgAlt } from "../hooks/useProductsQuery";
 
 export function AltimageCreate() {
+  const [isLoading, setIsLoading] = useState(false);
   const { modal, setToggleToast } = useUI();
   const images = modal?.data?.info?.images?.edges?.map((data) => data?.node);
 
   const { mutate: updateSeoAltText, isError } = useUpdateProductSeoImgAlt();
   const [formData, setFormData] = useState([]);
 
+  const [errors, setErrors] = useState({});
   const handleSubmit = (obj) => {
     if (!obj?.altText) {
-      return setToggleToast({
-        active: true,
-        message: `Alt text cannot be empty`,
-      });
+      return setErrors((prevErrors) => ({
+        ...prevErrors,
+        [obj.id]: "Please enter alt text.",
+      }));
+    } else if (obj?.altText?.length > 50) {
+      return setErrors((prevErrors) => ({
+        ...prevErrors,
+        altText: `altText  must be 50 characters or fewer. Currently, it is ${obj.altText.length} characters.`,
+      }));
     }
 
+    setIsLoading((prev) => ({ ...prev, [obj.id]: true }));
     const info = {
       id: modal?.data?.info?.id,
       imageId: obj?.id,
       altText: obj?.altText,
     };
-    updateSeoAltText(info);
+    updateSeoAltText(info, {
+      onSuccess: () => {
+        setIsLoading((prev) => ({ ...prev, [obj.id]: false }));
+      },
+      onError: () => {
+        setIsLoading((prev) => ({ ...prev, [obj.id]: false }));
+      },
+    });
   };
 
   const handleChange = (value, name, index) => {
@@ -32,10 +47,12 @@ export function AltimageCreate() {
     const data = { ...images[index], altText: value };
     images[index] = data;
     setFormData(images);
+    setErrors({ ...errors, altText: "" });
+    setErrors((prevErrors) => ({ ...prevErrors, [images[index].id]: "" }));
   };
 
   useEffect(() => {
-    if (images.length > 0) {
+    if (images?.length > 0) {
       setFormData(images);
     }
   }, []);
@@ -48,10 +65,7 @@ export function AltimageCreate() {
             <img src={image?.originalSrc} alt={image?.altText} />
           </div>
           <div className="app__product_alt_textarea">
-            <Form
-              className="app__product_alt_textarea"
-              onSubmit={() => handleSubmit(image)}
-            >
+            <Form className="app__product_alt_textarea" onSubmit={() => handleSubmit(image)}>
               <div className="app__seo_alt_form">
                 <div className="app__seo_alt_textarea">
                   <TextareaField
@@ -61,13 +75,13 @@ export function AltimageCreate() {
                     type="text"
                     name="seo_description"
                     placeholder="Enter image alt text"
-                    error={""}
+                    error={errors[image.id] || ""}
                     index={index}
                   />
                 </div>
                 <div className="app_seo_alt_button">
                   <Button primary submit>
-                    Submit
+                    {isLoading[image.id] ? <Spinner size="small" /> : "Submit"}
                   </Button>
                 </div>
               </div>

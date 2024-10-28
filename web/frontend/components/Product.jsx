@@ -12,10 +12,11 @@ import { Spinners } from "./Spinner";
 import { useUI } from "../contexts/ui.context";
 
 export default function Product() {
-  const { setOpenModal } = useUI();
+  const { setOpenModal ,modal} = useUI();
   const { isError, isLoading, data } = useProductsQuery({
     url: "/api/product/list",
   });
+
 
   const rowMarkup =
     (data &&

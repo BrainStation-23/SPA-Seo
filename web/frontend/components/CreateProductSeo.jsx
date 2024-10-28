@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { FormLayout, Button, Form, InlineError } from "@shopify/polaris";
+import { FormLayout, Button, Form, InlineError, Spinner } from "@shopify/polaris";
 import { InputField } from "./commonUI/InputField";
 import { useCreateProductSeo } from "../hooks/useProductsQuery";
 import { useUI } from "../contexts/ui.context";
 import TextareaField from "./commonUI/TextareaField";
 
 export function CreateProductSeo() {
+  const [isLoading, setIsLoading] = useState(false);
   const { modal } = useUI();
+  console.log("modal", modal);
   const { mutate: createOrUpdateSeo, isError } = useCreateProductSeo();
 
   const [formData, setFormData] = useState({
@@ -42,12 +44,21 @@ export function CreateProductSeo() {
       });
     }
 
+    setIsLoading(true);
     const info = {
       id: modal?.data?.info?.id,
       seoTitle: obj?.seo_title,
       seoDescription: obj?.seo_description,
     };
-    createOrUpdateSeo(info);
+    console.log("info", info);
+    createOrUpdateSeo(info, {
+      onSuccess: () => {
+        setIsLoading(false);
+      },
+      onError: () => {
+        setIsLoading(false);
+      },
+    });
   };
 
   const handleChange = (value, name) => {
@@ -89,8 +100,8 @@ export function CreateProductSeo() {
             error={errors?.seo_description}
             rows={"3"}
           />
-          <Button primary submit>
-            Submit
+          <Button primary submit disabled={isLoading}>
+            {isLoading ? <Spinner size="small" /> : "Submit"}
           </Button>
         </FormLayout>
       </Form>
