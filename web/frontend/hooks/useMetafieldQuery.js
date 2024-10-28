@@ -4,13 +4,10 @@ import { useMutation, useQuery, useQueryClient } from "react-query";
 import { useUI } from "../contexts/ui.context";
 import { useHomeSeo } from "../contexts/home.context";
 
-export const useMetafieldsQuery = ({
-  url,
-  fetchInit = {},
-  reactQueryOptions,
-}) => {
+export const useMetafieldsQuery = ({ url, fetchInit = {}, reactQueryOptions }) => {
   const authenticatedFetch = useAuthenticatedFetch();
   const { organization, setOrganization } = useHomeSeo();
+  const { setOpenModal } = useUI();
   const fetch = useMemo(() => {
     return async () => {
       const response = await authenticatedFetch(url, fetchInit);
@@ -22,10 +19,7 @@ export const useMetafieldsQuery = ({
     ...reactQueryOptions,
     onSuccess: (data) => {
       console.log("org data", data);
-      if (
-        typeof data.data === "object" &&
-        Object.entries(data.data).length > 0
-      ) {
+      if (typeof data.data === "object" && Object.entries(data.data).length > 0) {
         const industry = data.data.organization?.industry?.split(",");
         setOrganization({
           ...organization,
@@ -40,7 +34,7 @@ export const useMetafieldsQuery = ({
 
 export const useCreateMetafield = (invalidationTarget) => {
   const fetch = useAuthenticatedFetch();
-  const { setCloseModal, setToggleToast } = useUI();
+  const { setCloseModal, setToggleToast, setOpenModal } = useUI();
   const queryClient = useQueryClient();
   async function createStatus(status) {
     return await fetch("/api/metafields/create", {
@@ -60,8 +54,19 @@ export const useCreateMetafield = (invalidationTarget) => {
           message: `Something went wrong`,
         });
       }
-      setCloseModal(); // metafieldList productList collectionList
-      queryClient.invalidateQueries(invalidationTarget);
+
+      const updatedData = await data?.json();
+      const updatedInfo = updatedData?.productByID;
+      console.log("updatedInfo", updatedInfo);
+
+      setOpenModal({
+        view: "CREATE_PRODUCT_SEO",
+        isOpen: true,
+        data: {
+          title: `Product SEO (${updatedInfo?.title})`,
+          info: updatedInfo,
+        },
+      });
 
       setToggleToast({
         active: true,

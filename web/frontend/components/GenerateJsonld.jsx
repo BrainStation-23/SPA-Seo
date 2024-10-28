@@ -12,6 +12,7 @@ import {
   VerticalStack,
   Tag,
   Select,
+  Spinner,
 } from "@shopify/polaris";
 import { useUI } from "../contexts/ui.context";
 import { useCreateMetafield } from "../hooks/useMetafieldQuery";
@@ -19,6 +20,7 @@ import StarRating from "./commonUI/StarRating/StarRating";
 import Switch from "./commonUI/Switch/Switch";
 
 export function GenerateJsonld({ obj_type }) {
+  const [isLoading, setIsLoading] = useState(false);
   const { modal, shop } = useUI();
   const owner = modal?.data?.info;
   const images =
@@ -29,9 +31,7 @@ export function GenerateJsonld({ obj_type }) {
       : obj_type?.toLowerCase() == "article" && owner?.image
       ? [owner?.image]
       : null;
-  const metaData = owner?.metafield
-    ? JSON.parse(owner?.metafield?.value)
-    : null;
+  const metaData = owner?.metafield ? JSON.parse(owner?.metafield?.value) : null;
   const ownerMetaData = metaData?.[`${obj_type?.toLowerCase()}`] || null;
 
   const invalidationTarget =
@@ -45,66 +45,81 @@ export function GenerateJsonld({ obj_type }) {
   const [pushJson, setPushJson] = useState(metaData?.active || false);
   const [showTags, setShowTags] = useState(ownerMetaData?.showTags || false);
   const [rating, setRating] = useState(ownerMetaData?.rating || 0);
-  const [showVarinats, setShowVariants] = useState(
-    ownerMetaData?.showVarinats | false
-  );
-  const [reviewCount, setReviewCount] = useState(
-    ownerMetaData?.reviewCount || 0
-  );
+  const [showVarinats, setShowVariants] = useState(ownerMetaData?.showVarinats | false);
+  const [reviewCount, setReviewCount] = useState(ownerMetaData?.reviewCount || 0);
   const [keywordsInput, setKeywordsInput] = useState("");
-  const [keywords, setKeywords] = useState(
-    ownerMetaData?.keywords?.split(",") || []
-  );
+  const [keywords, setKeywords] = useState(ownerMetaData?.keywords?.split(",") || []);
   const [audiance, setAudience] = useState(null);
   const [authorUrl, setAuthorUrl] = useState(null);
   const [additionalAuthors, setAdditionalAuthors] = useState([]);
   const [additionalAuthorName, setAdditionalAuthorName] = useState(null);
   const [additionalAuthorUrl, setAdditionalAuthorUrl] = useState(null);
+  const [errors, setErrors] = useState({});
 
   const handleSubmit = useCallback(() => {
-    createMetafield({
-      type: obj_type.toLowerCase(),
-      owner: obj_type.toUpperCase(),
-      ownerId: owner?.id,
-      active: pushJson,
-      blogId: owner?.blog_id || null,
-      data: {
-        showTags,
-        showVarinats: showVarinats,
-        rating: rating,
-        reviewCount: reviewCount,
-        keywords: keywords.join(","),
-        audienceType: audiance || null,
-        authorUrl: authorUrl || null,
-        additionalAuthors:
-          additionalAuthors.length > 0 ? additionalAuthors : null,
+    console.log("rating", rating);
+    console.log("reviewCount", reviewCount);
+
+    if (reviewCount == 0 || rating == 0) {
+      return setErrors({
+        ...errors,
+        message: `Value must be getter then 5`,
+      });
+    }
+    if (rating > 5 || rating < 0) {
+      return setErrors({
+        ...errors,
+        message: `Rating must be between 0 and 5`,
+      });
+    }
+    if (rating == 0 && reviewCount != 0) {
+      return setErrors({
+        ...errors,
+        message: `Please enter rating count`,
+      });
+    }
+    setIsLoading(true);
+    createMetafield(
+      {
+        type: obj_type.toLowerCase(),
+        owner: obj_type.toUpperCase(),
+        ownerId: owner?.id,
+        active: pushJson,
+        blogId: owner?.blog_id || null,
+        data: {
+          showTags,
+          showVarinats: showVarinats,
+          rating: rating,
+          reviewCount: reviewCount,
+          keywords: keywords.join(","),
+          audienceType: audiance || null,
+          authorUrl: authorUrl || null,
+          additionalAuthors: additionalAuthors.length > 0 ? additionalAuthors : null,
+        },
       },
-    });
-  }, [
-    rating,
-    reviewCount,
-    showTags,
-    owner,
-    pushJson,
-    keywords,
-    showVarinats,
-    audiance,
-    authorUrl,
-    additionalAuthors,
-  ]);
+      {
+        onSuccess: () => {
+          setIsLoading(false);
+        },
+        onError: () => {
+          setIsLoading(false);
+        },
+      }
+    );
+  }, [rating, reviewCount, showTags, owner, pushJson, keywords, showVarinats, audiance, authorUrl, additionalAuthors]);
 
   const handleShowTagsChange = useCallback((value) => setShowTags(value), []);
-  const handleRatingChange = useCallback((value) => setRating(value), []);
+  const handleRatingChange = useCallback((value) => {
+    setRating(value);
+    setErrors({ ...errors, message: "" });
+  }, []);
   const handlePushJsonChange = () => setPushJson((prev) => !prev);
   const handleShowVariantsChange = () => setShowVariants((prev) => !prev);
-  const handleKeywordsChange = useCallback(
-    (value) => setKeywordsInput(value),
-    []
-  );
-  const handleReviewCountChange = useCallback(
-    (value) => setReviewCount(value),
-    []
-  );
+  const handleKeywordsChange = useCallback((value) => setKeywordsInput(value), []);
+  const handleReviewCountChange = useCallback((value) => {
+    setReviewCount(value);
+    setErrors({ ...errors, message: "" });
+  }, []);
 
   const handleRemoveKeyword = (index) => {
     const newKeywords = keywords.filter((_, i) => i !== index);
@@ -120,14 +135,8 @@ export function GenerateJsonld({ obj_type }) {
     setAudience(value);
   };
   const handleAuthorUrlChange = useCallback((value) => setAuthorUrl(value), []);
-  const handleAdditionalAuthorNamneChange = useCallback(
-    (value) => setAdditionalAuthorName(value),
-    []
-  );
-  const handleAdditionalAuthorUrlChange = useCallback(
-    (value) => setAdditionalAuthorUrl(value),
-    []
-  );
+  const handleAdditionalAuthorNamneChange = useCallback((value) => setAdditionalAuthorName(value), []);
+  const handleAdditionalAuthorUrlChange = useCallback((value) => setAdditionalAuthorUrl(value), []);
 
   const options = [
     { label: "General", value: "General" },
@@ -168,12 +177,7 @@ export function GenerateJsonld({ obj_type }) {
       <Box paddingBlockStart={"4"}>
         <Form onSubmit={handleSubmit}>
           <FormLayout>
-            <TextField
-              value={owner?.title}
-              disabled
-              label="Title"
-              type="text"
-            />
+            <TextField value={owner?.title} disabled label="Title" type="text" />
             {images && images.length > 0 && (
               <VerticalStack gap={"2"}>
                 <Text>Images</Text>
@@ -200,9 +204,7 @@ export function GenerateJsonld({ obj_type }) {
                 type="text"
                 placeholder="A link to a web page that uniquely identifies the author of the article"
                 onChange={handleAuthorUrlChange}
-                connectedLeft={
-                  <TextField disabled value={owner?.author} type="text" />
-                }
+                connectedLeft={<TextField disabled value={owner?.author} type="text" />}
               />
             )}
             {additionalAuthors.map((auth, index) => (
@@ -211,16 +213,12 @@ export function GenerateJsonld({ obj_type }) {
                 type="text"
                 disabled
                 placeholder="A link to a web page that uniquely identifies the author of the article"
-                connectedLeft={
-                  <TextField disabled value={auth.name} type="text" />
-                }
+                connectedLeft={<TextField disabled value={auth.name} type="text" />}
                 connectedRight={
                   <Button
                     destructive
                     onClick={() => {
-                      setAdditionalAuthors((prev) =>
-                        prev.filter((_, i) => i !== index)
-                      );
+                      setAdditionalAuthors((prev) => prev.filter((_, i) => i !== index));
                     }}
                   >
                     Remove
@@ -265,20 +263,10 @@ export function GenerateJsonld({ obj_type }) {
               />
             )}
             {obj_type?.toLowerCase() == "article" && (
-              <Select
-                label="Set audience type"
-                options={options}
-                onChange={handleAudienceChange}
-                value={audiance}
-              />
+              <Select label="Set audience type" options={options} onChange={handleAudienceChange} value={audiance} />
             )}
             {obj_type.toLowerCase() == "product" && (
-              <TextField
-                label={`Vendor`}
-                type="text"
-                disabled
-                value={owner?.vendor}
-              />
+              <TextField label={`Vendor`} type="text" disabled value={owner?.vendor} />
             )}
             {obj_type.toLowerCase() == "collection" && (
               <VerticalStack gap={"3"}>
@@ -308,10 +296,7 @@ export function GenerateJsonld({ obj_type }) {
                   {keywords &&
                     keywords.length > 0 &&
                     keywords.map((k, index) => (
-                      <Tag
-                        key={index}
-                        onRemove={() => handleRemoveKeyword(index)}
-                      >
+                      <Tag key={index} onRemove={() => handleRemoveKeyword(index)}>
                         {k}
                       </Tag>
                     ))}
@@ -327,13 +312,10 @@ export function GenerateJsonld({ obj_type }) {
                 }}
               >
                 <Text variant="bodyMd">Show all variants data</Text>
-                <Switch
-                  checked={showVarinats}
-                  handleClick={handleShowVariantsChange}
-                />
+                <Switch checked={showVarinats} handleClick={handleShowVariantsChange} />
                 <Text variant="bodySm">
-                  This shows all vairants data on your jsonld. If turned off the
-                  jsonld will only show the data for default variant.
+                  This shows all vairants data on your jsonld. If turned off the jsonld will only show the data for
+                  default variant.
                 </Text>
               </div>
             )}
@@ -344,12 +326,11 @@ export function GenerateJsonld({ obj_type }) {
                   onChange={handleRatingChange}
                   label="Aggregated rating"
                   type="number"
+                  max={5}
+                  min={0}
+                  error={errors?.message}
                 />
-                <StarRating
-                  size={30}
-                  rating={rating}
-                  onRate={handleStarClick}
-                />
+                <StarRating size={30} rating={rating} onRate={handleStarClick} />
               </HorizontalStack>
             )}
             {obj_type.toLowerCase() == "product" && (
@@ -358,6 +339,8 @@ export function GenerateJsonld({ obj_type }) {
                 onChange={handleReviewCountChange}
                 label={`Review count`}
                 type="integer"
+                min={0}
+                error={errors?.message}
               />
             )}
             {obj_type.toLowerCase() == "product" ||
@@ -369,8 +352,8 @@ export function GenerateJsonld({ obj_type }) {
                 />
               ))}
             <HorizontalStack align="end">
-              <Button primary submit>
-                Save
+              <Button primary submit disabled={isLoading}>
+                {isLoading ? <Spinner size="small" /> : "Save"}
               </Button>
             </HorizontalStack>
           </FormLayout>

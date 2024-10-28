@@ -50,7 +50,6 @@ export function CreateProductSeo() {
       seoTitle: obj?.seo_title,
       seoDescription: obj?.seo_description,
     };
-    console.log("info", info);
     createOrUpdateSeo(info, {
       onSuccess: () => {
         setIsLoading(false);
