@@ -6,6 +6,7 @@ import {
   GetShopMetafield,
   GetProductMetafield,
   GetCollectionMetafield,
+  GetArticleMetafield,
   SetShopMetafield,
 } from "../graphql/metafields.js";
 
@@ -93,23 +94,11 @@ async function manageArticleMetafield(session, ownerId, blogId, data, active) {
 export const MetafieldCreate = async (req, res, next) => {
   try {
     let { type, data, owner, ownerId, blogId } = req.body;
-    if (owner == "ARTICLE") {
-      await manageArticleMetafield(
-        res.locals.shopify.session,
-        ownerId,
-        blogId,
-        data,
-        req.body.active
-      );
-
-      return res.status(200).json({
-        message: "saved metafield successfully",
-      });
-    }
-
     const client = new shopify.api.clients.Graphql({
+      apiVersion: "2024-10",
       session: res.locals.shopify.session,
     });
+    console.log("initializing metafield", ownerId);
 
     await initializeMetafield(client, owner, "jsonld");
     let prevData = {};
@@ -117,7 +106,10 @@ export const MetafieldCreate = async (req, res, next) => {
     if (owner == "SHOP") {
       prevData = await client.query({
         data: {
-          query: GetShopMetafield,
+          query: GetShopMetafield({
+            namespace: "bs-23-seo-app",
+            key: "json-ld",
+          }),
         },
       });
     } else if (owner == "PRODUCT") {
@@ -130,6 +122,13 @@ export const MetafieldCreate = async (req, res, next) => {
       prevData = await client.query({
         data: {
           query: GetCollectionMetafield(ownerId),
+        },
+      });
+    } else if (owner == "ARTICLE") {
+      ownerId = `gid://shopify/Article/${ownerId}`;
+      prevData = await client.query({
+        data: {
+          query: GetArticleMetafield(ownerId),
         },
       });
     }
@@ -196,17 +195,10 @@ export const GetImageOptimizerSettings = async (req, res, next) => {
 
     let metafieldData = await client.query({
       data: {
-        query: `
-        query GetShopMetafield {
-          shop {
-              metafield(key: "image-optimizer", namespace: "bs-23-seo-app") {
-                  id
-                  namespace
-                  key
-                  value
-              }      
-          }
-        }`,
+        query: GetShopMetafield({
+          namespace: "bs-23-seo-app",
+          key: "image-optimizer",
+        }),
       },
     });
 
@@ -239,17 +231,10 @@ export const SaveImageOptimizerSettings = async (req, res, next) => {
 
     let metafieldData = await client.query({
       data: {
-        query: `
-        query GetShopMetafield {
-          shop {
-              metafield(key: "image-optimizer", namespace: "bs-23-seo-app") {
-                  id
-                  namespace
-                  key
-                  value
-              }      
-          }
-        }`,
+        query: GetShopMetafield({
+          namespace: "bs-23-seo-app",
+          key: "image-optimizer",
+        }),
       },
     });
 
@@ -307,7 +292,10 @@ export const GetMetafields = async (req, res, next) => {
 
     let metafieldData = await client.query({
       data: {
-        query: GetShopMetafield,
+        query: GetShopMetafield({
+          namespace: "bs-23-seo-app",
+          key: "json-ld",
+        }),
       },
     });
 

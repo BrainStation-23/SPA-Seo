@@ -1,4 +1,5 @@
 import shopify from "../shopify.js";
+import { extname, basename } from "path";
 
 const fetchAllFromDataSource = async ({ session, query, datasource }) => {
   let allData = [];
@@ -405,5 +406,374 @@ export const BulkUpdateAltText = async (req, res, next) => {
     return res.status(200).json({ message: "Bulk update alt text" });
   } catch (error) {
     console.error(error);
+  }
+};
+
+function sanitizeFilename(filename) {
+  const substrings = filename.split(/[^a-zA-Z0-9._-]+/);
+  const filteredSubstrings = substrings.filter(Boolean);
+  return filteredSubstrings.join("-");
+}
+
+function parseFilenameFromSrc(url) {
+  const full_filename = url.substring(url.lastIndexOf("/") + 1).split("?")[0];
+  const filename_without_extension = full_filename.substring(
+    0,
+    full_filename.lastIndexOf(".")
+  );
+  const fileExtension = full_filename.substring(full_filename.lastIndexOf("."));
+  return { filename: filename_without_extension, fileExt: fileExtension };
+}
+
+export const updateProductImageFilename = async (req, res, next) => {
+  try {
+    const client = new shopify.api.clients.Graphql({
+      session: res.locals.shopify.session,
+    });
+    const { id, fileNameSettings, fileExt, productId } = req.body;
+
+    const queryData = await client.query({
+      data: {
+        query: `
+          query QueryData{
+            shop {
+              name
+              primaryDomain {
+                id
+                host
+                url
+              }
+            }
+            product(id: "${productId}") {
+              id
+              title
+              productType
+              vendor
+              tags
+            }          
+          }`,
+      },
+    });
+
+    const shop = queryData.body.data.shop,
+      product = queryData.body.data.product;
+
+    const filename = translateAltText(
+      fileNameSettings,
+      product,
+      "product",
+      shop
+    );
+
+    const input = [
+      {
+        id,
+        filename: generateFileName(sanitizeFilename(filename + fileExt)),
+      },
+    ];
+
+    const productImageFilenameUpdateResponse = await client.query({
+      data: {
+        query: `
+        mutation FileUpdate($input: [FileUpdateInput!]!) {
+          fileUpdate(files: $input) {
+            userErrors {
+              code
+              field
+              message
+            }
+          }
+        }
+        `,
+        variables: { input },
+      },
+    });
+
+    if (
+      productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors
+        .length > 0
+    ) {
+      throw new Error(
+        JSON.stringify(
+          productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors
+        )
+      );
+    }
+
+    return res.status(200).json({ message: "Product image filename updated" });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(400)
+      .json({ message: "Error updating product image filename" });
+  }
+};
+
+async function batchUpdateImageFileName({ input, client }) {
+  try {
+    console.log("starting batch update");
+    const batchSize = 20;
+    let start = 0,
+      hasNextSlice = true;
+
+    while (hasNextSlice) {
+      const slice = input.slice(start, start + batchSize);
+      const productImageFilenameUpdateResponse = await client.query({
+        data: {
+          query: `
+        mutation FileUpdate($input: [FileUpdateInput!]!) {
+          fileUpdate(files: $input) {
+            userErrors {
+              code
+              field
+              message
+            }
+          }
+        }
+        `,
+          variables: { input: slice },
+        },
+      });
+
+      if (
+        productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors
+          .length > 0
+      ) {
+        console.log("something happened");
+        console.log(
+          productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors
+        );
+        // throw productImageFilenameUpdateResponse.body.data.fileUpdate
+        //   .userErrors;
+      }
+
+      if (start + batchSize >= input.length) {
+        hasNextSlice = false;
+      } else start += batchSize;
+    }
+
+    console.log("All product image filename updated successfully");
+    return true;
+  } catch (error) {
+    console.log("Error updating product image filename");
+    throw error;
+    return false;
+  }
+}
+
+function generateFileName(originalName) {
+  const timestamp = Date.now();
+  const ext = extname(originalName);
+  const baseName = basename(originalName, ext);
+  return `${baseName}-${timestamp}${ext}`;
+}
+
+async function saveGlobalImageFilenameToMetafield({ session, filename }) {
+  try {
+    const client = new shopify.api.clients.Graphql({
+      apiVersion: "2024-10",
+      session,
+    });
+
+    const initialQuery = await client.query({
+      data: {
+        query: `{
+                  metafieldDefinitions(first:1, namespace: "bs-23-seo-app", ownerType: SHOP, key: "image-optimizer") {
+                    edges {
+                      node {
+                        id
+                      }
+                    }
+                  }
+                  shop {
+                    id
+                    metafield(namespace: "bs-23-seo-app", key: "image-optimizer") {
+                      value
+                    }
+                  }
+                }`,
+      },
+    });
+
+    if (initialQuery.body.data.metafieldDefinitions.edges.length === 0) {
+      const createMetafieldDefinition = await client.query({
+        data: {
+          query: `mutation {
+                    metafieldDefinitionCreate(definition: {
+                      namespace: "bs-23-seo-app",
+                      key: "image-optimizer",
+                      type: "json",
+                      name: "SEO app metafield",
+                      description: "Metafield for storing image optimizer settings"
+                      ownerType: SHOP
+                    }) {
+                      createdDefinition {
+                        id
+                      }
+                      userErrors {
+                        code
+                        field
+                      }
+                    }
+                  }`,
+        },
+      });
+
+      if (
+        createMetafieldDefinition.body.data.metafieldDefinitionCreate.userErrors
+          .length > 0
+      ) {
+        throw createMetafieldDefinition.body.data.metafieldDefinitionCreate
+          .userErrors;
+      }
+    }
+
+    const shopId = initialQuery.body.data.shop.id;
+    const prevData = initialQuery.body.data.shop.metafield
+      ? JSON.parse(initialQuery.body.data.shop.metafield.value)
+      : {};
+    const setMetafield = await client.query({
+      data: {
+        variables: {
+          metafields: [
+            {
+              key: "image-optimizer",
+              namespace: "bs-23-seo-app",
+              ownerId: shopId,
+              value: JSON.stringify({ ...prevData, filename }),
+            },
+          ],
+        },
+        query: `mutation MetafieldsSet($metafields: [MetafieldsSetInput!]!) {
+                  metafieldsSet(metafields: $metafields) {
+                    metafields {
+                        id
+                        key
+                        namespace
+                        value
+                    }
+                    userErrors {
+                      field
+                      message
+                      code
+                    }
+                  }
+                }`,
+      },
+    });
+
+    if (setMetafield.body.data.metafieldsSet.userErrors.length > 0) {
+      throw setMetafield.body.data.metafieldsSet.userErrors;
+    }
+  } catch (error) {
+    throw error;
+  }
+}
+
+export const bulkUpdateProductImageFilename = async (req, res, next) => {
+  try {
+    const { fileNameSettings } = req.body;
+
+    await saveGlobalImageFilenameToMetafield({
+      session: res.locals.shopify.session,
+      filename: fileNameSettings,
+    });
+
+    const client = new shopify.api.clients.Graphql({
+      apiVersion: "2024-10",
+      session: res.locals.shopify.session,
+    });
+    const queryData = await client.query({
+      data: {
+        query: `
+          query QueryData{
+            shop {
+              name
+              primaryDomain {
+                id
+                host
+                url
+              }
+            }          
+          }`,
+      },
+    });
+    const shop = queryData.body.data.shop;
+
+    const allProducts = await fetchAllFromDataSource({
+      datasource: "products",
+      session: res.locals.shopify.session,
+      query: `
+      query ($first: Int!, $after: String) {
+        products(first: $first, after: $after, reverse: true) {
+          edges {
+            node {
+              id
+              title
+              productType
+              vendor
+              tags
+              media(first: 250) {
+                edges {
+                  node {
+                    id
+                    alt
+                    mediaContentType
+                    preview {
+                      status
+                      image {
+                        url
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            cursor
+          }
+          pageInfo {
+            hasNextPage
+            hasPreviousPage
+          }
+        }
+      }
+    `,
+    });
+
+    const input = [],
+      map = new Map();
+    allProducts.forEach((productData) => {
+      productData.media.edges
+        .filter((e) => e.node.mediaContentType === "IMAGE")
+        .forEach(({ node }) => {
+          const { fileExt } = parseFilenameFromSrc(node.preview.image.url);
+          const filename = sanitizeFilename(
+            translateAltText(fileNameSettings, productData, "product", shop)
+          );
+
+          if (map.has(filename)) {
+            map.set(filename, map.get(filename) + 1);
+            input.push({
+              id: node.id,
+              filename: generateFileName(filename + fileExt),
+            });
+          } else {
+            map.set(filename, 0);
+            input.push({
+              id: node.id,
+              filename: filename + fileExt,
+            });
+          }
+        });
+    });
+
+    await batchUpdateImageFileName({ input, client });
+
+    return res.status(200).json({ message: "Product image filename updated" });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(400)
+      .json({ message: "Error updating product image filename" });
   }
 };

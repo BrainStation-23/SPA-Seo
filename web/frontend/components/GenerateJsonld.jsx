@@ -23,7 +23,17 @@ export function GenerateJsonld({ obj_type }) {
   const owner = modal?.data?.info;
   const images =
     obj_type?.toLowerCase() == "product"
-      ? owner?.images.edges.map((e) => e.node)
+      ? owner?.media.edges
+          .filter((e) => e.node.mediaContentType === "IMAGE")
+          .map((e) => {
+            const node = e.node;
+            return {
+              id: node.id,
+              url: node.preview.image.url,
+              altText: node.alt,
+              originalSrc: node.preview.image.url,
+            };
+          })
       : obj_type?.toLowerCase() == "collection" && owner?.image
       ? [owner?.image]
       : obj_type?.toLowerCase() == "article" && owner?.image

@@ -21,7 +21,6 @@ export const useMetafieldsQuery = ({
   return useQuery("metafieldList", fetch, {
     ...reactQueryOptions,
     onSuccess: (data) => {
-      console.log("org data", data);
       if (
         typeof data.data === "object" &&
         Object.entries(data.data).length > 0
@@ -61,7 +60,7 @@ export const useCreateMetafield = (invalidationTarget) => {
         });
       }
       setCloseModal(); // metafieldList productList collectionList
-      queryClient.invalidateQueries(invalidationTarget);
+      if (invalidationTarget) queryClient.invalidateQueries(invalidationTarget);
 
       setToggleToast({
         active: true,

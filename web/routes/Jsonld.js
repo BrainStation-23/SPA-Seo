@@ -1,8 +1,8 @@
 import express from "express";
-import { testApi } from "../controllers/Jsonld.js";
+import { InitializeJsonldApi } from "../controllers/Jsonld.js";
 
 const router = express.Router();
 
-router.get("/create-snippets", testApi);
+router.get("/create-snippets", InitializeJsonldApi);
 
 export default router;

@@ -33,11 +33,12 @@ export function ImageAltOptimizer() {
     isLoading: isSavingImageOptimizerSettings,
     isSuccess: isSuccessSavingImageOptimizerSettings,
   } = useSaveImageOptimizerSettings();
-  const { mutate: runBulkImageUpdate, isLoading: isBulkAltUpdating } = useBulkUpdateAltText();
+  const { mutate: runBulkImageUpdate, isLoading: isBulkAltUpdating } =
+    useBulkUpdateAltText();
 
-  const [productImageAlt, setProductImageAlt] = useState("{{ product.title }} {{ shop.name }}");
-  const [collectionImgeAlt, setCollectionImageAlt] = useState("{{ collection.title }} {{ shop.name }}");
-  const [articleImageAlt, setArticleImageAlt] = useState("{{ article.title }} {{ shop.name }}");
+  const [productImageAlt, setProductImageAlt] = useState(null);
+  const [collectionImgeAlt, setCollectionImageAlt] = useState(null);
+  const [articleImageAlt, setArticleImageAlt] = useState(null);
   const [productAltStatus, setProductAltStatus] = useState(false);
   const [collectionAltStatus, setCollectionAltStatus] = useState(false);
   const [articleAltStatus, setArticleAltStatus] = useState(false);
@@ -46,9 +47,9 @@ export function ImageAltOptimizer() {
   useEffect(() => {
     if (isSuccess) {
       const metadata = data.data;
-      setProductImageAlt(metadata?.altText?.product || "{{ product.title }} {{ shop.name }}");
-      setCollectionImageAlt(metadata?.altText?.collection || "{{ collection.title }} {{ shop.name }}");
-      setArticleImageAlt(metadata?.altText?.article || "{{ article.title }} {{ shop.name }}");
+      setProductImageAlt(metadata?.altText?.product || null);
+      setCollectionImageAlt(metadata?.altText?.collection || null);
+      setArticleImageAlt(metadata?.altText?.article || null);
       setProductAltStatus(metadata?.altText?.productStatus || false);
       setCollectionAltStatus(metadata?.altText?.collectionStatus || false);
       setArticleAltStatus(metadata?.altText?.articleStatus || false);
@@ -117,13 +118,20 @@ export function ImageAltOptimizer() {
                 onClick={() => {
                   setProductImageAlt("{{ product.title }} {{ shop.name }}");
                   setArticleImageAlt("{{ product.title }} {{ shop.name }}");
-                  setCollectionImageAlt("{{ collection.title }} {{ shop.name }}");
+                  setCollectionImageAlt(
+                    "{{ collection.title }} {{ shop.name }}"
+                  );
                   setIsChanged(true);
                 }}
               >
                 Restore default
               </Button>
-              <Button primary disabled={!isChanged} loading={isSavingImageOptimizerSettings} onClick={handleSubmit}>
+              <Button
+                primary
+                disabled={!isChanged}
+                loading={isSavingImageOptimizerSettings}
+                onClick={handleSubmit}
+              >
                 Save settings
               </Button>
               <Button
@@ -148,9 +156,14 @@ export function ImageAltOptimizer() {
                         <Layout.Section oneThird>
                           <VerticalStack>
                             <Text variant="headingMd">Product Image Alt</Text>
-                            <Text variant="bodyMd">Can use variables in the PRODUCT and SHOP section</Text>
+                            <Text variant="bodyMd">
+                              Can use variables in the PRODUCT and SHOP section
+                            </Text>
                             <Box paddingBlockStart={"4"}>
-                              <Switch checked={productAltStatus} handleClick={handleParoductAltStatusChange} />
+                              <Switch
+                                checked={productAltStatus}
+                                handleClick={handleParoductAltStatusChange}
+                              />
                             </Box>
                           </VerticalStack>
                         </Layout.Section>
@@ -161,9 +174,11 @@ export function ImageAltOptimizer() {
                                 <TextField
                                   value={productImageAlt}
                                   onChange={handleProductImageAltChange}
-                                  label={<Text variant="headingSm">Alt Text</Text>}
-                                  placeholder="{{ product.title }} {{ shop.name }}"
-                                  helpText="Can use variables in the PRODUCT and SHOP section"
+                                  label={
+                                    <Text variant="headingSm">Alt Text</Text>
+                                  }
+                                  placeholder="Enter alt text or use variables"
+                                  helpText="Can use variables from the PRODUCT and SHOP section"
                                   type="text"
                                 />
                               </FormLayout>
@@ -177,10 +192,18 @@ export function ImageAltOptimizer() {
                       <Layout>
                         <Layout.Section oneThird>
                           <VerticalStack>
-                            <Text variant="headingMd">Collection Image Alt</Text>
-                            <Text variant="bodyMd">Can use variables in the COLLECTION and SHOP section</Text>
+                            <Text variant="headingMd">
+                              Collection Image Alt
+                            </Text>
+                            <Text variant="bodyMd">
+                              Can use variables in the COLLECTION and SHOP
+                              section
+                            </Text>
                             <Box paddingBlockStart={"4"}>
-                              <Switch checked={collectionAltStatus} handleClick={handleCollectionAltStatusChange} />
+                              <Switch
+                                checked={collectionAltStatus}
+                                handleClick={handleCollectionAltStatusChange}
+                              />
                             </Box>
                           </VerticalStack>
                         </Layout.Section>
@@ -191,9 +214,11 @@ export function ImageAltOptimizer() {
                                 <TextField
                                   value={collectionImgeAlt}
                                   onChange={handleCollectionImageAltChange}
-                                  label={<Text variant="headingSm">Alt Text</Text>}
-                                  placeholder="{{ collection.title }} {{ shop.name }}"
-                                  helpText="Can use variables in the COLLECTION and SHOP section"
+                                  label={
+                                    <Text variant="headingSm">Alt Text</Text>
+                                  }
+                                  placeholder="Enter alt text or use variables"
+                                  helpText="Can use variables from the COLLECTION and SHOP section"
                                   type="text"
                                 />
                               </FormLayout>
@@ -208,9 +233,15 @@ export function ImageAltOptimizer() {
                         <Layout.Section oneThird>
                           <VerticalStack>
                             <Text variant="headingMd">Blog Post Image Alt</Text>
-                            <Text variant="bodyMd">Can use variables in the BLOG POST and SHOP section</Text>
+                            <Text variant="bodyMd">
+                              Can use variables in the BLOG POST and SHOP
+                              section
+                            </Text>
                             <Box paddingBlockStart={"4"}>
-                              <Switch checked={articleAltStatus} handleClick={handleArticleAltStatusChange} />
+                              <Switch
+                                checked={articleAltStatus}
+                                handleClick={handleArticleAltStatusChange}
+                              />
                             </Box>
                           </VerticalStack>
                         </Layout.Section>
@@ -221,9 +252,11 @@ export function ImageAltOptimizer() {
                                 <TextField
                                   value={articleImageAlt}
                                   onChange={handleArticleImageAltChange}
-                                  label={<Text variant="headingSm">Alt Text</Text>}
-                                  placeholder="{{ article.title }} {{ shop.name }}"
-                                  helpText="Can use variables in the BLOG POST and SHOP section"
+                                  label={
+                                    <Text variant="headingSm">Alt Text</Text>
+                                  }
+                                  placeholder="Enter alt text or use variables"
+                                  helpText="Can use variables from the BLOG POST and SHOP section"
                                   type="text"
                                 />
                               </FormLayout>
@@ -239,18 +272,21 @@ export function ImageAltOptimizer() {
                 <VerticalStack gap={"4"}>
                   <AlphaCard>
                     <Text variant="bodyMd">
-                      You can use the following variables in the image alt and filename fields to dynamically generate
-                      the content based on the product, collection, blog post, and shop information.
+                      Use custom text and variables to create alt text templates
+                      for images. Your custom text works as a static template,
+                      while the variables pull in dynamic values from your
+                      store's content.
                     </Text>
                     <Box paddingBlockStart={"3"}>
                       <Text variant="bodyMd" fontWeight="bold">
-                        Use the following variables exactly as listed, including whitespace, to set image alt text.
+                        Use the following variables exactly as listed, including
+                        whitespace, to set image alt text.
                       </Text>
                     </Box>
                   </AlphaCard>
                   <AlphaCard padding={"0"}>
                     <Box padding={"5"}>
-                      <Text variant="headingMd">Variables</Text>
+                      <Text variant="headingLg">Variables</Text>
                     </Box>
                     <Divider borderWidth="2" />
                     <Box padding={"5"}>

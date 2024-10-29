@@ -1,548 +1,517 @@
 import shopify from "../shopify.js";
-import { initializeThemeFileContent } from "../utils/initializeThemeContent.js";
+import { seofyJsonldSnippet } from "../utils/snippets.js";
+import { templates } from "../utils/templates.js";
+import {
+  CheckShopMetafieldDefinition,
+  CreateShopMetafieldDefinition,
+  SetShopMetafield,
+} from "../graphql/metafields.js";
 
-export const testApi = async (req, res, next) => {
+export const InitializeJsonldApi = async (req, res, next) => {
   try {
-    console.log("🚀 ~ file: start snippets configuration");
-    await createProductSnippet(res.locals.shopify.session);
-    await createArticleSnippet(res.locals.shopify.session);
-    await createCollectionSnippet(res.locals.shopify.session);
-    await createCompanySnippet(res.locals.shopify.session);
-    return res.status(200).json({ message: "Snippets created successfully" });
+    const payloadToBeSaved = await updateThemeFiles(res.locals.shopify.session);
+    await savePreviousThemeCodesToMetafield({
+      session: res.locals.shopify.session,
+      payload: payloadToBeSaved,
+    });
+    return res.status(200).json({ message: "GG" });
   } catch (error) {
     console.error(error);
+    return res.status(400).json({ message: "Something went wrong" });
   }
 };
 
-async function createProductSnippet(session) {
+async function initializeMetafield(session) {
   try {
-    const updatedProductSnippet = `
-<script type="application/ld+json">
-  {% if product.variants.size > 0 %}
-    {
-      "@context": "https://schema.org",
-      "@type": "ProductGroup",
-      "@id": "{{ shop.url }}/products/{{ product.handle }}",
-      "name": "{{ product.title | escape }}",
-      "description": {{ product.description | strip_html | json }},
-      "url": "{{ shop.url }}/products/{{ product.handle }}",
-      "mainEntityOfPage": "{{ shop.url }}/products/{{ product.handle }}",
-      "sameAs": "{{ shop.url }}/products/{{ product.handle }}",
-      "image": [
-        {% for image in product.images %}"https:{{ image.src | image_url }}"{% if forloop.last == false %},{% endif %}
-        {% endfor %}],
-      "brand": {
-        "@type": "Brand",
-        {% if product.vendor %}"name": "{{ product.vendor | escape }}"{% else %}"name": "{{ org_data.brand.name | escape }}"{% endif %}
+    const metafieldData = null;
+    const client = new shopify.api.clients.Graphql({ session });
+    const checkMetafieldResponse = await client.query({
+      data: {
+        query: CheckShopMetafieldDefinition(
+          "SHOP",
+          "bs-23-seo-app",
+          "json-ld-saved-history"
+        ),
       },
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": {{ data.rating }},
-        "reviewCount": {{ data.reviewCount }},
-        "itemReviewed": {
-          "@type": "Product",
-          "@id": "{{ shop.url }}/products/{{ product.handle }}"
-        }
-      },
-      {% if data.showtags %}"keywords": "{{ product.tags | join: ', ' }}",{% endif %}
-      "hasVariant": [
-        {% if data.showVarinats %}
-          {% for variant in product.variants %}
-          {
-            "@type": "Product",
-            "name": "{{ product.title | append: " (" | append: variant.title | append: ")" | escape }}",
-            "image": "{% if variant.image %}https:{{ variant.image.src | image_url }}{% else %}https:{{ product.featured_image.src | image_url }}{%endif%}",
-            "sku": {{ variant.sku | json | remove: "\n" | remove: "\r" }},
-            "mpn": "{{ variant.barcode | escape }}",
-            "url": "{{ shop.url }}/products/{{ product.handle }}?variant={{ variant.id }}",
-            "offers": {
-              "@type": "Offer",
-              "priceCurrency": "{{ shop.currency | escape }}",
-              "price": {{ variant.price | money_without_currency | remove: ',' }},
-              "availability": "{% if variant.available %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}",
-              "seller": {
-                "@type": "Organization",
-                "name": "{{ shop.name | escape }}",
-                "url": "{{ shop.url | escape }}"
-              }
-            }
-          }{% if forloop.last == false %},{% endif %}{% endfor %}
-        {% else %}
-        {% assign default_variant = product.variants.first  %}
-          {
-            "@type": "Product",
-            "name": "{{ product.title | append: " (" | append: default_variant.title | append: ")" | escape }}",
-            "image": "{% if default_variant.image %}https:{{ default_variant.image.src | image_url }}{% else %}https:{{ product.featured_image.src | image_url }}{%endif%}",
-            "sku": {{ default_variant.sku | json | remove: "\n" | remove: "\r" }},
-            "mpn": "{{ default_variant.barcode | escape }}",
-            "url": "{{ shop.url }}/products/{{ product.handle }}?variant={{ default_variant.id }}",
-            "offers": {
-              "@type": "Offer",
-              "priceCurrency": "{{ shop.currency | escape }}",
-              "price": {{ default_variant.price | money_without_currency | remove: ',' }},
-              "availability": "{% if default_variant.available %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}",
-              "seller": {
-                "@type": "Organization",
-                "name": "{{ shop.name | escape }}",
-                "url": "{{ shop.url | escape }}"
-              }
-            }
-          }
-        {% endif %}
-      ]
-    }
-  {% else %}
-    {
-      "@context": "https://schema.org",
-      "@type": "Product",
-      "@id": "{{ shop.url }}/products/{{ product.handle }}",
-      "name": "{{ product.title | escape }}",
-      "description": {{ product.description | strip_html | json }},
-      "url": "{{ shop.url }}/products/{{ product.handle }}",
-      "mainEntityOfPage": "{{ shop.url }}/products/{{ product.handle }}",
-      "sameAs": "{{ shop.url }}/products/{{ product.handle }}",
-      "image": [
-        {% for image in product.images %}"https:{{ image.src | image_url }}"{% if forloop.last == false %},{% endif %}
-        {% endfor %}
-      ],
-      "sku": {{ product.variants.first.sku | json | remove: "\\n" | remove: "\\r" }},
-      "mpn": "{{ product.variants.first.barcode | escape }}",
-      "brand": {
-        "@type": "Brand",
-        {% if product.vendor %}"name": "{{ product.vendor | escape }}"{% else %}"name": "{{ org_data.brand.name | escape }}"{% endif %}
-      },
-      {% if data.showtags %}"keywords": "{{ product.tags | join: ', ' }}",{% endif %}
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": {{ data.rating }},
-        "reviewCount": {{ data.reviewCount }},
-        "itemReviewed": {
-          "@type": "Product",
-          "@id": "{{ shop.url }}/products/{{ product.handle }}"
-        }
-      },
-      "offers": [
-      {% for variant in product.variants %}{
-          "@type": "Offer",
-          "priceCurrency": "{{ shop.currency | escape }}",
-          "price": {{ variant.price | money_without_currency | remove: ',' }},
-          "availability": "{% if variant.available %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}",
-          "sku": {{ variant.sku | json | remove: "\\n" | remove: "\\r" }},
-          "mpn": "{{ variant.barcode | escape }}",
-          "url": "{{ shop.url }}/products/{{ product.handle }}?variant={{ variant.id }}",
-          "seller": {
-            "@type": "Organization",
-            "name": "{{ shop.name | escape }}",
-            "url": "{{ shop.url | escape }}"
-          }
-        }{% if forloop.last == false %},{% endif %}{% endfor %}
-      ]
-    }{% endif %}
-</script>
-`;
-
-    const { assetFileContent, themeId } = await initializeThemeFileContent({
-      session,
-      themeRole: "development",
-      assetKey: "sections/main-product.liquid",
-      snippetKey: "snippets/seofy-product-snippet.liquid",
-      snippetCode: updatedProductSnippet,
     });
 
-    const productSnippetRegExp =
-      /<script\s+type="application\/ld\+json">\s*{{\s*product\s*\|\s*structured_data\s*}}\s*<\/script>/g;
-
     if (
-      !assetFileContent.includes(
-        "{% render 'seofy-product-snippet', data: data.product, org_data: shop_data.organization %}"
-      )
+      checkMetafieldResponse.body.data.metafieldDefinitions.edges.length == 0
     ) {
-      let updatedContent = assetFileContent;
-      if (productSnippetRegExp.test(assetFileContent)) {
-        const prev_code = assetFileContent.match(productSnippetRegExp)[0];
-        updatedContent = updatedContent.replace(
-          productSnippetRegExp,
-          `
-          {% assign data = product.metafields['bs-23-seo-app']['json-ld'].value %}
-          {% assign shop_data = shop.metafields['bs-23-seo-app']['json-ld'].value %}
-          {% if data != null and data.active %}
-            {% render 'seofy-product-snippet', data: data.product, org_data: shop_data.organization %}
-          {% else %}
-          ${prev_code}
-          {% endif %}  
-          `
-        );
-      } else {
-        updatedContent =
-          `
-          {% assign data = product.metafields['bs-23-seo-app']['json-ld'].value %}
-          {% assign shop_data = shop.metafields['bs-23-seo-app']['json-ld'].value %}
-          {% if data != null and data.active %}
-            {% render 'seofy-product-snippet', data: data.product, org_data: shop_data.organization %}
-          {% endif %}
-          ` + assetFileContent;
-      }
-
-      const layout = new shopify.api.rest.Asset({
-        session,
-      });
-      layout.theme_id = themeId;
-      layout.key = "sections/main-product.liquid";
-      layout.value = updatedContent;
-      await layout.save({
-        update: true,
-      });
-    }
-
-    console.log(200, "success", "product");
-  } catch (err) {
-    console.log(err);
-  }
-}
-
-async function createArticleSnippet(session) {
-  try {
-    const updatedArticleSnippet = `
-<script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@id": "{{ article.url }}",
-    "@type": "Article",
-    "mainEntityOfPage": {
-      "@type": "WebPage",
-      "@id": "{{shop.secure_url}}{{ article.url }}"
-    },
-    {% if data.showTags %}"keywords": "{{ article.tags | join: ', ' }}",{% endif %}
-    "articleBody": {{ article.content | strip_html | strip_newlines | json }},
-    "headline": "{{ article.title | strip_html | strip_newlines | escape }}",
-    "description": "{{ article.excerpt | strip_html | strip_newlines | escape }}",
-    "image": "https:{{ article.image.src | image_url }}",
-    "datePublished": "{{ article.published_at }}",
-    "dateModified": "{{ article.updated_at }}",
-    "audience": {
-      "@type": "Audience",
-      "audienceType": "{{ data.audienceType }}"
-    },
-    "author": [
-      {
-        "@type": "Person",
-        {% if data.authorUrl %}"url": "{{ data.authorUrl }}",{% endif %}
-        "name": "{{ article.author }}"
-      }{% if data.additionalAuthors.size > 0 %},{% endif %}
-      {% for author in data.additionalAuthors %}
-        {
-          "@type": "Person",
-          {% if author.url %}"url": "{{ author.url }}",{% endif %}
-          "name": "{{ author.name }}"
-        }{% if forloop.last == false %},{% endif %}
-      {% endfor %}
-    ],
-    {% if data.showComments and article.comments.size > 0 %}
-    "comment": [
-      {% for cmnt in article.comments %}
-      {
-        "@type": "Comment",
-        "text": "{{ cmnt.content | strip_html | strip_newlines | escape }}",
-        "dateCreated": "{{ cmnt.created_at }}",
-        "author": {
-          "@type": "Person",
-          "name": "{{ cmnt.author }}",
-          "email": "{{ cmnt.email }}"
-        }
-      }{% if forloop.last == false %},{% endif %}
-      {% endfor %}
-    ],
-    "commentCount": {{ article.comments_count }},
-    {% endif %}
-    "publisher": {
-      "@type": "Organization",
-      "name": "{{ shop.name }}",
-      "url": "{{ shop.url }}"
-    }
-  }
-</script>
-`;
-    const { assetFileContent, themeId } = await initializeThemeFileContent({
-      session,
-      themeRole: "development",
-      assetKey: "sections/main-article.liquid",
-      snippetKey: "snippets/seofy-article-snippet.liquid",
-      snippetCode: updatedArticleSnippet,
-    });
-
-    const articleSnippetRegExp =
-      /<script\s+type="application\/ld\+json">\s*{{\s*article\s*\|\s*structured_data\s*}}\s*<\/script>/g;
-
-    if (
-      !assetFileContent.includes(
-        "{% render 'seofy-article-snippet', data: data.article, org_data: shop_data.organization %}"
-      )
-    ) {
-      console.log("🚀 ~ file: pay nai");
-      let updatedContent = assetFileContent;
-      if (articleSnippetRegExp.test(assetFileContent)) {
-        const prev_code = assetFileContent.match(articleSnippetRegExp)[0];
-        updatedContent = updatedContent.replace(
-          articleSnippetRegExp,
-          `
-          {% assign data = article.metafields['bs-23-seo-app']['json-ld'].value %}
-          {% assign shop_data = shop.metafields['bs-23-seo-app']['json-ld'].value %}
-          {% if data != null and data.active %}
-            {% render 'seofy-article-snippet', data: data.article, org_data: shop_data.organization %}
-          {% else %}
-            ${prev_code}
-          {% endif %}  
-          `
-        );
-      } else {
-        updatedContent =
-          `
-          {% assign data = article.metafields['bs-23-seo-app']['json-ld'].value %}
-          {% assign shop_data = shop.metafields['bs-23-seo-app']['json-ld'].value %}
-          {% if data != null and data.active %}
-            {% render 'seofy-article-snippet', data: data.article, org_data: shop_data.organization %}
-          {% endif %}
-          ` + assetFileContent;
-      }
-
-      const layout = new shopify.api.rest.Asset({
-        session,
-      });
-      layout.theme_id = themeId;
-      layout.key = "sections/main-article.liquid";
-      layout.value = updatedContent;
-      await layout.save({
-        update: true,
-      });
-    }
-
-    console.log(200, "success", "article");
-  } catch (err) {
-    console.log(err);
-  }
-}
-
-async function createCollectionSnippet(session) {
-  try {
-    const updatedCollectionSnippet = `
-<script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "ProductCollection",
-    "name": "{{ collection.title | escape }}",
-    "description": {{ collection.description | strip_html | strip_newlines | json }},
-    "keywords": "{{ data.keywords | escape }}",
-    "provider": {
-      "@type": "Organization",
-      "name": "{{ shop.name | escape }}",
-      "url": "{{ shop.url | escape }}"
-    }{% if collection.products.size > 0 %},{% endif %}
-    {% if collection.products.size > 0 %}"hasItem": [
-    {% for product in collection.products %}
-      {
-        "@context": "https://schema.org",
-        "@type": "Product",
-        "name": "{{ product.title | strip_html | strip_newlines | escape }}",
-        "description": {{ product.description | strip_html | strip_newlines | json }},
-        "image": [
-          {% for image in product.images %}"https:{{ image.src | image_url }}"{% if forloop.last == false %},{% endif %}
-          {% endfor %}
-        ],
-        "sku": {{ product.variants.first.sku | json | remove: "\n" | remove: "\r" }},
-        "mpn": "{{ product.variants.first.barcode | escape }}",
-        "brand": {
-          "@type": "Brand",
-          {% if product.vendor %}"name": "{{ product.vendor | escape }}"{% else %}"name": "{{ org_data.brand.name | escape }}"{% endif %}
+      const metafieldCreationResponse = await client.query({
+        data: {
+          query: CreateShopMetafieldDefinition(
+            "SHOP",
+            "bs-23-seo-app",
+            "json-ld-saved-history",
+            "Metafield to save code snippets of the original theme file before adding json-ld snippets"
+          ),
         },
-        {% if product.metafields['bs-23-seo-app']['json-ld'].value != null %}"aggregateRating": {
-          {% assign product_metadata = product.metafields['bs-23-seo-app']['json-ld'].value %}
-          "@type": "AggregateRating",
-          "itemReviewed": {
-            "@type": "Thing",
-            "name": "{{ product.title | strip_html | strip_newlines | escape }}"
-          },
-          "ratingValue": {{ product_metadata.product.rating }},
-          "reviewCount": {{ product_metadata.product.reviewCount }}
-        },{% endif %}
-        "offers": [
-          {% assign first_variant = product.variants.first %}{
-            "@type": "Offer",
-            "priceCurrency": "{{ shop.currency | escape }}",
-            "price": {{ first_variant.price | money_without_currency | remove: ',' }},
-            "availability": "{% if first_variant.available %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}",
-            "mpn": "{{ first_variant.barcode | escape }}",
-            "url": "{{ shop.url }}/products/{{ product.handle }}?variant={{ first_variant.id }}",
-            "seller": {
-              "@type": "Organization",
-              "name": "{{ shop.name | escape }}",
-              "url": "{{ shop.url | escape }}"
-            }
-          }
-        ]
-      }{% if forloop.last == false %},{% endif %}{% endfor %}
-    ]{% endif %}
-  }
-</script>
-`;
+      });
 
-    const { assetFileContent, themeId } = await initializeThemeFileContent({
-      session,
-      themeRole: "development",
-      assetKey: "sections/main-collection-product-grid.liquid",
-      snippetKey: "snippets/seofy-collection-snippet.liquid",
-      snippetCode: updatedCollectionSnippet,
-    });
-
-    const collectionSnippetRegExp =
-      /<script\s+type="application\/ld\+json">\s*{{\s*collection\s*\|\s*structured_data\s*}}\s*<\/script>/g;
-
-    if (
-      !assetFileContent.includes(
-        "{% render 'seofy-collection-snippet', data: data.collection, org_data: shop_data.organization %}"
-      )
-    ) {
-      console.log("🚀 ~ file: pay nai");
-      let updatedContent = assetFileContent;
-      if (collectionSnippetRegExp.test(assetFileContent)) {
-        const prev_code = assetFileContent.match(collectionSnippetRegExp)[0];
-        updatedContent = updatedContent.replace(
-          collectionSnippetRegExp,
-          `
-          {% assign data = collection.metafields['bs-23-seo-app']['json-ld'].value %}
-          {% assign shop_data = shop.metafields['bs-23-seo-app']['json-ld'].value %}
-          {% if data != null and data.active %}
-            {% render 'seofy-collection-snippet', data: data.collection, org_data: shop_data.organization %}
-          {% else %}
-            ${prev_code}
-          {% endif %}  
-          `
-        );
-      } else {
-        updatedContent =
-          `
-          {% assign data = collection.metafields['bs-23-seo-app']['json-ld'].value %}
-          {% assign shop_data = shop.metafields['bs-23-seo-app']['json-ld'].value %}
-          {% if data != null and data.active %}
-            {% render 'seofy-collection-snippet', data: data.collection, org_data: shop_data.organization %}
-          {% endif %}
-          ` + assetFileContent;
+      if (
+        metafieldCreationResponse.body.data.metafieldDefinitionCreate.userErrors
+          .length > 0
+      ) {
+        throw new Error({
+          status: 400,
+          error:
+            metafieldCreationResponse.body.data.metafieldDefinitionCreate
+              .userErrors,
+        });
       }
-
-      const layout = new shopify.api.rest.Asset({
-        session,
-      });
-      layout.theme_id = themeId;
-      layout.key = "sections/main-collection-product-grid.liquid";
-      layout.value = updatedContent;
-      await layout.save({
-        update: true,
-      });
     }
-
-    console.log(200, "success", "collection");
-  } catch (err) {
-    console.log(err);
+  } catch (error) {
+    console.error(error);
+    throw error;
   }
 }
 
-async function createCompanySnippet(session) {
+async function savePreviousThemeCodesToMetafield({ session, payload }) {
   try {
-    const updatedCompanySnippet = `
-<script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "{{ data.businessType }}",
-    "name": "{{ shop.name | escape }}",
-    "description": "{{ shop.description | escape }}",
-    "url": "{{ shop.url }}",
-    "brand": "{{ data.brand.name }}",
-    {% if data.businessType == "LocalBusiness" %}"image": "{{ data.brand.logo }}",{% endif %}
-    "logo": {% if data.logo %} "{{ data.logo }}" {% else %} "{{ shop.logo | default: shop.url }}" {% endif %},
-    "keywords": "{{ data.industry | escape }}",
-    {% if data.businessType == "LocalBusiness" %}"priceRange": "{{ data.priceRange[0] }} - {{ data.priceRange[1] }}",{% endif %}
-    "sameAs": [
-      "{% if data.socialLinks.facebook %}{{ data.socialLinks.facebook | escape }}{% endif %}",
-      "{% if data.socialLinks.twitter %}{{ data.socialLinks.twitter | escape }}{% endif %}",
-      "{% if data.socialLinks.instagram %}{{ data.socialLinks.instagram | escape }}{% endif %}",
-      "{% if data.socialLinks.youtube %}{{ data.socialLinks.youtube | escape }}{% endif %}",
-      "{% if data.socialLinks.pinterest %}{{ data.socialLinks.pinterest | escape }}{% endif %}",
-      "{% if data.socialLinks.linkedin %}{{ data.socialLinks.linkedin | escape }}{% endif %}",
-      "{% if data.socialLinks.snapchat %}{{ data.socialLinks.snapchat | escape }}{% endif %}",
-      "{% if data.socialLinks.tiktok %}{{ data.socialLinks.tiktok | escape }}{% endif %}"
-    ],
-    {% if data.showContact %}
-      "contactPoint": {
-        "@type": "ContactPoint",
-        "telephone": "{{ shop.phone | escape }}",
-        "contactType": "Customer Service"
-      },
-      "address": {
-        "@type": "PostalAddress",
-        "streetAddress": "{{ shop.address.address1 | escape }}{% if shop.address.address2 %}, {{ shop.address.address2 | escape }}{% endif %}",
-        "addressLocality": "{{ shop.address.city | escape }}",
-        "addressRegion": "{{ shop.address.province | escape }}",
-        "postalCode": "{{ shop.address.zip | escape }}",
-        "addressCountry": "{{ shop.address.country_code | escape }}"
-      }
-    {% endif %}
-  }
-</script>
-`;
+    await initializeMetafield(session);
+    console.log("saving previous theme codes to metafield");
 
-    const { assetFileContent, themeId } = await initializeThemeFileContent({
-      session,
-      themeRole: "development",
-      assetKey: "sections/header.liquid",
-      snippetKey: "snippets/seofy-company-snippet.liquid",
-      snippetCode: updatedCompanySnippet,
+    const client = new shopify.api.clients.Graphql({ session });
+    const shopMetafieldQuery = await client.query({
+      data: {
+        query: `
+      query GetShopMetafield {
+        shop {
+            id
+            metafield(key: "json-ld-saved-history", namespace: "bs-23-seo-app") {
+                id
+                namespace
+                key
+                value
+            }      
+        }
+    }`,
+      },
     });
 
-    const companySnippetRegExp =
-      /<script\s+type="application\/ld\+json">\s*[^]*?"@type"\s*:\s*"Organization"[^]*?<\/script>/g;
+    if (!shopMetafieldQuery.body.data.shop.metafield) {
+      const setMetafieldResponse = await client.query({
+        data: {
+          query: SetShopMetafield,
+          variables: {
+            metafields: [
+              {
+                key: "json-ld-saved-history",
+                namespace: "bs-23-seo-app",
+                ownerId: shopMetafieldQuery.body.data.shop.id,
+                value: JSON.stringify(payload),
+              },
+            ],
+          },
+        },
+      });
 
-    if (
-      !assetFileContent.includes(
-        "{% render 'seofy-company-snippet', data: shop_data.organization %}"
-      )
-    ) {
-      console.log("🚀 ~ file: pay nai");
-      let updatedContent = assetFileContent;
-      if (companySnippetRegExp.test(assetFileContent)) {
-        const prev_code = assetFileContent.match(companySnippetRegExp)[0];
-        updatedContent = updatedContent.replace(
-          companySnippetRegExp,
-          `
+      if (setMetafieldResponse.body.data.metafieldsSet.userErrors.length > 0) {
+        throw setMetafieldResponse.body.data.metafieldsSet.userErrors;
+      }
+
+      console.log("saved previous theme codes to metafield");
+    }
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
+
+async function updateThemeFiles(session) {
+  try {
+    const client = new shopify.api.clients.Graphql({
+      apiVersion: "2024-10",
+      session,
+    });
+
+    const themeQueryResponse = await client.query({
+      data: {
+        query: `
+                  query GetDevTheme {
+                    themes(first: 1, roles: MAIN) {
+                      edges {
+                        node {
+                          id
+                          files(
+                            first: 5
+                            filenames: ["sections/main-product.liquid", "sections/main-article.liquid", "sections/header.liquid", "sections/main-collection-product-grid.liquid", "${templates.seoJsonld}"]
+                          ) {
+                            edges {
+                              node {
+                                filename
+                                size
+                                body {
+                                  ... on OnlineStoreThemeFileBodyText {
+                                    content
+                                  }
+                                }
+                                checksumMd5
+                                contentType
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                `,
+      },
+    });
+
+    console.log("got theme files");
+
+    const themeId = themeQueryResponse.body.data.themes.edges[0].node.id;
+    const themeFilesMap = new Map();
+
+    themeQueryResponse.body.data.themes.edges[0].node.files.edges.forEach(
+      ({ node }) => {
+        themeFilesMap.set(node.filename, {
+          filename: node.filename,
+          body: node.body.content,
+        });
+      }
+    );
+
+    const { hitory: product_history, updatedContent: updated_product_content } =
+      updateProductThemeBody(
+        themeFilesMap.get("sections/main-product.liquid").body
+      );
+    const { history: article_history, updatedContent: updated_article_conent } =
+      updateArticleThemeBody(
+        themeFilesMap.get("sections/main-article.liquid").body
+      );
+    const {
+      history: collection_history,
+      updatedContent: updated_collection_content,
+    } = updateCollectionThemeBody(
+      themeFilesMap.get("sections/main-collection-product-grid.liquid").body
+    );
+    const {
+      history: company_history,
+      updatedContent: updated_company_content,
+    } = updateCompanyThemeBody(
+      themeFilesMap.get("sections/header.liquid").body
+    );
+
+    const variables = {
+      themeId: themeId,
+      files: [
+        {
+          filename: "sections/main-product.liquid",
+          body: {
+            type: "TEXT",
+            value: updated_product_content,
+          },
+        },
+        {
+          filename: "sections/main-article.liquid",
+          body: {
+            type: "TEXT",
+            value: updated_article_conent,
+          },
+        },
+        {
+          filename: "sections/main-collection-product-grid.liquid",
+          body: {
+            type: "TEXT",
+            value: updated_collection_content,
+          },
+        },
+        {
+          filename: "sections/header.liquid",
+          body: {
+            type: "TEXT",
+            value: updated_company_content,
+          },
+        },
+      ],
+    };
+
+    if (!themeFilesMap.has(templates.seoJsonld)) {
+      variables.files.push({
+        filename: templates.seoJsonld,
+        body: {
+          type: "TEXT",
+          value: seofyJsonldSnippet,
+        },
+      });
+      console.log("added seo jsonld snippet");
+    }
+
+    const response = await client.query({
+      data: {
+        variables,
+        query: `
+          mutation EditThemeFiles($files: [OnlineStoreThemeFilesUpsertFileInput!]!, $themeId: ID!) {
+            themeFilesUpsert(files: $files, themeId: $themeId) {
+              job {
+                # Job fields
+                id
+                done
+              }
+              upsertedThemeFiles {
+                # OnlineStoreThemeFileOperationResult fields
+                filename
+              }
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        `,
+      },
+    });
+
+    console.log("updated theme files");
+
+    if (response.body.data.themeFilesUpsert.userErrors.length > 0) {
+      throw response.body.data.themeFilesUpsert.userErrors;
+    }
+
+    return {
+      ["sections/main-product.liquid"]: { ...product_history },
+      ["sections/main-article.liquid"]: { ...article_history },
+      ["sections/main-collection-product-grid.liquid"]: {
+        ...collection_history,
+      },
+      ["sections/header.liquid"]: {
+        ...company_history,
+      },
+    };
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+function updateProductThemeBody(body) {
+  const productSnippetRegExp =
+    /<script\s+type="application\/ld\+json">\s*({{\s*product\s*\|\s*structured_data\s*}}|[^]*?"@type"\s*:\s*"(Product|ProductGroup)"[^]*?)<\/script>/g;
+  let updatedContent = body;
+  let hitory = { prev_code: "", updated_code: "" };
+
+  if (
+    !body.includes(
+      `{% render 'seofy-jsonld', render_type:"product", data: data.product, org_data: shop_data.organization %}`
+    )
+  ) {
+    if (productSnippetRegExp.test(body)) {
+      const prev_code = body.match(productSnippetRegExp)[0];
+      updatedContent = updatedContent.replace(
+        productSnippetRegExp,
+        `
+        {% assign data = product.metafields['bs-23-seo-app']['json-ld'].value %}
+        {% assign shop_data = shop.metafields['bs-23-seo-app']['json-ld'].value %}
+        {% if data != null and data.active %}
+          {% render 'seofy-jsonld', render_type:"product", data: data.product, org_data: shop_data.organization %}
+        {% else %}
+        ${prev_code}
+        {% endif %}  
+        `
+      );
+      hitory.prev_code = prev_code;
+      hitory.updated_code = `
+        {% assign data = product.metafields['bs-23-seo-app']['json-ld'].value %}
+        {% assign shop_data = shop.metafields['bs-23-seo-app']['json-ld'].value %}
+        {% if data != null and data.active %}
+          {% render 'seofy-jsonld', render_type:"product", data: data.product, org_data: shop_data.organization %}
+        {% else %}
+        ${prev_code}
+        {% endif %}  
+        `;
+    } else {
+      updatedContent =
+        `
+        {% assign data = product.metafields['bs-23-seo-app']['json-ld'].value %}
+        {% assign shop_data = shop.metafields['bs-23-seo-app']['json-ld'].value %}
+        {% if data != null and data.active %}
+          {% render 'seofy-jsonld', render_type:"product", data: data.product, org_data: shop_data.organization %}
+        {% endif %}
+        ` + body;
+
+      hitory.prev_code = "";
+      hitory.updatedContent = `
+        {% assign data = product.metafields['bs-23-seo-app']['json-ld'].value %}
+        {% assign shop_data = shop.metafields['bs-23-seo-app']['json-ld'].value %}
+        {% if data != null and data.active %}
+          {% render 'seofy-jsonld', render_type:"product", data: data.product, org_data: shop_data.organization %}
+        {% endif %}
+        `;
+    }
+  }
+
+  return { updatedContent, hitory };
+}
+
+function updateArticleThemeBody(assetFileContent) {
+  const articleSnippetRegExp =
+    /<script\s+type="application\/ld\+json">\s*({{\s*article\s*\|\s*structured_data\s*}}|[^]*?"@type"\s*:\s*"(Article)"[^]*?)<\/script>/g;
+
+  let updatedContent = assetFileContent;
+  let history = { prev_code: "", updated_code: "" };
+
+  if (
+    !assetFileContent.includes(
+      `{% render 'seofy-jsonld', render_type:"article", data: data.article, org_data: shop_data.organization %}`
+    )
+  ) {
+    if (articleSnippetRegExp.test(assetFileContent)) {
+      const prev_code = assetFileContent.match(articleSnippetRegExp)[0];
+      updatedContent = updatedContent.replace(
+        articleSnippetRegExp,
+        `
+          {% assign data = article.metafields['bs-23-seo-app']['json-ld'].value %}
           {% assign shop_data = shop.metafields['bs-23-seo-app']['json-ld'].value %}
-          {% if shop_data != null and shop_data.organization.status %}
-            {% render 'seofy-company-snippet', data: shop_data.organization %}
+          {% if data != null and data.active %}
+            {% render 'seofy-jsonld', render_type:"article", data: data.article, org_data: shop_data.organization %}
           {% else %}
             ${prev_code}
           {% endif %}  
           `
-        );
-      } else {
-        updatedContent =
-          `
+      );
+      history.prev_code = prev_code;
+      history.updated_code = `
+      {% assign data = article.metafields['bs-23-seo-app']['json-ld'].value %}
+      {% assign shop_data = shop.metafields['bs-23-seo-app']['json-ld'].value %}
+      {% if data != null and data.active %}
+        {% render 'seofy-jsonld', render_type:"article", data: data.article, org_data: shop_data.organization %}
+      {% else %}
+        ${prev_code}
+      {% endif %}  
+      `;
+    } else {
+      updatedContent =
+        `
+          {% assign data = article.metafields['bs-23-seo-app']['json-ld'].value %}
           {% assign shop_data = shop.metafields['bs-23-seo-app']['json-ld'].value %}
-          {% if shop_data != null and shop_data.organization.status %}
-            {% render 'seofy-company-snippet', data: shop_data.organization %}
+          {% if data != null and data.active %}
+            {% render 'seofy-jsonld', render_type:"article", data: data.article, org_data: shop_data.organization %}
           {% endif %}
           ` + assetFileContent;
-      }
-
-      const layout = new shopify.api.rest.Asset({
-        session,
-      });
-      layout.theme_id = themeId;
-      layout.key = "sections/header.liquid";
-      layout.value = updatedContent;
-      await layout.save({
-        update: true,
-      });
+      history.prev_code = "";
+      history.updated_code = `
+          {% assign data = article.metafields['bs-23-seo-app']['json-ld'].value %}
+          {% assign shop_data = shop.metafields['bs-23-seo-app']['json-ld'].value %}
+          {% if data != null and data.active %}
+            {% render 'seofy-jsonld', render_type:"article", data: data.article, org_data: shop_data.organization %}
+          {% endif %}
+          `;
     }
-
-    console.log(200, "success", "company");
-  } catch (err) {
-    console.log(err);
   }
+
+  return { updatedContent, history };
+}
+
+function updateCollectionThemeBody(assetFileContent) {
+  const collectionSnippetRegExp =
+    /<script\s+type="application\/ld\+json">\s*{{\s*collection\s*\|\s*structured_data\s*}}\s*<\/script>/g;
+  let updatedContent = assetFileContent;
+  let history = { prev_code: "", updated_code: "" };
+
+  if (
+    !assetFileContent.includes(
+      `{% render 'seofy-jsonld', render_type:"collection", data: data.collection, org_data: shop_data.organization %}`
+    )
+  ) {
+    if (collectionSnippetRegExp.test(assetFileContent)) {
+      const prev_code = assetFileContent.match(collectionSnippetRegExp)[0];
+      updatedContent = updatedContent.replace(
+        collectionSnippetRegExp,
+        `
+      {% assign data = collection.metafields['bs-23-seo-app']['json-ld'].value %}
+      {% assign shop_data = shop.metafields['bs-23-seo-app']['json-ld'].value %}
+      {% if data != null and data.active %}
+        {% render 'seofy-jsonld', render_type:"collection", data: data.collection, org_data: shop_data.organization %}
+      {% else %}
+        ${prev_code}
+      {% endif %}  
+      `
+      );
+      history.prev_code = prev_code;
+      history.updated_code = `
+      {% assign data = collection.metafields['bs-23-seo-app']['json-ld'].value %}
+      {% assign shop_data = shop.metafields['bs-23-seo-app']['json-ld'].value %}
+      {% if data != null and data.active %}
+        {% render 'seofy-jsonld', render_type:"collection", data: data.collection, org_data: shop_data.organization %}
+      {% else %}
+        ${prev_code}
+      {% endif %}  
+      `;
+    } else {
+      updatedContent =
+        `
+      {% assign data = collection.metafields['bs-23-seo-app']['json-ld'].value %}
+      {% assign shop_data = shop.metafields['bs-23-seo-app']['json-ld'].value %}
+      {% if data != null and data.active %}
+        {% render 'seofy-jsonld', render_type:"collection", data: data.collection, org_data: shop_data.organization %}
+      {% endif %}
+      ` + assetFileContent;
+      history.prev_code = "";
+      history.updated_code = `
+      {% assign data = collection.metafields['bs-23-seo-app']['json-ld'].value %}
+      {% assign shop_data = shop.metafields['bs-23-seo-app']['json-ld'].value %}
+      {% if data != null and data.active %}
+        {% render 'seofy-jsonld', render_type:"collection", data: data.collection, org_data: shop_data.organization %}
+      {% endif %}
+      `;
+    }
+  }
+
+  return { updatedContent, history };
+}
+
+function updateCompanyThemeBody(assetFileContent) {
+  const companySnippetRegExp =
+    /<script\s+type="application\/ld\+json">\s*[^]*?"@type"\s*:\s*"Organization"[^]*?<\/script>/g;
+  let updatedContent = assetFileContent;
+  let history = { prev_code: "", updated_code: "" };
+
+  if (
+    !assetFileContent.includes(
+      `{% render 'seofy-jsonld', render_type:"company", data: shop_data.organization %}`
+    )
+  ) {
+    if (companySnippetRegExp.test(assetFileContent)) {
+      const prev_code = assetFileContent.match(companySnippetRegExp)[0];
+      updatedContent = updatedContent.replace(
+        companySnippetRegExp,
+        `
+      {% assign shop_data = shop.metafields['bs-23-seo-app']['json-ld'].value %}
+      {% if shop_data != null and shop_data.organization.status %}
+        {% render 'seofy-jsonld', render_type:"company", data: shop_data.organization %}
+      {% else %}
+        ${prev_code}
+      {% endif %}  
+      `
+      );
+      history.prev_code = prev_code;
+      history.updated_code = `
+      {% assign shop_data = shop.metafields['bs-23-seo-app']['json-ld'].value %}
+      {% if shop_data != null and shop_data.organization.status %}
+        {% render 'seofy-jsonld', render_type:"company", data: shop_data.organization %}
+      {% else %}
+        ${prev_code}
+      {% endif %}  
+      `;
+    } else {
+      updatedContent =
+        `
+      {% assign shop_data = shop.metafields['bs-23-seo-app']['json-ld'].value %}
+      {% if shop_data != null and shop_data.organization.status %}
+        {% render 'seofy-jsonld', render_type:"company", data: shop_data.organization %}
+      {% endif %}
+      ` + assetFileContent;
+      history.prev_code = "";
+      history.updated_code = `
+      {% assign shop_data = shop.metafields['bs-23-seo-app']['json-ld'].value %}
+      {% if shop_data != null and shop_data.organization.status %}
+        {% render 'seofy-jsonld', render_type:"company", data: shop_data.organization %}
+      {% endif %}
+      `;
+    }
+  }
+
+  return { updatedContent, history };
 }

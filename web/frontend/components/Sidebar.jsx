@@ -13,23 +13,31 @@ export default function Sidebar({ selectedSidebar, setSelectedSidebar }) {
     { id: 5, title: "Collection Page" },
     { id: 6, title: "Bulk Collection Page" },
     { id: 7, title: "Company Settings" },
-    { id: 8, title: "Blog Page" },
-    { id: 9, title: "Image Alt Optimizer" },
-    { id: 10, title: "404 Error" },
-    { id: 11, title: "HTML Sitemap" },
+    { id: 8, title: "Blog page" },
+    { id: 9, title: "Image alt optimizer" },
+    { id: 10, title: "Filename optimizer" },
+    { id: 11, title: "404 Error" },
+    { id: 12, title: "HTML Sitemap" },
   ];
 
   return (
     <div className="app__sidebar">
-      <button className="sidebar__toggle_button" onClick={() => setSidebarOpen(!isSidebarOpen)}>
-        <div className="sidebar__toggle_icon">{isSidebarOpen ? <XIcon /> : <MenuIcon />}</div>
+      <button
+        className="sidebar__toggle_button"
+        onClick={() => setSidebarOpen(!isSidebarOpen)}
+      >
+        <div className="sidebar__toggle_icon">
+          {isSidebarOpen ? <XIcon /> : <MenuIcon />}
+        </div>
       </button>
 
       <div className={`sidebar__menu ${isSidebarOpen ? "active" : ""}`}>
         {menuItems?.map((data) => (
           <div
             key={data?.id}
-            className={`sidebar__menu_item ${data?.id === selectedSidebar ? "sidebar__selected_item" : ""}`}
+            className={`sidebar__menu_item ${
+              data?.id === selectedSidebar ? "sidebar__selected_item" : ""
+            }`}
             onClick={() => {
               setSelectedSidebar(data?.id);
               setSidebarOpen(false);

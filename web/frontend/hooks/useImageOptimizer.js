@@ -97,3 +97,85 @@ export const useSaveImageOptimizerSettings = () => {
     refetchOnWindowFocus: false,
   });
 };
+
+export const useSingleImageFilenameUpdate = () => {
+  const fetch = useAuthenticatedFetch();
+  const { setCloseModal, setToggleToast } = useUI();
+  const queryClient = useQueryClient();
+  async function updateSingleImageFilename(status) {
+    return await fetch("/api/image-optimizer/filename", {
+      method: "POST",
+      body: JSON.stringify(status),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  }
+
+  return useMutation((status) => updateSingleImageFilename(status), {
+    onSuccess: async (data) => {
+      if (data?.status === 400) {
+        return setToggleToast({
+          active: true,
+          message: `Something went wrong`,
+        });
+      }
+      queryClient.invalidateQueries("productList");
+
+      setToggleToast({
+        active: true,
+        message: `Updated Successfully`,
+      });
+
+      setCloseModal();
+    },
+    onError: async () => {
+      setToggleToast({
+        active: true,
+        message: `Something went wrong`,
+      });
+    },
+    refetchOnWindowFocus: false,
+  });
+};
+
+export const useBulkImageFilenameUpdate = () => {
+  const fetch = useAuthenticatedFetch();
+  const { setCloseModal, setToggleToast } = useUI();
+  const queryClient = useQueryClient();
+  async function bulkUpdateImagefilename(status) {
+    return await fetch("/api/image-optimizer/filename/all", {
+      method: "POST",
+      body: JSON.stringify(status),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  }
+
+  return useMutation((status) => bulkUpdateImagefilename(status), {
+    onSuccess: async (data) => {
+      if (data?.status === 400) {
+        return setToggleToast({
+          active: true,
+          message: `Something went wrong`,
+        });
+      }
+      queryClient.invalidateQueries("ImageOptimizerSettings");
+
+      setToggleToast({
+        active: true,
+        message: `Updated Successfully`,
+      });
+
+      setCloseModal();
+    },
+    onError: async () => {
+      setToggleToast({
+        active: true,
+        message: `Something went wrong`,
+      });
+    },
+    refetchOnWindowFocus: false,
+  });
+};

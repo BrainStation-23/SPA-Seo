@@ -26,7 +26,7 @@ export const getErrorInsightsContent = async (req, res, next) => {
       return acc;
     }, {});
 
-    const mostFrequentUrl = Object.keys(urlFrequency).reduce((a, b) =>
+    const mostFrequentUrl = Object?.keys(urlFrequency)?.reduce((a, b) =>
       urlFrequency[a] > urlFrequency[b] ? a : b
     );
 

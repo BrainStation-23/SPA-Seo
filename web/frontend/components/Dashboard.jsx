@@ -15,6 +15,8 @@ import { ErrorInsights } from "./ErrorInsights";
 import { useCreateGlobalFileSeo } from "../hooks/useHomeSEOQuery";
 import HTMLSitemap from "./htmlSitemap";
 import { useJsonldQuery } from "../hooks/useJsonLdQuery";
+import {} from "./";
+import { BulkProductImageFilename } from "./BulkProductImageFilename";
 
 export function Dashboard() {
   useShopQuery({
@@ -43,8 +45,9 @@ export function Dashboard() {
           {selectedSidebar === 7 && <CompanyProfile />}
           {selectedSidebar === 8 && <BlogPage />}
           {selectedSidebar === 9 && <ImageAltOptimizer />}
-          {selectedSidebar === 10 && <ErrorInsights />}
-          {selectedSidebar === 11 && <HTMLSitemap />}
+          {selectedSidebar === 10 && <BulkProductImageFilename />}
+          {selectedSidebar === 11 && <ErrorInsights />}
+          {selectedSidebar === 12 && <HTMLSitemap />}
         </div>
       </div>
     </>
