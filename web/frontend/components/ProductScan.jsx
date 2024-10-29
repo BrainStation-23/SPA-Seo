@@ -4,6 +4,17 @@ import { useUI } from "../contexts/ui.context";
 export function ProductScan() {
   const { modal, shop } = useUI();
   const product = modal?.data?.info;
+  const images = modal?.data?.info?.media?.edges?.map((data) => {
+    const node = data?.node;
+    return {
+      node: {
+        id: node.id,
+        url: node.preview.image.url,
+        altText: node.alt,
+        originalSrc: node.preview.image.url,
+      },
+    };
+  });
   const productUrl = `https://${shop?.domain}/products/${product?.handle}`;
   const metaTitle = product?.seo?.title;
   const metaDescription = product?.seo?.description;
@@ -126,7 +137,7 @@ export function ProductScan() {
         </div>
       </div>
       <div className="seo_scan_meta_info">
-        {product?.images?.edges?.map((data) => (
+        {images?.map((data) => (
           <div className="seo_scan_product_section" key={data?.node?.id}>
             <div className="seo_scan_product_meta items_center">
               <div className="app__product_alt_image-smaller">
