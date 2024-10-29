@@ -38,13 +38,18 @@ const fetchAllProducts = async (session) => {
               title
               description
             }
-            images(first: 250) {
+            media(first: 250) {
               edges {
                 node {
                   id
-                  url
-                  originalSrc
-                  altText
+									alt
+                  mediaContentType
+                  preview {
+										status
+                    image {
+                      url
+                    }
+                  }
                 }
               }
             }

@@ -5,12 +5,16 @@ import { CreateProductSeo } from "./CreateProductSeo";
 import { AltimageCreate } from "./AltimageCreate";
 import { ProductScan } from "./ProductScan";
 import { GenerateJsonld } from "./GenerateJsonld";
+import { ProductImageFilenameOptimizer } from "./ProductImageFilenameOptimizer";
 import { ImageCompression } from "./ImageCompression";
 
 export default function ProductSeo() {
   const [selected, setSelected] = useState(0);
 
-  const handleTabChange = useCallback((selectedTabIndex) => setSelected(selectedTabIndex), []);
+  const handleTabChange = useCallback(
+    (selectedTabIndex) => setSelected(selectedTabIndex),
+    []
+  );
 
   const tabs = [
     {
@@ -34,6 +38,11 @@ export default function ProductSeo() {
       panelID: "panel-product-json-ld",
     },
     {
+      id: "product-filename",
+      content: "Image Filename Optimization",
+      panelID: "panel-product-filename",
+    },
+    {
       id: "product-compression",
       content: "Product Image Compression",
       panelID: "accepts-Product-alt-content-1",
@@ -51,7 +60,8 @@ export default function ProductSeo() {
         {selected === 1 && <AltimageCreate />}
         {selected === 2 && <ProductScan />}
         {selected === 3 && <GenerateJsonld obj_type={"Product"} />}
-        {selected === 4 && <ImageCompression />}
+        {selected === 4 && <ProductImageFilenameOptimizer />}
+        {selected === 5 && <ImageCompression />}
       </Tabs>
     </div>
   );

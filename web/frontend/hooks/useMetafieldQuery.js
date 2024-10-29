@@ -18,8 +18,10 @@ export const useMetafieldsQuery = ({ url, fetchInit = {}, reactQueryOptions }) =
   return useQuery("metafieldList", fetch, {
     ...reactQueryOptions,
     onSuccess: (data) => {
-      console.log("org data", data);
-      if (typeof data.data === "object" && Object.entries(data.data).length > 0) {
+      if (
+        typeof data.data === "object" &&
+        Object.entries(data.data).length > 0
+      ) {
         const industry = data.data.organization?.industry?.split(",");
         setOrganization({
           ...organization,

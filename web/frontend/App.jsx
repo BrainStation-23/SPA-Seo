@@ -1,9 +1,13 @@
 import { BrowserRouter } from "react-router-dom";
-// import { NavigationMenu } from "@shopify/app-bridge-react";
+import { NavigationMenu } from "@shopify/app-bridge-react";
 import Routes from "./Routes";
 import "./assets/style.css";
 
-import { AppBridgeProvider, QueryProvider, PolarisProvider } from "./components";
+import {
+  AppBridgeProvider,
+  QueryProvider,
+  PolarisProvider,
+} from "./components";
 import { ManagedUIContext } from "./contexts/ui.context";
 import { ManagedHomeSeoContext } from "./contexts/home.context";
 import { ManagedImageCompressionContext } from "./contexts/imageCompression.context";
@@ -23,14 +27,14 @@ export default function App() {
             <BrowserRouter>
               <AppBridgeProvider>
                 <QueryProvider>
-                  {/* <NavigationMenu
-                navigationLinks={[
-                  {
-                    label: "Page name",
-                    destination: "/pagename",
-                  },
-                ]}
-              /> */}
+                  <NavigationMenu
+                    navigationLinks={[
+                      {
+                        label: "User manual",
+                        destination: "/manual",
+                      },
+                    ]}
+                  />
                   <Routes pages={pages} />
                   <ModalArea />
                   <ToastContainer />
