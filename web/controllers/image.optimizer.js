@@ -568,9 +568,117 @@ function generateFileName(originalName) {
   return `${baseName}-${timestamp}${ext}`;
 }
 
+async function saveGlobalImageFilenameToMetafield({ session, filename }) {
+  try {
+    const client = new shopify.api.clients.Graphql({
+      apiVersion: "2024-10",
+      session,
+    });
+
+    const initialQuery = await client.query({
+      data: {
+        query: `{
+                  metafieldDefinitions(first:1, namespace: "bs-23-seo-app", ownerType: SHOP, key: "json-ld") {
+                    edges {
+                      node {
+                        id
+                      }
+                    }
+                  }
+                  shop {
+                    id
+                    metafield(namespace: "bs-23-seo-app", key: "json-ld") {
+                      value
+                    }
+                  }
+                }`,
+      },
+    });
+
+    if (initialQuery.body.data.metafieldDefinitions.edges.length === 0) {
+      const createMetafieldDefinition = await client.query({
+        data: {
+          query: `mutation {
+                    metafieldDefinitionCreate(definition: {
+                      namespace: "bs-23-seo-app",
+                      key: "json-ld",
+                      type: "json",
+                      name: "SEO app metafield",
+                      description: "Metafield for storing image optimizer settings"
+                      ownerType: SHOP
+                    }) {
+                      createdDefinition {
+                        id
+                      }
+                      userErrors {
+                        code
+                        field
+                      }
+                    }
+                  }`,
+        },
+      });
+
+      if (
+        createMetafieldDefinition.body.data.metafieldDefinitionCreate.userErrors
+          .length > 0
+      ) {
+        throw createMetafieldDefinition.body.data.metafieldDefinitionCreate
+          .userErrors;
+      }
+    }
+
+    const shopId = initialQuery.body.data.shop.id;
+    const prevData = initialQuery.body.data.shop.metafield
+      ? JSON.parse(initialQuery.body.data.shop.metafield.value)
+      : {};
+    const setMetafield = await client.query({
+      data: {
+        variables: {
+          metafields: [
+            {
+              key: "json-ld",
+              namespace: "bs-23-seo-app",
+              ownerId: shopId,
+              value: JSON.stringify({ ...prevData, filename }),
+            },
+          ],
+        },
+        query: `mutation MetafieldsSet($metafields: [MetafieldsSetInput!]!) {
+                  metafieldsSet(metafields: $metafields) {
+                    metafields {
+                        id
+                        key
+                        namespace
+                        value
+                    }
+                    userErrors {
+                      field
+                      message
+                      code
+                    }
+                  }
+                }`,
+      },
+    });
+
+    if (setMetafield.body.data.metafieldsSet.userErrors.length > 0) {
+      throw setMetafield.body.data.metafieldsSet.userErrors;
+    }
+  } catch (error) {
+    throw error;
+  }
+}
+
 export const bulkUpdateProductImageFilename = async (req, res, next) => {
   try {
     const { fileNameSettings } = req.body;
+
+    await saveGlobalImageFilenameToMetafield({
+      session: res.locals.shopify.session,
+      filename: fileNameSettings,
+    });
+
     const client = new shopify.api.clients.Graphql({
       apiVersion: "2024-10",
       session: res.locals.shopify.session,
