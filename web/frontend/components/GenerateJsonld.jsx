@@ -57,27 +57,35 @@ export function GenerateJsonld({ obj_type }) {
   const [errors, setErrors] = useState({});
 
   const handleSubmit = useCallback(() => {
-    console.log("rating", rating);
-    console.log("reviewCount", reviewCount);
+    if (obj_type?.toLowerCase() == "collection") {
+      if (keywords?.length == 0) {
+        return setErrors({
+          ...errors,
+          message: `Please enter keywords`,
+        });
+      }
+    }
+    if (obj_type?.toLowerCase() == "product") {
+      if (reviewCount == 0 || rating == 0) {
+        return setErrors({
+          ...errors,
+          message: `Value must be getter then 5`,
+        });
+      }
+      if (rating > 5 || rating < 0) {
+        return setErrors({
+          ...errors,
+          message: `Rating must be between 0 and 5`,
+        });
+      }
+      if (rating == 0 && reviewCount != 0) {
+        return setErrors({
+          ...errors,
+          message: `Please enter rating count`,
+        });
+      }
+    }
 
-    if (reviewCount == 0 || rating == 0) {
-      return setErrors({
-        ...errors,
-        message: `Value must be getter then 5`,
-      });
-    }
-    if (rating > 5 || rating < 0) {
-      return setErrors({
-        ...errors,
-        message: `Rating must be between 0 and 5`,
-      });
-    }
-    if (rating == 0 && reviewCount != 0) {
-      return setErrors({
-        ...errors,
-        message: `Please enter rating count`,
-      });
-    }
     setIsLoading(true);
     createMetafield(
       {
@@ -115,7 +123,10 @@ export function GenerateJsonld({ obj_type }) {
   }, []);
   const handlePushJsonChange = () => setPushJson((prev) => !prev);
   const handleShowVariantsChange = () => setShowVariants((prev) => !prev);
-  const handleKeywordsChange = useCallback((value) => setKeywordsInput(value), []);
+  const handleKeywordsChange = useCallback((value) => {
+    setKeywordsInput(value);
+    setErrors({ ...errors, message: "" });
+  }, []);
   const handleReviewCountChange = useCallback((value) => {
     setReviewCount(value);
     setErrors({ ...errors, message: "" });
@@ -275,6 +286,7 @@ export function GenerateJsonld({ obj_type }) {
                   onChange={handleKeywordsChange}
                   label={`Keywords`}
                   type="text"
+                  error={errors?.message}
                   connectedRight={
                     keywordsInput &&
                     keywordsInput.length > 0 && (

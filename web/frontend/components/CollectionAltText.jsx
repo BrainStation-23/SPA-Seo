@@ -3,31 +3,49 @@ import { Button, Form } from "@shopify/polaris";
 import { useUI } from "../contexts/ui.context";
 import TextareaField from "./commonUI/TextareaField";
 import { useUpdateCollectionSeoImgAlt } from "../hooks/useCollectionsQuery";
+import { Spinners } from "./Spinner";
 
 export function CollectionAltTextImage() {
   const { modal, setToggleToast } = useUI();
+  const [isLoading, setIsLoading] = useState(false);
   const image = modal?.data?.info?.image;
+  const [errors, setErrors] = useState({});
 
   const { mutate: updateSeoAltText, isError } = useUpdateCollectionSeoImgAlt();
   const [formData, setFormData] = useState("");
 
   const handleSubmit = (obj) => {
+    console.log("obj", obj.length);
     if (!obj) {
-      return setToggleToast({
-        active: true,
-        message: `Alt text cannot be empty`,
+      return setErrors({
+        ...errors,
+        altText: `Please enter alt text.`,
       });
     }
-
+    if (obj?.length > 125) {
+      return setErrors({
+        ...errors,
+        altText: `Alt text must be 125 characters or fewer. Currently, it is ${obj?.length} characters`,
+      });
+    }
+    setIsLoading(true);
     const info = {
       id: modal?.data?.info?.id,
       imageId: image?.id,
       atlText: obj,
     };
-    updateSeoAltText(info);
+    updateSeoAltText(info, {
+      onSuccess: () => {
+        setIsLoading(false);
+      },
+      onError: () => {
+        setIsLoading(false);
+      },
+    });
   };
 
   const handleChange = (value) => {
+    setErrors({ ...errors, altText: "" });
     setFormData(value);
   };
 
@@ -45,10 +63,7 @@ export function CollectionAltTextImage() {
             <img src={image?.url} alt={image?.altText} />
           </div>
           <div className="app__product_alt_textarea">
-            <Form
-              className="app__product_alt_textarea"
-              onSubmit={() => handleSubmit(formData)}
-            >
+            <Form className="app__product_alt_textarea" onSubmit={() => handleSubmit(formData)}>
               <div className="app__seo_alt_form">
                 <div className="app__seo_alt_textarea">
                   <TextareaField
@@ -58,13 +73,13 @@ export function CollectionAltTextImage() {
                     type="text"
                     name="altText"
                     placeholder="Enter image alt text"
-                    error={""}
+                    error={errors?.altText}
                     rows={2}
                   />
                 </div>
                 <div className="app_seo_alt_button">
-                  <Button primary submit>
-                    Submit
+                  <Button primary submit loading={isLoading}>
+                    {isLoading ? <Spinners /> : "Submit"}
                   </Button>
                 </div>
               </div>

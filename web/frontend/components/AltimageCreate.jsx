@@ -19,7 +19,7 @@ export function AltimageCreate() {
         ...prevErrors,
         [obj.id]: "Please enter alt text.",
       }));
-    } else if (obj?.altText?.length > 50) {
+    } else if (obj?.altText?.length > 125) {
       return setErrors((prevErrors) => ({
         ...prevErrors,
         altText: `altText  must be 50 characters or fewer. Currently, it is ${obj.altText.length} characters.`,

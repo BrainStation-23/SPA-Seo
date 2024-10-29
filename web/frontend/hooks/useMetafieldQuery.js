@@ -59,17 +59,30 @@ export const useCreateMetafield = (invalidationTarget) => {
         queryClient.invalidateQueries(invalidationTarget);
       } else {
         const updatedData = await data?.json();
-        const updatedInfo = updatedData?.productByID;
+        const owner = updatedData?.owner;
+        const updatedInfo = updatedData?.dataByID;
         console.log("updatedInfo", updatedInfo);
-
-        setOpenModal({
-          view: "CREATE_PRODUCT_SEO",
-          isOpen: true,
-          data: {
-            title: `Product SEO (${updatedInfo?.title})`,
-            info: updatedInfo,
-          },
-        });
+        console.log("owner", owner.toLowerCase());
+        if (owner.toLowerCase() == "product") {
+          setOpenModal({
+            view: "CREATE_PRODUCT_SEO",
+            isOpen: true,
+            data: {
+              title: `Product SEO (${updatedInfo?.title})`,
+              info: updatedInfo,
+            },
+          });
+        }
+        if (owner.toLowerCase() == "collection") {
+          setOpenModal({
+            view: "CREATE_COLLECTION_SEO",
+            isOpen: true,
+            data: {
+              title: `Collection SEO (${updatedInfo?.title})`,
+              info: updatedInfo,
+            },
+          });
+        }
       }
 
       setToggleToast({

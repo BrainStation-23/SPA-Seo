@@ -9,6 +9,7 @@ import {
   SetShopMetafield,
 } from "../graphql/metafields.js";
 import { getProductByID } from "./products.js";
+import { getCollectionByID } from "./collections.js";
 
 async function initializeMetafield(client, type, functionType) {
   try {
@@ -153,9 +154,15 @@ export const MetafieldCreate = async (req, res, next) => {
         error: setMetafieldResponse.body.data.metafieldsSet.userErrors,
       });
     }
-    const productByID = await getProductByID(res.locals.shopify.session, ownerNumberId);
+    let dataByID = {};
+    if (owner == "PRODUCT") {
+      dataByID = await getProductByID(res.locals.shopify.session, ownerNumberId);
+    } else if (owner == "COLLECTION") {
+      dataByID = await getCollectionByID(res.locals.shopify.session, ownerNumberId);
+    }
     return res.status(200).json({
-      productByID,
+      dataByID,
+      owner,
       message: "saved metafield successfully",
     });
   } catch (error) {
