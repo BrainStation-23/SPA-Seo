@@ -62,8 +62,8 @@ export const useCreateMetafield = (invalidationTarget) => {
         const owner = updatedData?.owner;
         const updatedInfo = updatedData?.dataByID;
         console.log("updatedInfo", updatedInfo);
-        console.log("owner", owner.toLowerCase());
-        if (owner.toLowerCase() == "product") {
+        console.log("owner", owner?.toLowerCase());
+        if (owner?.toLowerCase() == "product") {
           setOpenModal({
             view: "CREATE_PRODUCT_SEO",
             isOpen: true,
@@ -73,12 +73,22 @@ export const useCreateMetafield = (invalidationTarget) => {
             },
           });
         }
-        if (owner.toLowerCase() == "collection") {
+        if (owner?.toLowerCase() == "collection") {
           setOpenModal({
             view: "CREATE_COLLECTION_SEO",
             isOpen: true,
             data: {
               title: `Collection SEO (${updatedInfo?.title})`,
+              info: updatedInfo,
+            },
+          });
+        }
+        if (owner?.toLowerCase() == "article") {
+          setOpenModal({
+            view: "ARTICLE_SEO",
+            isOpen: true,
+            data: {
+              title: `Article SEO (${updatedInfo?.title})`,
               info: updatedInfo,
             },
           });

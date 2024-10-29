@@ -8,9 +8,11 @@ import { Spinners } from "./Spinner";
 
 export function CreateArticleSeo() {
   const { modal } = useUI();
+  const [loading, setLoading] = useState(false);
   const { data, isLoading } = useArticlesSeoQuery({
     url: `/api/blog/article-seo/${modal?.data?.info?.id}`,
   });
+  const blog_id = modal?.data?.info?.blog_id;
   const { mutate: createOrUpdateSeo, isError } = useUpdateBlogSeo();
   const [formData, setFormData] = useState({
     seo_title: "",
@@ -44,15 +46,23 @@ export function CreateArticleSeo() {
         seo_description: `SEO description must be 160 characters or fewer. Currently, it is ${obj.seo_description.length} characters.`,
       });
     }
-
+    setLoading(true);
     const info = {
       seoObj: {
         id: modal?.data?.info?.id,
         seoTitle: obj.seo_title,
         seoDescription: obj?.seo_description,
+        blog_id,
       },
     };
-    createOrUpdateSeo(info);
+    createOrUpdateSeo(info, {
+      onSuccess: () => {
+        setLoading(false);
+      },
+      onError: () => {
+        setLoading(false);
+      },
+    });
   };
 
   const handleChange = (value, name) => {
@@ -61,10 +71,7 @@ export function CreateArticleSeo() {
   };
 
   useEffect(() => {
-    if (
-      (data?.seoDescription || data?.seoTitle) &&
-      modal?.data?.info?.id === data?.id
-    ) {
+    if ((data?.seoDescription || data?.seoTitle) && modal?.data?.info?.id === data?.id) {
       setFormData({
         ...formData,
         seo_title: data?.seoTitle,
@@ -101,8 +108,8 @@ export function CreateArticleSeo() {
                 error={errors?.seo_description}
                 rows={"3"}
               />
-              <Button primary submit>
-                Submit
+              <Button primary submit loading={loading}>
+                {loading ? <Spinners /> : "Submit"}
               </Button>
             </FormLayout>
           </Form>

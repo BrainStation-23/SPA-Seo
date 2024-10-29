@@ -10,7 +10,7 @@ import {
 } from "../graphql/metafields.js";
 import { getProductByID } from "./products.js";
 import { getCollectionByID } from "./collections.js";
-
+import { getArticleById } from "./blog.js";
 async function initializeMetafield(client, type, functionType) {
   try {
     console.log("initializing metafield", type);
@@ -80,7 +80,9 @@ async function manageArticleMetafield(session, ownerId, blogId, data, active) {
 export const MetafieldCreate = async (req, res, next) => {
   try {
     let { type, data, owner, ownerId, blogId } = req.body;
-    const ownerNumberId = ownerId?.split("/").pop();
+    console.log("owner", ownerId);
+    let ownerNumberId = owner === "ARTICLE" ? ownerId : ownerId?.split("/").pop();
+
     if (owner == "ARTICLE") {
       await manageArticleMetafield(res.locals.shopify.session, ownerId, blogId, data, req.body.active);
 
@@ -159,6 +161,8 @@ export const MetafieldCreate = async (req, res, next) => {
       dataByID = await getProductByID(res.locals.shopify.session, ownerNumberId);
     } else if (owner == "COLLECTION") {
       dataByID = await getCollectionByID(res.locals.shopify.session, ownerNumberId);
+    } else if (owner == "ARTICLE") {
+      dataByID = await getArticleById(res.locals.shopify.session, ownerNumberId);
     }
     return res.status(200).json({
       dataByID,
