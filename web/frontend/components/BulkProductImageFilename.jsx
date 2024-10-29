@@ -44,17 +44,14 @@ export function BulkProductImageFilename() {
   };
 
   useEffect(() => {
-    setIsWaiting(true);
-    console.log("isSuccess effect", isSuccess);
+    if (isLoading) setIsWaiting(true);
     if (isSuccess) {
       setTimeout(() => {
         setIsWaiting(false);
-        console.log("isSuccess", isSuccess);
       }, 3000);
     } else if (isError) {
       setTimeout(() => {
         setIsWaiting(false);
-        console.log("isSuccess", isSuccess);
       }, 5000);
     }
   }, [isSuccess, isError, isLoading]);
