@@ -97,19 +97,15 @@ export const uninstallCleanup = async (req, res) => {
         }`;
 
     data.shop_defs.edges.forEach(({ node }, index) => {
-      console.log("shop", node.key);
       metafieldDefinitionIds.push(deleteQuery(node.id, index, "shop"));
     });
     data.product_defs.edges.forEach(({ node }, index) => {
-      console.log("product", node.key);
       metafieldDefinitionIds.push(deleteQuery(node.id, index, "product"));
     });
     data.article_defs.edges.forEach(({ node }, index) => {
-      console.log("article", node.key);
       metafieldDefinitionIds.push(deleteQuery(node.id, index, "article"));
     });
     data.collection_defs.edges.forEach(({ node }, index) => {
-      console.log("collection", node.key);
       metafieldDefinitionIds.push(deleteQuery(node.id, index, "collection"));
     });
 
@@ -228,7 +224,7 @@ export const uninstallCleanup = async (req, res) => {
       return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
-    const metafieldCleanupResponse = await client.query({
+    await client.query({
       data: {
         query: `mutation ThemeCleanupMutation {
                       ${deleteAllMetafieldsQuery}
@@ -236,8 +232,7 @@ export const uninstallCleanup = async (req, res) => {
       },
     });
 
-    console.log("ok");
-    console.log(JSON.stringify(metafieldCleanupResponse.body.data));
+    console.log("all metafields deleted");
 
     await wait(2000);
     const cleanupResponse = await client.query({
@@ -264,11 +259,9 @@ export const uninstallCleanup = async (req, res) => {
       },
     });
 
-    console.log("ok");
-    console.log(JSON.stringify(cleanupResponse.body));
+    console.log("theme code reverted");
 
     await wait(5000);
-    console.log(filesToBeDeleted);
     const themeFilesDelete = await client.query({
       data: {
         variables: {
@@ -289,8 +282,7 @@ export const uninstallCleanup = async (req, res) => {
       },
     });
 
-    console.log("ok");
-    console.log(JSON.stringify(themeFilesDelete.body.data));
+    console.log("theme files deleted");
 
     return res.status(200).send("uninstall");
   } catch (error) {
