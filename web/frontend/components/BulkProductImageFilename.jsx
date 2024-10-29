@@ -96,8 +96,8 @@ export function BulkProductImageFilename() {
                               value={productImageFileName}
                               onChange={handleProductImageAltChange}
                               label={<Text variant="headingSm">File name</Text>}
-                              placeholder="Enter filename or use variables. For example: {{ product.title }} {{ shop.name }}"
-                              helpText="Can use variables in the PRODUCT and SHOP section"
+                              placeholder="Enter filename or use variables."
+                              helpText="Can use variables from the PRODUCT and SHOP section"
                               type="text"
                             />
                           </FormLayout>

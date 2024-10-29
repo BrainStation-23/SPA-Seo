@@ -177,8 +177,8 @@ export function ImageAltOptimizer() {
                                   label={
                                     <Text variant="headingSm">Alt Text</Text>
                                   }
-                                  placeholder="Enter alt text or use variables. For example: {{ product.title }} {{ shop.name }}"
-                                  helpText="Can use variables in the PRODUCT and SHOP section"
+                                  placeholder="Enter alt text or use variables"
+                                  helpText="Can use variables from the PRODUCT and SHOP section"
                                   type="text"
                                 />
                               </FormLayout>
@@ -217,8 +217,8 @@ export function ImageAltOptimizer() {
                                   label={
                                     <Text variant="headingSm">Alt Text</Text>
                                   }
-                                  placeholder="Enter alt text or use variables. For example: {{ collection.title }} {{ shop.name }}"
-                                  helpText="Can use variables in the COLLECTION and SHOP section"
+                                  placeholder="Enter alt text or use variables"
+                                  helpText="Can use variables from the COLLECTION and SHOP section"
                                   type="text"
                                 />
                               </FormLayout>
@@ -255,8 +255,8 @@ export function ImageAltOptimizer() {
                                   label={
                                     <Text variant="headingSm">Alt Text</Text>
                                   }
-                                  placeholder="Enter alt text or use variables. For example: {{ article.title }} {{ shop.name }}"
-                                  helpText="Can use variables in the BLOG POST and SHOP section"
+                                  placeholder="Enter alt text or use variables"
+                                  helpText="Can use variables from the BLOG POST and SHOP section"
                                   type="text"
                                 />
                               </FormLayout>
