@@ -63,7 +63,7 @@ export default function manual() {
           <Layout.Section>
             <AlphaCard padding={"0"}>
               <Banner status="warning" title="App uninstall instructions" />
-              <Box padding={"4"}>
+              <Box padding={"6"}>
                 <Text variant="bodyMd">
                   Our app enhances your store’s SEO by adding custom code to
                   theme files, including meta tags, structured data, and image
@@ -87,28 +87,23 @@ export default function manual() {
                   </Box>
                 </Box>
               </Box>
+              <Box>
+                <Banner
+                  status="critical"
+                  title={<Text variant="headingLg">Reset everything</Text>}
+                  action={{
+                    content: "Reset",
+                    onAction: () => setShowConfirmation(true),
+                    destructive: true,
+                  }}
+                >
+                  <Text variant="bodyMd">
+                    This will remove every change that the app made in youre
+                    store, including theme snippets and stored settings.
+                  </Text>
+                </Banner>
+              </Box>
             </AlphaCard>
-          </Layout.Section>
-        </Layout>
-      </Box>
-      <Box paddingBlockStart={"4"}>
-        <Layout>
-          <Layout.Section oneHalf>
-            <Text variant="headingLg">Reset everything</Text>
-            <Box paddingBlockStart={"1"} paddingBlockEnd={"2"}>
-              <Text variant="bodyMd">
-                This will remove every change that the app made in youre store,
-                including theme snippets and stored settings.
-              </Text>
-            </Box>
-            <Box></Box>
-          </Layout.Section>
-          <Layout.Section oneHalf>
-            <HorizontalStack align="center" blockAlign="center">
-              <Button destructive onClick={() => setShowConfirmation(true)}>
-                Reset
-              </Button>
-            </HorizontalStack>
           </Layout.Section>
         </Layout>
       </Box>

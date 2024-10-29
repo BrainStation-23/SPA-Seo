@@ -36,15 +36,9 @@ export function ImageAltOptimizer() {
   const { mutate: runBulkImageUpdate, isLoading: isBulkAltUpdating } =
     useBulkUpdateAltText();
 
-  const [productImageAlt, setProductImageAlt] = useState(
-    "{{ product.title }} {{ shop.name }}"
-  );
-  const [collectionImgeAlt, setCollectionImageAlt] = useState(
-    "{{ collection.title }} {{ shop.name }}"
-  );
-  const [articleImageAlt, setArticleImageAlt] = useState(
-    "{{ article.title }} {{ shop.name }}"
-  );
+  const [productImageAlt, setProductImageAlt] = useState(null);
+  const [collectionImgeAlt, setCollectionImageAlt] = useState(null);
+  const [articleImageAlt, setArticleImageAlt] = useState(null);
   const [productAltStatus, setProductAltStatus] = useState(false);
   const [collectionAltStatus, setCollectionAltStatus] = useState(false);
   const [articleAltStatus, setArticleAltStatus] = useState(false);
@@ -53,16 +47,9 @@ export function ImageAltOptimizer() {
   useEffect(() => {
     if (isSuccess) {
       const metadata = data.data;
-      setProductImageAlt(
-        metadata?.altText?.product || "{{ product.title }} {{ shop.name }}"
-      );
-      setCollectionImageAlt(
-        metadata?.altText?.collection ||
-          "{{ collection.title }} {{ shop.name }}"
-      );
-      setArticleImageAlt(
-        metadata?.altText?.article || "{{ article.title }} {{ shop.name }}"
-      );
+      setProductImageAlt(metadata?.altText?.product || null);
+      setCollectionImageAlt(metadata?.altText?.collection || null);
+      setArticleImageAlt(metadata?.altText?.article || null);
       setProductAltStatus(metadata?.altText?.productStatus || false);
       setCollectionAltStatus(metadata?.altText?.collectionStatus || false);
       setArticleAltStatus(metadata?.altText?.articleStatus || false);
@@ -190,7 +177,7 @@ export function ImageAltOptimizer() {
                                   label={
                                     <Text variant="headingSm">Alt Text</Text>
                                   }
-                                  placeholder="{{ product.title }} {{ shop.name }}"
+                                  placeholder="Enter alt text or use variables. For example: {{ product.title }} {{ shop.name }}"
                                   helpText="Can use variables in the PRODUCT and SHOP section"
                                   type="text"
                                 />
@@ -230,7 +217,7 @@ export function ImageAltOptimizer() {
                                   label={
                                     <Text variant="headingSm">Alt Text</Text>
                                   }
-                                  placeholder="{{ collection.title }} {{ shop.name }}"
+                                  placeholder="Enter alt text or use variables. For example: {{ collection.title }} {{ shop.name }}"
                                   helpText="Can use variables in the COLLECTION and SHOP section"
                                   type="text"
                                 />
@@ -268,7 +255,7 @@ export function ImageAltOptimizer() {
                                   label={
                                     <Text variant="headingSm">Alt Text</Text>
                                   }
-                                  placeholder="{{ article.title }} {{ shop.name }}"
+                                  placeholder="Enter alt text or use variables. For example: {{ article.title }} {{ shop.name }}"
                                   helpText="Can use variables in the BLOG POST and SHOP section"
                                   type="text"
                                 />
@@ -285,10 +272,10 @@ export function ImageAltOptimizer() {
                 <VerticalStack gap={"4"}>
                   <AlphaCard>
                     <Text variant="bodyMd">
-                      You can use the following variables in the image alt and
-                      filename fields to dynamically generate the content based
-                      on the product, collection, blog post, and shop
-                      information.
+                      Use custom text and variables to create alt text templates
+                      for images. Your custom text works as a static template,
+                      while the variables pull in dynamic values from your
+                      store's content.
                     </Text>
                     <Box paddingBlockStart={"3"}>
                       <Text variant="bodyMd" fontWeight="bold">

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   Page,
   Layout,
@@ -20,8 +20,14 @@ import { useUI } from "../contexts/ui.context";
 
 export function BulkProductImageFilename() {
   const { setToggleToast } = useUI();
-  const { mutate: bulkUpdate, isLoading } = useBulkImageFilenameUpdate();
+  const {
+    mutate: bulkUpdate,
+    isLoading,
+    isSuccess,
+    isError,
+  } = useBulkImageFilenameUpdate();
   const [productImageFileName, setProductImageFileName] = useState(null);
+  const [isWaiting, setIsWaiting] = useState(false);
 
   const handleProductImageAltChange = useCallback((value) => {
     setProductImageFileName(value);
@@ -37,6 +43,22 @@ export function BulkProductImageFilename() {
     bulkUpdate({ fileNameSettings: productImageFileName });
   };
 
+  useEffect(() => {
+    setIsWaiting(true);
+    console.log("isSuccess effect", isSuccess);
+    if (isSuccess) {
+      setTimeout(() => {
+        setIsWaiting(false);
+        console.log("isSuccess", isSuccess);
+      }, 3000);
+    } else if (isError) {
+      setTimeout(() => {
+        setIsWaiting(false);
+        console.log("isSuccess", isSuccess);
+      }, 5000);
+    }
+  }, [isSuccess, isError, isLoading]);
+
   return (
     <Page
       fullWidth
@@ -46,7 +68,7 @@ export function BulkProductImageFilename() {
         <Button
           primary
           icon={RefreshIcon}
-          loading={isLoading}
+          loading={isLoading || isWaiting}
           onClick={handleSubmit}
         >
           Sync
@@ -77,7 +99,7 @@ export function BulkProductImageFilename() {
                               value={productImageFileName}
                               onChange={handleProductImageAltChange}
                               label={<Text variant="headingSm">File name</Text>}
-                              placeholder="{{ product.title }} {{ shop.name }}"
+                              placeholder="Enter filename or use variables. For example: {{ product.title }} {{ shop.name }}"
                               helpText="Can use variables in the PRODUCT and SHOP section"
                               type="text"
                             />
@@ -94,9 +116,9 @@ export function BulkProductImageFilename() {
             <VerticalStack gap={"4"}>
               <AlphaCard>
                 <Text variant="bodyMd">
-                  You can use the following variables for filename to
-                  dynamically generate the content based on the product and shop
-                  information.
+                  Use custom text and variables to create alt text templates for
+                  images. Your custom text works as a static template, while the
+                  variables pull in dynamic values from your store's content.
                 </Text>
                 <Box paddingBlockStart={"3"}>
                   <Text variant="bodyMd" fontWeight="bold">
