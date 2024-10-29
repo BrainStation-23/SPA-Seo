@@ -15,6 +15,8 @@ import ImageOptimizerRoute from "./routes/image.optimizer.js";
 import sitemapRoute from "./routes/htmlsitemap.js";
 import UninstallCleanupRouter from "./routes/uninstall.js";
 import { errorRouter, updateErrorInsightsRouter } from "./routes/404error.js";
+import imageCompression from "./routes/imageCompression.js";
+import sharp from "sharp";
 
 const PORT = parseInt(
   process.env.BACKEND_PORT || process.env.PORT || "3000",
@@ -75,6 +77,7 @@ app.use("/api/error", errorRouter);
 app.use("/api/html-sitemap", sitemapRoute);
 app.use("/api/jsonld", jsonLdRoute);
 app.use("/api/uninstall", UninstallCleanupRouter);
+app.use("/api/image-compression", imageCompression);
 
 app.use(shopify.cspHeaders());
 app.use(serveStatic(STATIC_PATH, { index: false }));

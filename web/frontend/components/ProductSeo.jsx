@@ -6,6 +6,7 @@ import { AltimageCreate } from "./AltimageCreate";
 import { ProductScan } from "./ProductScan";
 import { GenerateJsonld } from "./GenerateJsonld";
 import { ProductImageFilenameOptimizer } from "./ProductImageFilenameOptimizer";
+import { ImageCompression } from "./ImageCompression";
 
 export default function ProductSeo() {
   const [selected, setSelected] = useState(0);
@@ -41,6 +42,11 @@ export default function ProductSeo() {
       content: "Image Filename Optimization",
       panelID: "panel-product-filename",
     },
+    {
+      id: "product-compression",
+      content: "Product Image Compression",
+      panelID: "accepts-Product-alt-content-1",
+    },
   ];
 
   return (
@@ -55,6 +61,7 @@ export default function ProductSeo() {
         {selected === 2 && <ProductScan />}
         {selected === 3 && <GenerateJsonld obj_type={"Product"} />}
         {selected === 4 && <ProductImageFilenameOptimizer />}
+        {selected === 5 && <ImageCompression />}
       </Tabs>
     </div>
   );

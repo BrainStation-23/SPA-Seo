@@ -20,7 +20,7 @@ export function ErrorList() {
             <Text as="span">{info?.url}</Text>
           </IndexTable.Cell>
           <IndexTable.Cell>
-            <Text as="span">{formattedDate(info?.timestamp)}</Text>
+            <Text as="span">{info?.timestamp && formattedDate(info?.timestamp)}</Text>
           </IndexTable.Cell>
         </IndexTable.Row>
       ))) ||
@@ -72,7 +72,7 @@ export function ErrorList() {
               </p>
               <p>
                 <b>Date: </b>
-                {isSuccess && formattedDate(data?.lastVisit?.timestamp)}
+                {isSuccess && data?.lastVisit?.timestamp && formattedDate(data?.lastVisit?.timestamp)}
               </p>
             </LegacyCard>
           </Grid.Cell>
@@ -80,12 +80,7 @@ export function ErrorList() {
       </div>
       <div className="seo_error_list">
         <div className="seo_error_list_title">404 Error list</div>
-        <IndexTableData
-          isLoading={isLoading}
-          rowMarkup={rowMarkup}
-          headings={headings}
-          resourceName={resourceName}
-        />
+        <IndexTableData isLoading={isLoading} rowMarkup={rowMarkup} headings={headings} resourceName={resourceName} />
       </div>
     </div>
   );

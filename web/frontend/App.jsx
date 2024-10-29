@@ -10,6 +10,7 @@ import {
 } from "./components";
 import { ManagedUIContext } from "./contexts/ui.context";
 import { ManagedHomeSeoContext } from "./contexts/home.context";
+import { ManagedImageCompressionContext } from "./contexts/imageCompression.context";
 import { ModalArea } from "./components/commonUI/Modal";
 import { ToastContainer } from "./components/commonUI/Toast";
 
@@ -20,27 +21,29 @@ export default function App() {
 
   return (
     <ManagedUIContext>
-      <ManagedHomeSeoContext>
-        <PolarisProvider>
-          <BrowserRouter>
-            <AppBridgeProvider>
-              <QueryProvider>
-                <NavigationMenu
-                  navigationLinks={[
-                    {
-                      label: "User manual",
-                      destination: "/manual",
-                    },
-                  ]}
-                />
-                <Routes pages={pages} />
-                <ModalArea />
-                <ToastContainer />
-              </QueryProvider>
-            </AppBridgeProvider>
-          </BrowserRouter>
-        </PolarisProvider>
-      </ManagedHomeSeoContext>
+      <ManagedImageCompressionContext>
+        <ManagedHomeSeoContext>
+          <PolarisProvider>
+            <BrowserRouter>
+              <AppBridgeProvider>
+                <QueryProvider>
+                  <NavigationMenu
+                    navigationLinks={[
+                      {
+                        label: "User manual",
+                        destination: "/manual",
+                      },
+                    ]}
+                  />
+                  <Routes pages={pages} />
+                  <ModalArea />
+                  <ToastContainer />
+                </QueryProvider>
+              </AppBridgeProvider>
+            </BrowserRouter>
+          </PolarisProvider>
+        </ManagedHomeSeoContext>
+      </ManagedImageCompressionContext>
     </ManagedUIContext>
   );
 }
