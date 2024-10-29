@@ -24,6 +24,7 @@ import {
 } from "../hooks/useImageOptimizer";
 
 export function ImageAltOptimizer() {
+  const [errors, setErrors] = useState({});
   const { data, isSuccess, isLoading } = useImageOptimizerQuery({
     url: "/api/metafields/get/image-optimizer",
   });
@@ -77,17 +78,39 @@ export function ImageAltOptimizer() {
   const handleProductImageAltChange = useCallback((value) => {
     setProductImageAlt(value);
     setIsChanged(true);
+    setErrors({ ...errors, productImageAlt: "" });
   }, []);
   const handleCollectionImageAltChange = useCallback((value) => {
     setCollectionImageAlt(value);
     setIsChanged(true);
+    setErrors({ ...errors, collectionImgeAlt: "" });
   }, []);
   const handleArticleImageAltChange = useCallback((value) => {
     setArticleImageAlt(value);
     setIsChanged(true);
+    setErrors({ ...errors, articleImageAlt: "" });
   }, []);
 
   const handleSubmit = () => {
+    if (productImageAlt.length > 125 || productImageAlt.length < 1) {
+      return setErrors({
+        ...errors,
+        productImageAlt: `Product Image Alt must be between 1 to 125 characters `,
+      });
+    }
+    if (collectionImgeAlt.length > 125 || collectionImgeAlt.length < 1) {
+      return setErrors({
+        ...errors,
+        collectionImgeAlt: `Collection Image Alt must be between 1 to 125 characters`,
+      });
+    }
+    if (articleImageAlt.length > 125 || articleImageAlt.length < 1) {
+      return setErrors({
+        ...errors,
+        articleImageAlt: `Article Image Alt must be between 1 to 125 characters`,
+      });
+    }
+
     saveImageOptimizerSettings({
       type: "altText",
       data: {
@@ -165,6 +188,7 @@ export function ImageAltOptimizer() {
                                   placeholder="{{ product.title }} {{ shop.name }}"
                                   helpText="Can use variables in the PRODUCT and SHOP section"
                                   type="text"
+                                  error={errors?.productImageAlt}
                                 />
                               </FormLayout>
                             </AlphaCard>
@@ -195,6 +219,7 @@ export function ImageAltOptimizer() {
                                   placeholder="{{ collection.title }} {{ shop.name }}"
                                   helpText="Can use variables in the COLLECTION and SHOP section"
                                   type="text"
+                                  error={errors?.collectionImgeAlt}
                                 />
                               </FormLayout>
                             </AlphaCard>
@@ -225,6 +250,7 @@ export function ImageAltOptimizer() {
                                   placeholder="{{ article.title }} {{ shop.name }}"
                                   helpText="Can use variables in the BLOG POST and SHOP section"
                                   type="text"
+                                  error={errors?.articleImageAlt}
                                 />
                               </FormLayout>
                             </AlphaCard>

@@ -20,11 +20,7 @@ export const useBlogsQuery = ({ url, fetchInit = {}, reactQueryOptions }) => {
   });
 };
 
-export const useArticlesQuery = ({
-  url,
-  fetchInit = {},
-  reactQueryOptions,
-}) => {
+export const useArticlesQuery = ({ url, fetchInit = {}, reactQueryOptions }) => {
   const authenticatedFetch = useAuthenticatedFetch();
   const fetch = useMemo(() => {
     return async () => {
@@ -45,11 +41,7 @@ export const useArticlesQuery = ({
   });
 };
 
-export const useSingleArticleQuery = ({
-  url,
-  fetchInit = {},
-  reactQueryOptions,
-}) => {
+export const useSingleArticleQuery = ({ url, fetchInit = {}, reactQueryOptions }) => {
   const authenticatedFetch = useAuthenticatedFetch();
   const fetch = useMemo(() => {
     return async () => {
@@ -68,11 +60,7 @@ export const useSingleArticleQuery = ({
   });
 };
 
-export const useArticlesSeoQuery = ({
-  url,
-  fetchInit = {},
-  reactQueryOptions,
-}) => {
+export const useArticlesSeoQuery = ({ url, fetchInit = {}, reactQueryOptions }) => {
   const authenticatedFetch = useAuthenticatedFetch();
   const fetch = useMemo(() => {
     return async () => {

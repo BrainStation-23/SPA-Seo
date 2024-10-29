@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  IndexTable,
-  Text,
-  HorizontalStack,
-  VerticalStack,
-  Button,
-} from "@shopify/polaris";
+import { IndexTable, Text, HorizontalStack, VerticalStack, Button } from "@shopify/polaris";
 import { IndexTableData } from "./commonUI/IndexTable";
 import { Spinners } from "./Spinner";
 import { useUI } from "../contexts/ui.context";
@@ -16,6 +10,8 @@ export default function BlogPage() {
   const { isError, isLoading, data } = useBlogsQuery({
     url: "/api/blog/list",
   });
+
+  console.log("data", data);
 
   const rowMarkup =
     (data &&
@@ -52,11 +48,7 @@ export default function BlogPage() {
       ))) ||
     [];
 
-  const headings = [
-    { title: "Name" },
-    { title: "Tags" },
-    { title: "Action", alignment: "center" },
-  ];
+  const headings = [{ title: "Name" }, { title: "Tags" }, { title: "Action", alignment: "center" }];
 
   const resourceName = {
     singular: "Product",
@@ -72,12 +64,7 @@ export default function BlogPage() {
           <div className="seo_score_page_title_container">
             <div className="seo_score_page_title">Blog SEO</div>
           </div>
-          <IndexTableData
-            isLoading={isLoading}
-            rowMarkup={rowMarkup}
-            headings={headings}
-            resourceName={resourceName}
-          />
+          <IndexTableData isLoading={isLoading} rowMarkup={rowMarkup} headings={headings} resourceName={resourceName} />
         </VerticalStack>
       )}
     </>
