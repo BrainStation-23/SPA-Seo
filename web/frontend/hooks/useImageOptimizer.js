@@ -161,7 +161,7 @@ export const useBulkImageFilenameUpdate = () => {
           message: `Something went wrong`,
         });
       }
-      queryClient.invalidateQueries("metafieldList");
+      queryClient.invalidateQueries("ImageOptimizerSettings");
 
       setToggleToast({
         active: true,

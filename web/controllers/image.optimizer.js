@@ -578,7 +578,7 @@ async function saveGlobalImageFilenameToMetafield({ session, filename }) {
     const initialQuery = await client.query({
       data: {
         query: `{
-                  metafieldDefinitions(first:1, namespace: "bs-23-seo-app", ownerType: SHOP, key: "json-ld") {
+                  metafieldDefinitions(first:1, namespace: "bs-23-seo-app", ownerType: SHOP, key: "image-optimizer") {
                     edges {
                       node {
                         id
@@ -587,7 +587,7 @@ async function saveGlobalImageFilenameToMetafield({ session, filename }) {
                   }
                   shop {
                     id
-                    metafield(namespace: "bs-23-seo-app", key: "json-ld") {
+                    metafield(namespace: "bs-23-seo-app", key: "image-optimizer") {
                       value
                     }
                   }
@@ -601,7 +601,7 @@ async function saveGlobalImageFilenameToMetafield({ session, filename }) {
           query: `mutation {
                     metafieldDefinitionCreate(definition: {
                       namespace: "bs-23-seo-app",
-                      key: "json-ld",
+                      key: "image-optimizer",
                       type: "json",
                       name: "SEO app metafield",
                       description: "Metafield for storing image optimizer settings"
@@ -637,7 +637,7 @@ async function saveGlobalImageFilenameToMetafield({ session, filename }) {
         variables: {
           metafields: [
             {
-              key: "json-ld",
+              key: "image-optimizer",
               namespace: "bs-23-seo-app",
               ownerId: shopId,
               value: JSON.stringify({ ...prevData, filename }),
