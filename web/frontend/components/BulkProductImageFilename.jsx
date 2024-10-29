@@ -15,33 +15,54 @@ import {
   HorizontalStack,
 } from "@shopify/polaris";
 import { RefreshIcon } from "@shopify/polaris-icons";
+import { useHomeSeo } from "../contexts/home.context";
 import { useBulkImageFilenameUpdate } from "../hooks/useImageOptimizer";
+import { useCreateMetafield } from "../hooks/useMetafieldQuery";
 import { useUI } from "../contexts/ui.context";
 
 export function BulkProductImageFilename() {
   const { setToggleToast } = useUI();
+  const { filename, setFilename } = useHomeSeo();
+  const [isChanged, setIsChanged] = useState(false);
   const {
     mutate: bulkUpdate,
     isLoading,
     isSuccess,
     isError,
   } = useBulkImageFilenameUpdate();
-  const [productImageFileName, setProductImageFileName] = useState(null);
+  const {
+    mutate: saveFilenamePattern,
+    isLoading: isFilenamePatternSaving,
+    isError: isFilenamePatternSavingError,
+    isSuccess: isFilenamePatternSavingSuccess,
+  } = useCreateMetafield("metafieldList");
+
   const [isWaiting, setIsWaiting] = useState(false);
 
   const handleProductImageAltChange = useCallback((value) => {
-    setProductImageFileName(value);
+    setFilename(value);
+    setIsChanged(true);
   }, []);
 
   const handleSubmit = () => {
-    if (productImageFileName === null || productImageFileName.length === 0) {
+    if (filename === null || filename.length === 0) {
       return setToggleToast({
         active: true,
         message: `Filename cannot be empty`,
       });
     }
-    bulkUpdate({ fileNameSettings: productImageFileName });
+    bulkUpdate({ fileNameSettings: filename });
   };
+
+  useEffect(() => {
+    if (isFilenamePatternSavingSuccess) {
+      setIsChanged(false);
+    }
+  }, [
+    isFilenamePatternSaving,
+    isFilenamePatternSavingSuccess,
+    isFilenamePatternSavingSuccess,
+  ]);
 
   useEffect(() => {
     if (isLoading) setIsWaiting(true);
@@ -62,14 +83,31 @@ export function BulkProductImageFilename() {
       title="Product Image Filename Optimization"
       subtitle="Filename optimization for better SEO"
       primaryAction={
-        <Button
-          primary
-          icon={RefreshIcon}
-          loading={isLoading || isWaiting}
-          onClick={handleSubmit}
-        >
-          Sync
-        </Button>
+        <HorizontalStack gap={"2"}>
+          <Button
+            primary
+            loading={isFilenamePatternSaving}
+            disabled={!isChanged}
+            onClick={() => {
+              saveFilenamePattern({
+                type: "filename",
+                owner: "SHOP",
+                data: filename,
+              });
+            }}
+          >
+            Save
+          </Button>
+          <Button
+            primary
+            icon={RefreshIcon}
+            loading={isLoading || isWaiting}
+            disabled={isChanged}
+            onClick={handleSubmit}
+          >
+            Sync
+          </Button>
+        </HorizontalStack>
       }
     >
       <Box paddingBlockStart={"2"}>
@@ -93,7 +131,7 @@ export function BulkProductImageFilename() {
                         <AlphaCard>
                           <FormLayout>
                             <TextField
-                              value={productImageFileName}
+                              value={filename}
                               onChange={handleProductImageAltChange}
                               label={<Text variant="headingSm">File name</Text>}
                               placeholder="Enter filename or use variables."

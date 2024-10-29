@@ -1,6 +1,7 @@
 import React from "react";
 
 const initialState = {
+  filename: "",
   organization: {
     industry: [],
     brand: { name: "", logo: "" },
@@ -37,6 +38,12 @@ function homeSeoReducer(state, action) {
         organization: action.payload,
       };
     }
+    case "SET_FILE": {
+      return {
+        ...state,
+        filename: action.payload,
+      };
+    }
     case "SET_RATE": {
       return {
         ...state,
@@ -56,6 +63,7 @@ export const HomeSeoProvider = (props) => {
   const [state, dispatch] = React.useReducer(homeSeoReducer, initialState);
 
   const setOrganization = (payload) => dispatch({ type: "SET_ORG", payload });
+  const setFilename = (payload) => dispatch({ type: "SET_FILE", payload });
   const setRating = (payload) => dispatch({ type: "SET_RATE", payload });
   const setReviews = (payload) => dispatch({ type: "SET_REVIEW", payload });
 
@@ -65,6 +73,7 @@ export const HomeSeoProvider = (props) => {
       setOrganization,
       setRating,
       setReviews,
+      setFilename,
     }),
     [state]
   );
