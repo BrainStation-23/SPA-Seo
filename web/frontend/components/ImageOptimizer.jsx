@@ -286,7 +286,7 @@ export function ImageAltOptimizer() {
                   </AlphaCard>
                   <AlphaCard padding={"0"}>
                     <Box padding={"5"}>
-                      <Text variant="headingMd">Variables</Text>
+                      <Text variant="headingLg">Variables</Text>
                     </Box>
                     <Divider borderWidth="2" />
                     <Box padding={"5"}>
