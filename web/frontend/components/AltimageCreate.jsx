@@ -7,7 +7,15 @@ import { useUpdateProductSeoImgAlt } from "../hooks/useProductsQuery";
 export function AltimageCreate() {
   const [isLoading, setIsLoading] = useState(false);
   const { modal, setToggleToast } = useUI();
-  const images = modal?.data?.info?.images?.edges?.map((data) => data?.node);
+  const images = modal?.data?.info?.media?.edges?.map((data) => {
+    const node = data?.node;
+    return {
+      id: node.id,
+      url: node.preview.image.url,
+      altText: node.alt,
+      originalSrc: node.preview.image.url,
+    };
+  });
 
   const { mutate: updateSeoAltText, isError } = useUpdateProductSeoImgAlt();
   const [formData, setFormData] = useState([]);
