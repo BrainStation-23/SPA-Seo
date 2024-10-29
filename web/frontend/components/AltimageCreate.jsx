@@ -35,7 +35,7 @@ export function AltimageCreate() {
   };
 
   useEffect(() => {
-    if (images.length > 0) {
+    if (images?.length > 0) {
       setFormData(images);
     }
   }, []);
