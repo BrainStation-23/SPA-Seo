@@ -54,19 +54,23 @@ export const useCreateMetafield = (invalidationTarget) => {
           message: `Something went wrong`,
         });
       }
+      if (invalidationTarget === "metafieldList") {
+        setCloseModal();
+        queryClient.invalidateQueries(invalidationTarget);
+      } else {
+        const updatedData = await data?.json();
+        const updatedInfo = updatedData?.productByID;
+        console.log("updatedInfo", updatedInfo);
 
-      const updatedData = await data?.json();
-      const updatedInfo = updatedData?.productByID;
-      console.log("updatedInfo", updatedInfo);
-
-      setOpenModal({
-        view: "CREATE_PRODUCT_SEO",
-        isOpen: true,
-        data: {
-          title: `Product SEO (${updatedInfo?.title})`,
-          info: updatedInfo,
-        },
-      });
+        setOpenModal({
+          view: "CREATE_PRODUCT_SEO",
+          isOpen: true,
+          data: {
+            title: `Product SEO (${updatedInfo?.title})`,
+            info: updatedInfo,
+          },
+        });
+      }
 
       setToggleToast({
         active: true,

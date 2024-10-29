@@ -1,13 +1,5 @@
-import React from "react";
-import {
-  Box,
-  Divider,
-  Page,
-  Layout,
-  AlphaCard,
-  Text,
-  VerticalStack,
-} from "@shopify/polaris";
+import React, { useState } from "react";
+import { Box, Divider, Page, Layout, AlphaCard, Text, VerticalStack } from "@shopify/polaris";
 import {
   IndustryInformation,
   BrandInformation,
@@ -22,9 +14,9 @@ import { useCreateMetafield } from "../hooks/useMetafieldQuery";
 import Switch from "./commonUI/Switch/Switch";
 
 export default function CompanyProfile() {
+  const [loading, setLoading] = useState(false);
   const { organization, setOrganization } = useHomeSeo();
-  const { mutate: createMetafield, isError: isErrorOnCreatingMetafield } =
-    useCreateMetafield("metafieldList");
+  const { mutate: createMetafield, isError: isErrorOnCreatingMetafield } = useCreateMetafield("metafieldList");
   const handleCheckedChange = () => {
     setOrganization({
       ...organization,
@@ -40,17 +32,29 @@ export default function CompanyProfile() {
       title={"Company profile settings"}
       primaryAction={{
         content: "Save",
+        loading: loading,
+        disabled: loading,
         onAction: () => {
           const industryList = organization?.industry.join(", ");
-
-          createMetafield({
-            type: "organization",
-            data: {
-              ...organization,
-              industry: industryList,
+          setLoading(true);
+          createMetafield(
+            {
+              type: "organization",
+              data: {
+                ...organization,
+                industry: industryList,
+              },
+              owner: "SHOP",
             },
-            owner: "SHOP",
-          });
+            {
+              onSuccess: () => {
+                setLoading(false);
+              },
+              onError: () => {
+                setLoading(false);
+              },
+            }
+          );
         },
       }}
     >
@@ -81,8 +85,7 @@ export default function CompanyProfile() {
               </Box>
               <Box>
                 <Text variant="bodyMd">
-                  Inject your organization information for search engines like
-                  googles to crawl
+                  Inject your organization information for search engines like googles to crawl
                 </Text>
               </Box>
             </Layout.Section>
@@ -90,15 +93,10 @@ export default function CompanyProfile() {
               <Box>
                 <AlphaCard>
                   <VerticalStack gap={"6"}>
-                    <Text variant="bodyMd">
-                      Add organization snippet in storefront.
-                    </Text>
+                    <Text variant="bodyMd">Add organization snippet in storefront.</Text>
                     <VerticalStack gap={"2"}>
                       <Text variant="headingSm">Status</Text>
-                      <Switch
-                        checked={organization?.status}
-                        handleClick={handleCheckedChange}
-                      />
+                      <Switch checked={organization?.status} handleClick={handleCheckedChange} />
                     </VerticalStack>
                   </VerticalStack>
                 </AlphaCard>

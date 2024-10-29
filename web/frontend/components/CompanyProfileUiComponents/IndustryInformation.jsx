@@ -1,25 +1,14 @@
 import React, { useCallback, useState } from "react";
-import {
-  Layout,
-  Box,
-  Text,
-  AlphaCard,
-  Select,
-  VerticalStack,
-  TextField,
-  Tag,
-  Button,
-} from "@shopify/polaris";
+import { Layout, Box, Text, AlphaCard, Select, VerticalStack, TextField, Tag, Button } from "@shopify/polaris";
 import { useHomeSeo } from "../../contexts/home.context";
 import { useUI } from "../../contexts/ui.context";
 
 export default function IndustryInformation() {
   const { setToggleToast } = useUI();
   const { organization, setOrganization } = useHomeSeo();
+  console.log("organization", organization);
   const handleAddSelection = (value) => {
-    const isExists = organization?.industry?.find(
-      (organization) => organization === value
-    );
+    const isExists = organization?.industry?.find((org) => org.trim().toLowerCase() === value.trim().toLowerCase());
 
     if (isExists) {
       return setToggleToast({
@@ -74,7 +63,13 @@ export default function IndustryInformation() {
       value: "Other",
     },
   ];
-
+  const getOptionsWithDisabled = () =>
+    options.map((option) => ({
+      ...option,
+      disabled: organization?.industry?.some(
+        (selected) => selected.trim().toLowerCase() === option.value.trim().toLowerCase()
+      ),
+    }));
   return (
     <Box paddingBlockStart={"5"} paddingBlockEnd={"5"}>
       <Layout>
@@ -83,9 +78,7 @@ export default function IndustryInformation() {
             <Text variant="headingMd">Industry</Text>
           </Box>
           <Box>
-            <Text variant="bodyMd">
-              Let search engines like Google know your industry
-            </Text>
+            <Text variant="bodyMd">Let search engines like Google know your industry</Text>
           </Box>
         </Layout.Section>
         <Layout.Section oneHalf>
@@ -96,7 +89,7 @@ export default function IndustryInformation() {
                   <div className="select_for_industry">
                     <Select
                       label="Select industry"
-                      options={options}
+                      options={getOptionsWithDisabled()}
                       onChange={(value) => setSelectOrganization(value)}
                       value={selectOrganization}
                     />
@@ -111,10 +104,7 @@ export default function IndustryInformation() {
                     )}
                   </div>
                   <div className="items_center button_for_industry_info">
-                    <Button
-                      primary
-                      onClick={() => handleAddSelection(selectOrganization)}
-                    >
+                    <Button primary onClick={() => handleAddSelection(selectOrganization)}>
                       Add
                     </Button>
                   </div>
