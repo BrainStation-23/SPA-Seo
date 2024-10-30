@@ -39,11 +39,7 @@ export const useBulkUpdateAltText = () => {
   });
 };
 
-export const useImageOptimizerQuery = ({
-  url,
-  fetchInit = {},
-  reactQueryOptions,
-}) => {
+export const useImageOptimizerQuery = ({ url, fetchInit = {}, reactQueryOptions }) => {
   const authenticatedFetch = useAuthenticatedFetch();
   const fetch = useMemo(() => {
     return async () => {
@@ -100,7 +96,7 @@ export const useSaveImageOptimizerSettings = () => {
 
 export const useSingleImageFilenameUpdate = () => {
   const fetch = useAuthenticatedFetch();
-  const { setCloseModal, setToggleToast } = useUI();
+  const { setCloseModal, setToggleToast, setOpenModal } = useUI();
   const queryClient = useQueryClient();
   async function updateSingleImageFilename(status) {
     return await fetch("/api/image-optimizer/filename", {
@@ -120,14 +116,24 @@ export const useSingleImageFilenameUpdate = () => {
           message: `Something went wrong`,
         });
       }
-      queryClient.invalidateQueries("productList");
 
+      const updataedData = await data.json();
+      const updatedInfo = updataedData.productDataById;
+
+      setOpenModal({
+        view: "CREATE_PRODUCT_SEO",
+        isOpen: true,
+        data: {
+          title: `Product SEO (${updatedInfo?.title})`,
+          info: updatedInfo,
+        },
+      });
       setToggleToast({
         active: true,
         message: `Updated Successfully`,
       });
 
-      setCloseModal();
+      // setCloseModal();
     },
     onError: async () => {
       setToggleToast({

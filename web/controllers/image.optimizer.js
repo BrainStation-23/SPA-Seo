@@ -1,5 +1,6 @@
 import shopify from "../shopify.js";
 import { extname, basename } from "path";
+import { getProductByID } from "./products.js";
 
 const fetchAllFromDataSource = async ({ session, query, datasource }) => {
   let allData = [];
@@ -23,15 +24,11 @@ const fetchAllFromDataSource = async ({ session, query, datasource }) => {
         },
       });
 
-      const products = response.body.data[`${datasource}`].edges.map(
-        (edge) => edge.node
-      );
+      const products = response.body.data[`${datasource}`].edges.map((edge) => edge.node);
       const pageInfo = response.body.data[`${datasource}`].pageInfo;
       const endCursor =
         response.body.data[`${datasource}`].edges.length > 0
-          ? response.body.data[`${datasource}`].edges[
-              response.body.data[`${datasource}`].edges.length - 1
-            ].cursor
+          ? response.body.data[`${datasource}`].edges[response.body.data[`${datasource}`].edges.length - 1].cursor
           : null;
       allData = allData.concat(products);
 
@@ -83,10 +80,7 @@ const translateAltText = (altTextSettings, owner, type, shop) => {
           ownerData = "";
           break;
       }
-    } else if (
-      ownerType.toLocaleLowerCase() == "product" &&
-      type == "product"
-    ) {
+    } else if (ownerType.toLocaleLowerCase() == "product" && type == "product") {
       switch (property.toLocaleLowerCase()) {
         case "title":
           ownerData = owner.title;
@@ -104,17 +98,11 @@ const translateAltText = (altTextSettings, owner, type, shop) => {
           ownerData = "";
           break;
       }
-    } else if (
-      ownerType.toLocaleLowerCase() == "collection" &&
-      type == "collection"
-    ) {
+    } else if (ownerType.toLocaleLowerCase() == "collection" && type == "collection") {
       if (property.toLocaleLowerCase() == "title") {
         ownerData = owner.title;
       }
-    } else if (
-      ownerType.toLocaleLowerCase() == "article" &&
-      type == "article"
-    ) {
+    } else if (ownerType.toLocaleLowerCase() == "article" && type == "article") {
       switch (property.toLocaleLowerCase()) {
         case "title":
           ownerData = owner.title;
@@ -137,13 +125,7 @@ const translateAltText = (altTextSettings, owner, type, shop) => {
   return altText;
 };
 
-const updateImageAltManually = async ({
-  session,
-  shopData,
-  datasource,
-  metafieldData,
-  type,
-}) => {
+const updateImageAltManually = async ({ session, shopData, datasource, metafieldData, type }) => {
   try {
     const client = new shopify.api.clients.Graphql({
       apiVersion: "2024-10",
@@ -156,20 +138,13 @@ const updateImageAltManually = async ({
     while (hasNextSlice) {
       const slice = datasource.slice(
         start,
-        start + batchSize < datasource.length
-          ? start + batchSize
-          : datasource.length
+        start + batchSize < datasource.length ? start + batchSize : datasource.length
       );
 
       let mutation_query = ``;
       slice.forEach((data, index) => {
         const altText = metafieldData.altText[`${type}Status`]
-          ? translateAltText(
-              metafieldData.altText[`${type}`],
-              data,
-              type,
-              shopData
-            )
+          ? translateAltText(metafieldData.altText[`${type}`], data, type, shopData)
           : "";
 
         if (type == "collection") {
@@ -238,9 +213,7 @@ export const BulkUpdateAltText = async (req, res, next) => {
     }
 
     if (!metafieldData) {
-      return res
-        .status(400)
-        .json({ message: "No optimization settings was specified" });
+      return res.status(400).json({ message: "No optimization settings was specified" });
     }
 
     console.log("got metafield data");
@@ -284,12 +257,7 @@ export const BulkUpdateAltText = async (req, res, next) => {
 
     allProducts.forEach((productData) => {
       const productAltText = metafieldData.altText.productStatus
-        ? translateAltText(
-            metafieldData.altText.product,
-            productData,
-            "product",
-            shopData.body.data.shop
-          )
+        ? translateAltText(metafieldData.altText.product, productData, "product", shopData.body.data.shop)
         : "";
 
       productData.media.edges.forEach(({ node }) => {
@@ -417,10 +385,7 @@ function sanitizeFilename(filename) {
 
 function parseFilenameFromSrc(url) {
   const full_filename = url.substring(url.lastIndexOf("/") + 1).split("?")[0];
-  const filename_without_extension = full_filename.substring(
-    0,
-    full_filename.lastIndexOf(".")
-  );
+  const filename_without_extension = full_filename.substring(0, full_filename.lastIndexOf("."));
   const fileExtension = full_filename.substring(full_filename.lastIndexOf("."));
   return { filename: filename_without_extension, fileExt: fileExtension };
 }
@@ -431,7 +396,7 @@ export const updateProductImageFilename = async (req, res, next) => {
       session: res.locals.shopify.session,
     });
     const { id, fileNameSettings, fileExt, productId } = req.body;
-
+    console.log("productID", productId);
     const queryData = await client.query({
       data: {
         query: `
@@ -458,12 +423,7 @@ export const updateProductImageFilename = async (req, res, next) => {
     const shop = queryData.body.data.shop,
       product = queryData.body.data.product;
 
-    const filename = translateAltText(
-      fileNameSettings,
-      product,
-      "product",
-      shop
-    );
+    const filename = translateAltText(fileNameSettings, product, "product", shop);
 
     const input = [
       {
@@ -489,23 +449,15 @@ export const updateProductImageFilename = async (req, res, next) => {
       },
     });
 
-    if (
-      productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors
-        .length > 0
-    ) {
-      throw new Error(
-        JSON.stringify(
-          productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors
-        )
-      );
+    if (productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors.length > 0) {
+      throw new Error(JSON.stringify(productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors));
     }
-
-    return res.status(200).json({ message: "Product image filename updated" });
+    const product_id = productId.split("/").pop();
+    const productDataById = await getProductByID(res.locals.shopify.session, product_id);
+    return res.status(200).json({ message: "Product image filename updated", productDataById });
   } catch (error) {
     console.error(error);
-    return res
-      .status(400)
-      .json({ message: "Error updating product image filename" });
+    return res.status(400).json({ message: "Error updating product image filename" });
   }
 };
 
@@ -535,14 +487,9 @@ async function batchUpdateImageFileName({ input, client }) {
         },
       });
 
-      if (
-        productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors
-          .length > 0
-      ) {
+      if (productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors.length > 0) {
         console.log("something happened");
-        console.log(
-          productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors
-        );
+        console.log(productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors);
         // throw productImageFilenameUpdateResponse.body.data.fileUpdate
         //   .userErrors;
       }
@@ -619,12 +566,8 @@ async function saveGlobalImageFilenameToMetafield({ session, filename }) {
         },
       });
 
-      if (
-        createMetafieldDefinition.body.data.metafieldDefinitionCreate.userErrors
-          .length > 0
-      ) {
-        throw createMetafieldDefinition.body.data.metafieldDefinitionCreate
-          .userErrors;
+      if (createMetafieldDefinition.body.data.metafieldDefinitionCreate.userErrors.length > 0) {
+        throw createMetafieldDefinition.body.data.metafieldDefinitionCreate.userErrors;
       }
     }
 
@@ -747,9 +690,7 @@ export const bulkUpdateProductImageFilename = async (req, res, next) => {
         .filter((e) => e.node.mediaContentType === "IMAGE")
         .forEach(({ node }) => {
           const { fileExt } = parseFilenameFromSrc(node.preview.image.url);
-          const filename = sanitizeFilename(
-            translateAltText(fileNameSettings, productData, "product", shop)
-          );
+          const filename = sanitizeFilename(translateAltText(fileNameSettings, productData, "product", shop));
 
           if (map.has(filename)) {
             map.set(filename, map.get(filename) + 1);
@@ -772,8 +713,6 @@ export const bulkUpdateProductImageFilename = async (req, res, next) => {
     return res.status(200).json({ message: "Product image filename updated" });
   } catch (error) {
     console.error(error);
-    return res
-      .status(400)
-      .json({ message: "Error updating product image filename" });
+    return res.status(400).json({ message: "Error updating product image filename" });
   }
 };

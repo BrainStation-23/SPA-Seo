@@ -128,16 +128,21 @@ export const getProductByID = async (session, id) => {
         handle
         tags
         vendor
-        images(first: 250) {
-          edges {
-            node {
-              id
-              url
-              originalSrc
-              altText
+         media(first: 250) {
+              edges {
+                node {
+                  id
+									alt
+                  mediaContentType
+                  preview {
+										status
+                    image {
+                      url
+                    }
+                  }
+                }
+              }
             }
-          }
-        }
         featuredImage {
           altText
           url

@@ -17,10 +17,7 @@ import { useSingleImageFilenameUpdate } from "../hooks/useImageOptimizer";
 
 function parseFilenameFromSrc(url) {
   const full_filename = url.substring(url.lastIndexOf("/") + 1).split("?")[0];
-  const filename_without_extension = full_filename.substring(
-    0,
-    full_filename.lastIndexOf(".")
-  );
+  const filename_without_extension = full_filename.substring(0, full_filename.lastIndexOf("."));
   const fileExtension = full_filename.substring(full_filename.lastIndexOf("."));
   return { filename: filename_without_extension, fileExt: fileExtension };
 }
@@ -29,38 +26,50 @@ function ImageTextField({ image, product, shop }) {
   const { filename: prev_filename, fileExt } = parseFilenameFromSrc(image?.url);
   const { mutate: updateFilename, isLoading } = useSingleImageFilenameUpdate();
   const [filename, setFilename] = useState(prev_filename);
+  const [errors, setErrors] = useState("");
 
   const handleFilenameChange = useCallback((value) => {
     setFilename(value);
+    setErrors("");
   }, []);
+  const validateFilename = (filename) => {
+    const forbiddenChars = /[^a-zA-Z0-9-_]/;
+    if (!filename) {
+      return "Filename cannot be empty.";
+    }
+    if (forbiddenChars.test(filename)) {
+      return "Filename contains invalid characters. Use only alphanumeric characters, dashes, and underscores.";
+    }
+    if (filename.length > 50) {
+      return "Filename must not exceed 50 characters.";
+    }
+    return null;
+  };
+  const handleSave = () => {
+    const validationError = validateFilename(filename);
+    if (validationError) {
+      setErrors(validationError);
+      return;
+    }
 
+    updateFilename({
+      id: image.id,
+      fileNameSettings: filename,
+      fileExt: fileExt,
+      productId: product.id,
+      shop: shop,
+    });
+  };
   return (
     <HorizontalStack gap={"2"} blockAlign="center">
       <Thumbnail source={image?.url ? image?.url : image?.src} />
       <HorizontalStack gap={"1"}>
         <Box width="400px">
-          <TextField
-            onChange={handleFilenameChange}
-            value={filename}
-            type="text"
-          />
+          <TextField onChange={handleFilenameChange} value={filename} type="text" error={errors} />
         </Box>
         <Text>{fileExt}</Text>
       </HorizontalStack>
-      <Button
-        loading={isLoading}
-        disabled={filename === prev_filename}
-        primary
-        onClick={() => {
-          updateFilename({
-            id: image.id,
-            fileNameSettings: filename,
-            fileExt: fileExt,
-            productId: product.id,
-            shop: shop,
-          });
-        }}
-      >
+      <Button loading={isLoading} disabled={filename === prev_filename} primary onClick={handleSave}>
         Save
       </Button>
     </HorizontalStack>
@@ -82,7 +91,6 @@ export function ProductImageFilenameOptimizer() {
         originalSrc: node.preview.image.url,
       };
     });
-  console.log("product", product, shop);
   return (
     <Box paddingBlockStart={"2"}>
       <Text variant="headingMd">Product Image Filename Optimizer</Text>
@@ -91,12 +99,7 @@ export function ProductImageFilenameOptimizer() {
           <Box paddingBlockStart={"4"}>
             <VerticalStack gap={"4"}>
               {images?.map((image, index) => (
-                <ImageTextField
-                  key={index}
-                  image={image}
-                  product={product}
-                  shop={shop}
-                />
+                <ImageTextField key={index} image={image} product={product} shop={shop} />
               ))}
             </VerticalStack>
           </Box>
@@ -105,13 +108,12 @@ export function ProductImageFilenameOptimizer() {
           <VerticalStack gap={"2"}>
             <AlphaCard background="bg-app-selected">
               <Text variant="bodyMd">
-                You can use the following variables to dynamically generate the
-                content based on the product and shop information.
+                You can use the following variables to dynamically generate the content based on the product and shop
+                information.
               </Text>
               <Box paddingBlockStart={"3"}>
                 <Text variant="bodyMd" fontWeight="bold">
-                  Use the following variables exactly as listed, including
-                  whitespace, to set image alt text.
+                  Use the following variables exactly as listed, including whitespace, to set image alt text.
                 </Text>
               </Box>
             </AlphaCard>
