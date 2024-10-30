@@ -108,7 +108,6 @@ export const getCollectionByID = async (session, id) => {
     const client = new shopify.api.clients.Graphql({ session });
 
     const collectionInfo = await client.query({ data: query });
-    console.log("collectionInfo", collectionInfo);
     return collectionInfo?.body?.data?.collection;
   } catch (err) {
     console.log("🚀 ~ getProductByID ~ error:", err);
@@ -130,8 +129,6 @@ export const updateCollectionSEO = async (req, res, next) => {
   try {
     const { id, seoTitle, seoDescription } = req.body;
     const collectionID = id?.split("/").pop();
-    console.log("collectionID", collectionID);
-
     const mutation = `
     mutation updateCollection($input: CollectionInput!) {
       collectionUpdate(input: $input) {
@@ -177,7 +174,6 @@ export const updateCollectionSEO = async (req, res, next) => {
       return res.status(400).json({ error: response.body.data.collectionUpdate.userErrors });
     } else {
       const collectionByID = await getCollectionByID(res.locals.shopify.session, collectionID);
-      console.log("Updated product SEO:", response.body.data.collectionUpdate.collection);
       return res.status(200).json({ product: response.body.data.collectionUpdate.collection, collectionByID });
     }
   } catch (error) {

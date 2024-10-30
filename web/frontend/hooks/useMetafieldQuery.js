@@ -63,8 +63,6 @@ export const useCreateMetafield = (invalidationTarget) => {
         const updatedData = await data?.json();
         const owner = updatedData?.owner;
         const updatedInfo = updatedData?.dataByID;
-        console.log("updatedInfo", updatedInfo);
-        console.log("owner", owner?.toLowerCase());
         if (owner?.toLowerCase() == "product") {
           setOpenModal({
             view: "CREATE_PRODUCT_SEO",

@@ -81,7 +81,6 @@ async function manageArticleMetafield(session, ownerId, blogId, data, active) {
 export const MetafieldCreate = async (req, res, next) => {
   try {
     let { type, data, owner, ownerId, blogId } = req.body;
-    console.log("owner", ownerId);
     let ownerNumberId = owner === "ARTICLE" ? ownerId : ownerId?.split("/").pop();
 
     if (owner == "ARTICLE") {

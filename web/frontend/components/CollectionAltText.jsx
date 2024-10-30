@@ -15,7 +15,6 @@ export function CollectionAltTextImage() {
   const [formData, setFormData] = useState("");
 
   const handleSubmit = (obj) => {
-    console.log("obj", obj.length);
     if (!obj) {
       return setErrors({
         ...errors,

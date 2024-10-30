@@ -6,7 +6,6 @@ import { useUI } from "../../contexts/ui.context";
 export default function IndustryInformation() {
   const { setToggleToast } = useUI();
   const { organization, setOrganization } = useHomeSeo();
-  console.log("organization", organization);
   const handleAddSelection = (value) => {
     const isExists = organization?.industry?.find((org) => org.trim().toLowerCase() === value.trim().toLowerCase());
 

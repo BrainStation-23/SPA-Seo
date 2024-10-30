@@ -54,8 +54,6 @@ export function ArticleSchemaMarkup() {
   }, [isSuccess]);
 
   const handleSubmit = useCallback(() => {
-    console.log("authorUrl", authorUrl);
-    console.log("additionalAuthors", additionalAuthors);
     if (authorUrl?.length && additionalAuthors?.length == 0) {
       return setErrors({
         ...errors,

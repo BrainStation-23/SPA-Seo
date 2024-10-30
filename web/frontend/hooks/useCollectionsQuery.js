@@ -58,12 +58,8 @@ export const useCreateCollectionSeo = () => {
           message: `Something went wrong`,
         });
       }
-      // console.log("data", await data.json());
       const updatedInfo = await data.json();
       const updateData = updatedInfo?.collectionByID;
-      // setCloseModal();
-      // queryClient.invalidateQueries("collectionList");
-      console.log("updateData", updateData);
       setOpenModal({
         view: "CREATE_COLLECTION_SEO",
         isOpen: true,
@@ -110,11 +106,9 @@ export const useUpdateCollectionSeoImgAlt = () => {
           message: `Something went wrong`,
         });
       }
-      // setCloseModal();
-      // queryClient.invalidateQueries("collectionList");
+
       const updatedData = await data?.json();
       const updatedInfo = updatedData?.collectionByID;
-      console.log("updatedInfo", updatedInfo);
       setOpenModal({
         view: "CREATE_COLLECTION_SEO",
         isOpen: true,

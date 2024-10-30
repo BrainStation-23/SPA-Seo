@@ -396,7 +396,6 @@ export const updateProductImageFilename = async (req, res, next) => {
       session: res.locals.shopify.session,
     });
     const { id, fileNameSettings, fileExt, productId } = req.body;
-    console.log("productID", productId);
     const queryData = await client.query({
       data: {
         query: `

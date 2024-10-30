@@ -105,7 +105,6 @@ export const useUpdateBlogSeo = () => {
       // queryClient.invalidateQueries("articleSeo");
       const updatedData = await data?.json();
       const updatedInfo = updatedData?.article;
-      console.log("updatedInfo", updatedInfo);
 
       setOpenModal({
         view: "ARTICLE_SEO",
@@ -153,10 +152,8 @@ export const useUpdateArticleSeoImgAlt = () => {
           message: `Something went wrong`,
         });
       }
-      // queryClient.invalidateQueries("singleArticle");
       const updatedData = await data?.json();
       const updatedInfo = updatedData?.articleData;
-      console.log("updatedInfo", updatedInfo);
       setOpenModal({
         view: "ARTICLE_SEO",
         isOpen: true,

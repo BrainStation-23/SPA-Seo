@@ -8,7 +8,6 @@ import TextareaField from "./commonUI/TextareaField";
 export function CreateProductSeo() {
   const [isLoading, setIsLoading] = useState(false);
   const { modal } = useUI();
-  console.log("modal", modal);
   const { mutate: createOrUpdateSeo, isError } = useCreateProductSeo();
 
   const [formData, setFormData] = useState({

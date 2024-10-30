@@ -6,7 +6,6 @@ import { useUI } from "../contexts/ui.context";
 export const useProductsQuery = ({ url, fetchInit = {}, reactQueryOptions }) => {
   const authenticatedFetch = useAuthenticatedFetch();
   const { modal } = useUI();
-  console.log("modal", modal);
   const fetch = useMemo(() => {
     return async () => {
       const response = await authenticatedFetch(url, fetchInit);
@@ -43,7 +42,6 @@ export const useCreateProductSeo = () => {
   const { setCloseModal, setToggleToast, setOpenModal } = useUI();
   const queryClient = useQueryClient();
   async function createStatus(status) {
-    console.log("status", status);
     return await fetch("/api/product/update-product-seo", {
       method: "POST",
       body: JSON.stringify(status),
@@ -105,17 +103,14 @@ export const useUpdateProductSeoImgAlt = () => {
 
   return useMutation((status) => createStatus(status), {
     onSuccess: async (data, obj) => {
-      console.log("data", data);
       if (data?.status === 400) {
         return setToggleToast({
           active: true,
           message: `Something went wrong`,
         });
       }
-      // setCloseModal();
-      // await queryClient.invalidateQueries("productList");
+      
       const updatedData = await data.json();
-      console.log("updatedInfo", updatedData);
       const updatedInfo = updatedData?.productByID;
 
       setOpenModal({

@@ -138,7 +138,6 @@ export const getArticleById = async (session, blog_id, id) => {
 export const updateArticleSeo = async (req, res) => {
   const { seoObj } = req.body;
 
-  console.log("seoobj in atrticel", seoObj);
   try {
     const metafield = new shopify.api.rest.Metafield({
       session: res.locals.shopify.session,
@@ -153,13 +152,7 @@ export const updateArticleSeo = async (req, res) => {
     });
     const blog_id = seoObj?.blog_id;
     const article_id = seoObj?.id;
-    // const article = await shopify.api.rest.Article.find({
-    //   session: res.locals.shopify.session,
-    //   blog_id,
-    //   id: article_id,
-    // });
     const article = await getArticleById(res.locals.shopify.session, blog_id, article_id);
-    console.log("article", article);
     return res.status(200).json({ metafield, article });
   } catch (error) {
     console.log(error);

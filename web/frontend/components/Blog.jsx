@@ -11,7 +11,6 @@ export default function BlogPage() {
     url: "/api/blog/list",
   });
 
-  console.log("data", data);
 
   const rowMarkup =
     (data &&
