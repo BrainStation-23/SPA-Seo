@@ -219,12 +219,74 @@ export const GetImageOptimizerSettings = async (req, res, next) => {
   }
 };
 
-export const SaveImageOptimizerSettings = async (req, res, next) => {
+export const SaveImageAltOptimizerMetafiled = async (req, res, nest) => {
   try {
     const client = new shopify.api.clients.Graphql({
       session: res.locals.shopify.session,
     });
     let { data, type } = req.body;
+    console.log("data", data, type);
+    await initializeMetafield(client, "SHOP", "image");
+
+    let metafieldData = await client.query({
+      data: {
+        query: GetShopMetafield({
+          namespace: "bs-23-seo-app",
+          key: "image-optimizer",
+        }),
+      },
+    });
+
+    if (metafieldData.body.data.shop.metafield) {
+      metafieldData = JSON.parse(metafieldData.body.data.shop.metafield.value);
+    } else {
+      metafieldData = null;
+    }
+
+    let shopId = await client.query({
+      data: {
+        query: GetShopId,
+      },
+    });
+    shopId = shopId.body.data.shop.id;
+
+    const setMetafieldResponse = await client.query({
+      data: {
+        query: SetShopMetafield,
+        variables: {
+          metafields: [
+            {
+              key: "image-optimizer",
+              namespace: "bs-23-seo-app",
+              ownerId: shopId,
+              value: JSON.stringify({
+                ...metafieldData,
+                [type === "altText" ? "altText" : "fileName"]: data,
+              }),
+            },
+          ],
+        },
+      },
+    });
+
+    if (setMetafieldResponse.body.data.metafieldsSet.userErrors.length > 0) {
+      throw new Error({
+        error: setMetafieldResponse.body.data.metafieldsSet.userErrors,
+      });
+    }
+    return;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const SaveImageOptimizerSettings = async (req, res, nest) => {
+  try {
+    const client = new shopify.api.clients.Graphql({
+      session: res.locals.shopify.session,
+    });
+    let { data, type } = req.body;
+    console.log("data", data, type);
     await initializeMetafield(client, "SHOP", "image");
 
     let metafieldData = await client.query({

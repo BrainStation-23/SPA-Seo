@@ -1,7 +1,7 @@
 import shopify from "../shopify.js";
 import { extname, basename } from "path";
 import { getProductByID } from "./products.js";
-
+import { SaveImageAltOptimizerMetafiled } from "./metafields.js";
 const fetchAllFromDataSource = async ({ session, query, datasource }) => {
   let allData = [];
   let hasNextPage = true;
@@ -143,9 +143,7 @@ const updateImageAltManually = async ({ session, shopData, datasource, metafield
 
       let mutation_query = ``;
       slice.forEach((data, index) => {
-        const altText = metafieldData.altText[`${type}Status`]
-          ? translateAltText(metafieldData.altText[`${type}`], data, type, shopData)
-          : "";
+        const altText = translateAltText(metafieldData.altText[`${type}`], data, type, shopData);
 
         if (type == "collection") {
           mutation_query += `collection_${index}: collectionUpdate(input: { id: "${data.id}", image: { altText: "${altText}" } }) {
@@ -181,9 +179,12 @@ const updateImageAltManually = async ({ session, shopData, datasource, metafield
 
 export const BulkUpdateAltText = async (req, res, next) => {
   try {
+    const { altTextChenge } = req?.body?.data;
+    const session = res.locals.shopify.session;
     const client = new shopify.api.clients.Graphql({
-      session: res.locals.shopify.session,
+      session,
     });
+    await SaveImageAltOptimizerMetafiled(req, res, next);
 
     let metafieldData = null,
       shopData = await client.query({
@@ -219,10 +220,12 @@ export const BulkUpdateAltText = async (req, res, next) => {
     console.log("got metafield data");
 
     const input = [];
-    const allProducts = await fetchAllFromDataSource({
-      datasource: "products",
-      session: res.locals.shopify.session,
-      query: `
+    if (altTextChenge.includes("product")) {
+      console.log("getting all products");
+      const allProducts = await fetchAllFromDataSource({
+        datasource: "products",
+        session: res.locals.shopify.session,
+        query: `
       query ($first: Int!, $after: String) {
         products(first: $first, after: $after, reverse: true) {
           edges {
@@ -251,26 +254,29 @@ export const BulkUpdateAltText = async (req, res, next) => {
         }
       }
     `,
-    });
+      });
 
-    console.log("got all products");
+      console.log("got all products");
 
-    allProducts.forEach((productData) => {
-      const productAltText = metafieldData.altText.productStatus
-        ? translateAltText(metafieldData.altText.product, productData, "product", shopData.body.data.shop)
-        : "";
+      allProducts.forEach((productData) => {
+        const productAltText = translateAltText(
+          metafieldData.altText.product,
+          productData,
+          "product",
+          shopData.body.data.shop
+        );
 
-      productData.media.edges.forEach(({ node }) => {
-        input.push({
-          id: node.id,
-          alt: productAltText,
+        productData.media.edges.forEach(({ node }) => {
+          input.push({
+            id: node.id,
+            alt: productAltText,
+          });
         });
       });
-    });
 
-    const productImageUpdateResponse = await client.query({
-      data: {
-        query: `
+      const productImageUpdateResponse = await client.query({
+        data: {
+          query: `
         mutation FileUpdate($input: [FileUpdateInput!]!) {
           fileUpdate(files: $input) {
             userErrors {
@@ -284,16 +290,18 @@ export const BulkUpdateAltText = async (req, res, next) => {
           }
         }
         `,
-        variables: { input },
-      },
-    });
+          variables: { input },
+        },
+      });
 
-    console.log("product image alt updated successfully");
-
-    const allCollections = await fetchAllFromDataSource({
-      datasource: "collections",
-      session: res.locals.shopify.session,
-      query: `
+      console.log("product image alt updated successfully");
+    }
+    if (altTextChenge.includes("collection")) {
+      console.log("getting all collection");
+      const allCollections = await fetchAllFromDataSource({
+        datasource: "collections",
+        session: res.locals.shopify.session,
+        query: `
         query ($first: Int!, $after: String) {
           collections(first: $first, after: $after, reverse: true) {
             edges {
@@ -314,24 +322,26 @@ export const BulkUpdateAltText = async (req, res, next) => {
           }
         }
       `,
-    });
+      });
 
-    console.log("got all collections");
+      console.log("got all collections");
 
-    await updateImageAltManually({
-      session: res.locals.shopify.session,
-      shopData: shopData.body.data.shop,
-      datasource: allCollections,
-      type: "collection",
-      metafieldData,
-    });
+      await updateImageAltManually({
+        session: res.locals.shopify.session,
+        shopData: shopData.body.data.shop,
+        datasource: allCollections,
+        type: "collection",
+        metafieldData,
+      });
 
-    console.log("collection image alt updated successfully");
-
-    const allArticles = await fetchAllFromDataSource({
-      datasource: "articles",
-      session: res.locals.shopify.session,
-      query: `
+      console.log("collection image alt updated successfully");
+    }
+    if (altTextChenge.includes("article")) {
+      console.log("getting all collection");
+      const allArticles = await fetchAllFromDataSource({
+        datasource: "articles",
+        session: res.locals.shopify.session,
+        query: `
         query ($first: Int!, $after: String) {
           articles(first: $first, after: $after) {
             edges {
@@ -357,19 +367,20 @@ export const BulkUpdateAltText = async (req, res, next) => {
           }
         }
         `,
-    });
+      });
 
-    console.log("got all articles");
+      console.log("got all articles");
 
-    await updateImageAltManually({
-      session: res.locals.shopify.session,
-      shopData: shopData.body.data.shop,
-      datasource: allArticles,
-      type: "article",
-      metafieldData,
-    });
+      await updateImageAltManually({
+        session: res.locals.shopify.session,
+        shopData: shopData.body.data.shop,
+        datasource: allArticles,
+        type: "article",
+        metafieldData,
+      });
 
-    console.log("article image alt updated successfully");
+      console.log("article image alt updated successfully");
+    }
 
     return res.status(200).json({ message: "Bulk update alt text" });
   } catch (error) {

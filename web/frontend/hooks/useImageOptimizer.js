@@ -4,18 +4,21 @@ import { useMutation, useQuery, useQueryClient } from "react-query";
 import { useUI } from "../contexts/ui.context";
 
 export const useBulkUpdateAltText = () => {
+  console.log("useBulkUpdateAltText");
   const fetch = useAuthenticatedFetch();
   const { setToggleToast } = useUI();
-  async function runBulkImageAltTextChange() {
+  async function runBulkImageAltTextChange(status) {
+    console.log("status", status);
     return await fetch("/api/image-optimizer/alt-text", {
-      method: "GET",
+      method: "POST",
+      body: JSON.stringify(status),
       headers: {
         "Content-Type": "application/json",
       },
     });
   }
 
-  return useMutation(() => runBulkImageAltTextChange(), {
+  return useMutation((status) => runBulkImageAltTextChange(status), {
     onSuccess: async (data) => {
       if (data?.status === 400) {
         return setToggleToast({

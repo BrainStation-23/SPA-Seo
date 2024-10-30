@@ -7,7 +7,7 @@ import {
 
 const router = express.Router();
 
-router.get("/alt-text", BulkUpdateAltText);
+router.post("/alt-text", BulkUpdateAltText);
 router.post("/filename", updateProductImageFilename);
 router.post("/filename/all", bulkUpdateProductImageFilename);
 
