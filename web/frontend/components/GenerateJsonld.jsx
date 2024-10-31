@@ -76,22 +76,23 @@ export function GenerateJsonld({ obj_type }) {
       }
     }
     if (obj_type?.toLowerCase() == "product") {
-      if (reviewCount == 0 || rating == 0) {
+      console.log(reviewCount.length, rating);
+      if (!reviewCount) {
         return setErrors({
           ...errors,
-          message: `Value must be getter then 5`,
+          reviewCount: `Review Count is required`,
         });
       }
-      if (rating > 5 || rating < 0) {
+      if (rating > 5 || rating <= 0) {
         return setErrors({
           ...errors,
-          message: `Rating must be between 0 and 5`,
+          rating: `Rating must be between 1 to 5`,
         });
       }
-      if (rating == 0 && reviewCount != 0) {
+      if (!rating) {
         return setErrors({
           ...errors,
-          message: `Please enter rating count`,
+          rating: `Rating must be between 1 to 5`,
         });
       }
     }
@@ -348,9 +349,9 @@ export function GenerateJsonld({ obj_type }) {
                   onChange={handleRatingChange}
                   label="Aggregated rating"
                   type="number"
-                  max={5}
-                  min={0}
-                  error={errors?.message}
+                  // max={5}
+                  // min={0}
+                  error={errors?.rating}
                 />
                 <StarRating size={30} rating={rating} onRate={handleStarClick} />
               </HorizontalStack>
@@ -361,8 +362,7 @@ export function GenerateJsonld({ obj_type }) {
                 onChange={handleReviewCountChange}
                 label={`Review count`}
                 type="integer"
-                min={0}
-                error={errors?.message}
+                error={errors?.reviewCount}
               />
             )}
             {obj_type.toLowerCase() == "product" ||

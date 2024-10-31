@@ -167,6 +167,7 @@ export function ImageCompression() {
         fetchImages();
       })
       .finally(() => {
+        selectedResources.length = 0;
         setIsSaving(false);
       });
   };
@@ -241,6 +242,7 @@ export function ImageCompression() {
               label="Image Format"
               options={OPTION}
               value={compressionSettings.format}
+              helpText={`This will chenge the formating of the image to  ${compressionSettings.format}`}
               onChange={(value) => handleFieldChange(value, "format")}
             />
             <div style={{ marginTop: "1rem", textAlign: "right", display: "flex", justifyContent: "space-between" }}>

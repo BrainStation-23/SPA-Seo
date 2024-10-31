@@ -109,9 +109,10 @@ export const useUpdateProductSeoImgAlt = () => {
           message: `Something went wrong`,
         });
       }
-      
+
       const updatedData = await data.json();
       const updatedInfo = updatedData?.productByID;
+      console.log("updatedInfo", updatedInfo);
 
       setOpenModal({
         view: "CREATE_PRODUCT_SEO",
