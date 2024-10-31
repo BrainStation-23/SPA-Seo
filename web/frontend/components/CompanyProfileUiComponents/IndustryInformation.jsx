@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Layout,
   Box,
@@ -13,12 +13,56 @@ import {
 import { useHomeSeo } from "../../contexts/home.context";
 import { useUI } from "../../contexts/ui.context";
 
-export default function IndustryInformation() {
+export default function IndustryInformation({
+  hasIndustryErrors,
+  setHasIndustryErrors,
+}) {
   const { setToggleToast } = useUI();
   const { organization, setOrganization } = useHomeSeo();
-  const handleAddSelection = (value) => {
-    const isExists = organization?.industry?.find(
-      (organization) => organization === value
+
+  const [selectedIndustry, setSelectedIndustry] = useState("Store");
+  const [otherIndustry, setOtherIndustry] = useState("");
+
+  const options = [
+    { label: "Store", value: "Store" },
+    { label: "Arts and Crafts", value: "Arts and Crafts" },
+    { label: "Baby and Kids", value: "Baby and Kids" },
+    { label: "Books, Music and Video", value: "Books, Music and Video" },
+    {
+      label: "Business equipment and Supplies",
+      value: "Business equipment and Supplies",
+    },
+    { label: "Clothing", value: "Clothing" },
+    { label: "Electronics", value: "Electronics" },
+    { label: "Food and Drink", value: "Food and Drink" },
+    { label: "Hardware and Automotive", value: "Hardware and Automotive" },
+    { label: "Health and Beauty", value: "Health and Beauty" },
+    { label: "Home and Decor", value: "Home and Decor" },
+    { label: "Jewelry and Accessories", value: "Jewelry and Accessories" },
+    { label: "Outdoor and Garden", value: "Outdoor and Garden" },
+    { label: "Pet Supplies", value: "Pet Supplies" },
+    { label: "Restaurants", value: "Restaurants" },
+    { label: "Services", value: "Services" },
+    { label: "Sports and Recreation", value: "Sports and Recreation" },
+    { label: "Toys and Games", value: "Toys and Games" },
+    { label: "Other", value: "Other" },
+  ];
+
+  const getOptionsWithDisabled = () =>
+    options.map((option) => ({
+      ...option,
+      disabled: organization?.industry?.some(
+        (selected) =>
+          selected.trim().toLowerCase() === option.value.trim().toLowerCase()
+      ),
+    }));
+
+  const handleAddSelection = () => {
+    setHasIndustryErrors(false);
+    const valueToAdd =
+      selectedIndustry === "Other" ? otherIndustry : selectedIndustry;
+    const isExists = organization?.industry?.some(
+      (org) => org.trim().toLowerCase() === valueToAdd.trim().toLowerCase()
     );
 
     if (isExists) {
@@ -27,10 +71,14 @@ export default function IndustryInformation() {
         message: `Item already added`,
       });
     }
-    setOrganization({
-      ...organization,
-      industry: [...organization?.industry, value],
-    });
+
+    if (valueToAdd) {
+      setOrganization({
+        ...organization,
+        industry: [...(organization?.industry || []), valueToAdd],
+      });
+      if (selectedIndustry === "Other") setOtherIndustry("");
+    }
   };
 
   const handleRemove = (value) => {
@@ -40,40 +88,6 @@ export default function IndustryInformation() {
       industry: list,
     });
   };
-
-  const [selectOrganization, setSelectOrganization] = useState("Store");
-  const [otherOrganization, setOtherOrganization] = useState("");
-
-  const options = [
-    {
-      label: "Store",
-      value: "Store",
-    },
-    { label: "Arts and Crafts", value: "Arts and Crafts" },
-    { label: "Baby and Kids", value: "Baby and Kids" },
-    { label: "Books, Music and Video", value: "Books, Music and Video" },
-    {
-      label: "Business equipment and Supplies",
-      value: "Business equipment and Supplies",
-    },
-    { label: "Clothing", value: "Clothing" },
-    { label: "Electronics", value: "electronics" },
-    { label: "Food and Drink", value: "Food and Drink" },
-    { label: "Hardware and Automotive", value: "Hardware and Automotive" },
-    { label: "Health and Beauty", value: "Health and Beauty" },
-    { label: "Home and Decor", value: "Home and Decor" },
-    { label: "Jewelry and Accessories", value: "Jewelry and Accessories" },
-    { label: "Outdoor and Garden", value: "Outdoor and Garden" },
-    { label: "Pet supplies", value: "Pet supplies" },
-    { label: "Restaurants", value: "Restaurants" },
-    { label: "Services", value: "Services" },
-    { label: "Sports and Recreation", value: "Sports and Recreation" },
-    { label: "Toys and Games", value: "Toys and Games" },
-    {
-      label: "Other",
-      value: "Other",
-    },
-  ];
 
   return (
     <Box paddingBlockStart={"5"} paddingBlockEnd={"5"}>
@@ -96,35 +110,38 @@ export default function IndustryInformation() {
                   <div className="select_for_industry">
                     <Select
                       label="Select industry"
-                      options={options}
-                      onChange={(value) => setSelectOrganization(value)}
-                      value={selectOrganization}
+                      options={getOptionsWithDisabled()}
+                      onChange={(value) => setSelectedIndustry(value)}
+                      value={selectedIndustry}
+                      error={
+                        hasIndustryErrors && "Please select a specific industry"
+                      }
                     />
 
-                    {selectOrganization == "Other" && (
+                    {selectedIndustry === "Other" && (
                       <TextField
                         label="Enter other industry"
-                        value={otherOrganization}
+                        value={otherIndustry}
                         placeholder="Enter industry"
-                        onChange={(value) => setOtherOrganization(value)}
-                      ></TextField>
+                        onChange={(value) => setOtherIndustry(value)}
+                      />
                     )}
                   </div>
                   <div className="items_center button_for_industry_info">
-                    <Button
-                      primary
-                      onClick={() => handleAddSelection(selectOrganization)}
-                    >
+                    <Button primary onClick={handleAddSelection}>
                       Add
                     </Button>
                   </div>
                 </div>
                 <div className="organization_industry_list">
-                  {organization?.industry?.map((data, index) => (
-                    <Tag key={index} onRemove={() => handleRemove(data)}>
-                      {data}
-                    </Tag>
-                  ))}
+                  {organization?.industry?.map(
+                    (data, index) =>
+                      data != "" && (
+                        <Tag key={index} onRemove={() => handleRemove(data)}>
+                          {data}
+                        </Tag>
+                      )
+                  )}
                 </div>
               </VerticalStack>
             </AlphaCard>

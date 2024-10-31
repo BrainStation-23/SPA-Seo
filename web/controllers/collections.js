@@ -53,15 +53,11 @@ const fetchAllCollections = async (session) => {
         },
       });
 
-      const collections = response.body.data.collections.edges.map(
-        (edge) => edge.node
-      );
+      const collections = response.body.data.collections.edges.map((edge) => edge.node);
       const pageInfo = response.body.data.collections.pageInfo;
       const endCursor =
         response.body.data.collections.edges.length > 0
-          ? response.body.data.collections.edges[
-              response.body.data.collections.edges.length - 1
-            ].cursor
+          ? response.body.data.collections.edges[response.body.data.collections.edges.length - 1].cursor
           : null;
       allCollections = allCollections.concat(collections);
 
@@ -81,16 +77,50 @@ const fetchAllCollections = async (session) => {
   return allCollections;
 };
 
+export const getCollectionByID = async (session, id) => {
+  try {
+    const query = `
+    query {
+      collection(id: "gid://shopify/Collection/${id}") {
+        id
+        title
+        description
+        handle
+        updatedAt
+        image {
+          id
+          url
+          originalSrc
+          altText
+        }
+     
+        seo {
+          description
+          title
+        }
+        metafield(namespace: "bs-23-seo-app", key: "json-ld") {
+          value
+        }
+      }
+    }
+  `;
+
+    const client = new shopify.api.clients.Graphql({ session });
+
+    const collectionInfo = await client.query({ data: query });
+    return collectionInfo?.body?.data?.collection;
+  } catch (err) {
+    console.log("🚀 ~ getProductByID ~ error:", err);
+    throw err;
+  }
+};
 export const getCollectionsController = async (req, res, next) => {
   try {
     const products = await fetchAllCollections(res.locals.shopify.session);
 
     return res.status(200).json(products);
   } catch (err) {
-    console.log(
-      "🚀 ~ file: description.js:73 ~ descriptionController ~ err:",
-      err
-    );
+    console.log("🚀 ~ file: description.js:73 ~ descriptionController ~ err:", err);
     res.status(400).json({ err });
   }
 };
@@ -98,7 +128,7 @@ export const getCollectionsController = async (req, res, next) => {
 export const updateCollectionSEO = async (req, res, next) => {
   try {
     const { id, seoTitle, seoDescription } = req.body;
-
+    const collectionID = id?.split("/").pop();
     const mutation = `
     mutation updateCollection($input: CollectionInput!) {
       collectionUpdate(input: $input) {
@@ -141,30 +171,20 @@ export const updateCollectionSEO = async (req, res, next) => {
 
     if (response.body.data.collectionUpdate.userErrors.length > 0) {
       console.error("Errors:", response.body.data.collectionUpdate.userErrors);
-      return res
-        .status(400)
-        .json({ error: response.body.data.collectionUpdate.userErrors });
+      return res.status(400).json({ error: response.body.data.collectionUpdate.userErrors });
     } else {
-      console.log(
-        "Updated product SEO:",
-        response.body.data.collectionUpdate.collection
-      );
-      return res
-        .status(200)
-        .json({ product: response.body.data.collectionUpdate.collection });
+      const collectionByID = await getCollectionByID(res.locals.shopify.session, collectionID);
+      return res.status(200).json({ product: response.body.data.collectionUpdate.collection, collectionByID });
     }
   } catch (error) {
-    console.error(
-      "Failed to update product SEO:",
-      error.response?.errors || error.message
-    );
+    console.error("Failed to update product SEO:", error.response?.errors || error.message);
   }
 };
 
 export const updateCollectionAltTextSEO = async (req, res, next) => {
   try {
     const { id, imageId, atlText } = req.body;
-
+    const collectionID = id?.split("/").pop();
     const mutation = `
     mutation updateCollection($input: CollectionInput!) {
       collectionUpdate(input: $input) {
@@ -206,23 +226,14 @@ export const updateCollectionAltTextSEO = async (req, res, next) => {
 
     if (response.body.data.collectionUpdate.userErrors.length > 0) {
       console.error("Errors:", response.body.data.collectionUpdate.userErrors);
-      return res
-        .status(400)
-        .json({ error: response.body.data.collectionUpdate.userErrors });
+      return res.status(400).json({ error: response.body.data.collectionUpdate.userErrors });
     } else {
-      console.log(
-        "Updated product SEO:",
-        response.body.data.collectionUpdate.collection
-      );
-      return res
-        .status(200)
-        .json({ product: response.body.data.collectionUpdate.collection });
+      const collectionByID = await getCollectionByID(res.locals.shopify.session, collectionID);
+      console.log("Updated product SEO:", response.body.data.collectionUpdate.collection);
+      return res.status(200).json({ product: response.body.data.collectionUpdate.collection, collectionByID });
     }
   } catch (error) {
-    console.error(
-      "Failed to update product SEO:",
-      error.response?.errors || error.message
-    );
+    console.error("Failed to update product SEO:", error.response?.errors || error.message);
   }
 };
 
@@ -265,10 +276,7 @@ export const updateCollectionBulkSeo = async (req, res) => {
     data: mutation,
   });
 
-  console.log(
-    "🚀 ~ updateProductBulkSeo ~ response:",
-    response.body.data?.collectionUpdate_0?.userErrors
-  );
+  console.log("🚀 ~ updateProductBulkSeo ~ response:", response.body.data?.collectionUpdate_0?.userErrors);
   if (response.body?.data?.collectionUpdate_0?.userErrors?.length > 0) {
     return res.status(400).json({ error: response.body.data });
   } else {
@@ -313,23 +321,13 @@ export const updateImageSeoAltController = async (req, res, next) => {
     });
 
     if (response.body.data?.productImageUpdate?.userErrors?.length > 0) {
-      console.error(
-        "Errors:",
-        response.body.data.productImageUpdate.userErrors
-      );
-      return res
-        .status(400)
-        .json({ error: response.body.data?.productImageUpdate?.userErrors });
+      console.error("Errors:", response.body.data.productImageUpdate.userErrors);
+      return res.status(400).json({ error: response.body.data?.productImageUpdate?.userErrors });
     } else {
-      return res
-        .status(200)
-        .json({ product: response.body.data.productImageUpdate.image });
+      return res.status(200).json({ product: response.body.data.productImageUpdate.image });
     }
   } catch (err) {
-    console.log(
-      "🚀 ~ file: description.js:73 ~ descriptionController ~ err:",
-      err
-    );
+    console.log("🚀 ~ file: description.js:73 ~ descriptionController ~ err:", err);
     res.status(400).json({ err });
   }
 };

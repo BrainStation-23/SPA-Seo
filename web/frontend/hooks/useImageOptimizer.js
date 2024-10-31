@@ -6,16 +6,17 @@ import { useUI } from "../contexts/ui.context";
 export const useBulkUpdateAltText = () => {
   const fetch = useAuthenticatedFetch();
   const { setToggleToast } = useUI();
-  async function runBulkImageAltTextChange() {
+  async function runBulkImageAltTextChange(status) {
     return await fetch("/api/image-optimizer/alt-text", {
-      method: "GET",
+      method: "POST",
+      body: JSON.stringify(status),
       headers: {
         "Content-Type": "application/json",
       },
     });
   }
 
-  return useMutation(() => runBulkImageAltTextChange(), {
+  return useMutation((status) => runBulkImageAltTextChange(status), {
     onSuccess: async (data) => {
       if (data?.status === 400) {
         return setToggleToast({
@@ -23,6 +24,7 @@ export const useBulkUpdateAltText = () => {
           message: `Something went wrong`,
         });
       }
+      queryClient.invalidateQueries("ImageOptimizerSettings");
 
       setToggleToast({
         active: true,
@@ -39,11 +41,7 @@ export const useBulkUpdateAltText = () => {
   });
 };
 
-export const useImageOptimizerQuery = ({
-  url,
-  fetchInit = {},
-  reactQueryOptions,
-}) => {
+export const useImageOptimizerQuery = ({ url, fetchInit = {}, reactQueryOptions }) => {
   const authenticatedFetch = useAuthenticatedFetch();
   const fetch = useMemo(() => {
     return async () => {
@@ -61,7 +59,7 @@ export const useImageOptimizerQuery = ({
 
 export const useSaveImageOptimizerSettings = () => {
   const fetch = useAuthenticatedFetch();
-  const { setToggleToast } = useUI();
+  const { setToggleToast, setCloseModal } = useUI();
   const queryClient = useQueryClient();
   async function saveImageOptimizerSettings(status) {
     return await fetch("/api/metafields/save/image-optimizer", {
@@ -100,7 +98,7 @@ export const useSaveImageOptimizerSettings = () => {
 
 export const useSingleImageFilenameUpdate = () => {
   const fetch = useAuthenticatedFetch();
-  const { setCloseModal, setToggleToast } = useUI();
+  const { setCloseModal, setToggleToast, setOpenModal } = useUI();
   const queryClient = useQueryClient();
   async function updateSingleImageFilename(status) {
     return await fetch("/api/image-optimizer/filename", {
@@ -120,14 +118,24 @@ export const useSingleImageFilenameUpdate = () => {
           message: `Something went wrong`,
         });
       }
-      queryClient.invalidateQueries("productList");
 
+      const updataedData = await data.json();
+      const updatedInfo = updataedData.productDataById;
+
+      setOpenModal({
+        view: "CREATE_PRODUCT_SEO",
+        isOpen: true,
+        data: {
+          title: `Product SEO (${updatedInfo?.title})`,
+          info: updatedInfo,
+        },
+      });
       setToggleToast({
         active: true,
         message: `Updated Successfully`,
       });
 
-      setCloseModal();
+      // setCloseModal();
     },
     onError: async () => {
       setToggleToast({

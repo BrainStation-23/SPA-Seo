@@ -13,6 +13,7 @@ import {
   TextField,
   Button,
   HorizontalStack,
+  Banner,
 } from "@shopify/polaris";
 import { RefreshIcon } from "@shopify/polaris-icons";
 import { useImageOptimizerQuery } from "../hooks/useImageOptimizer";
@@ -20,6 +21,7 @@ import { useBulkImageFilenameUpdate } from "../hooks/useImageOptimizer";
 import { Spinners } from "./Spinner";
 
 export function BulkProductImageFilename() {
+  const [errors, setErrors] = useState({});
   const {
     data,
     isSuccess: isFetchSuccess,
@@ -28,27 +30,39 @@ export function BulkProductImageFilename() {
     url: "/api/metafields/get/image-optimizer",
   });
 
-  const {
-    mutate: bulkUpdate,
-    isLoading,
-    isSuccess,
-    isError,
-  } = useBulkImageFilenameUpdate();
+  const { mutate: bulkUpdate, isLoading, isSuccess, isError } = useBulkImageFilenameUpdate();
 
   const [filename, setFilename] = useState(null);
   const [isWaiting, setIsWaiting] = useState(false);
 
   const handleProductImageAltChange = useCallback((value) => {
     setFilename(value);
+    setErrors({ ...errors, message: "" });
   }, []);
 
   const handleSubmit = () => {
-    if (filename === null || filename.length === 0) {
-      return setToggleToast({
-        active: true,
+    const forbiddenChars = /[^a-z-]/;
+
+    if (filename === null || filename?.length === 0) {
+      return setErrors({
+        ...errors,
         message: `Filename cannot be empty`,
       });
     }
+    if (forbiddenChars.test(filename) || filename.includes(" ") || filename.split("-").length > 5) {
+      return setErrors({
+        ...errors,
+        message: `Filename contains invalid characters. Use only characters, dashes, small latter.`,
+      });
+    }
+
+    if (filename.length > 50) {
+      return setErrors({
+        ...errors,
+        message: `Filename must not exceed 50 characters.`,
+      });
+    }
+
     bulkUpdate({ fileNameSettings: filename });
   };
 
@@ -82,12 +96,7 @@ export function BulkProductImageFilename() {
           subtitle="Filename optimization for better SEO"
           primaryAction={
             <HorizontalStack gap={"2"}>
-              <Button
-                primary
-                icon={RefreshIcon}
-                loading={isLoading || isWaiting}
-                onClick={handleSubmit}
-              >
+              <Button primary icon={RefreshIcon} loading={isLoading || isWaiting} onClick={handleSubmit}>
                 Sync
               </Button>
             </HorizontalStack>
@@ -102,12 +111,9 @@ export function BulkProductImageFilename() {
                       <Layout>
                         <Layout.Section oneThird>
                           <VerticalStack>
-                            <Text variant="headingMd">
-                              Product image filename
-                            </Text>
+                            <Text variant="headingMd">Product image filename</Text>
                             <Text variant="bodyMd">
-                              Set up a global structure for product image
-                              filenames for better SEO.
+                              Set up a global structure for product image filenames for better SEO.
                             </Text>
                           </VerticalStack>
                         </Layout.Section>
@@ -118,15 +124,31 @@ export function BulkProductImageFilename() {
                                 <TextField
                                   value={filename}
                                   onChange={handleProductImageAltChange}
-                                  label={
-                                    <Text variant="headingSm">File name</Text>
-                                  }
+                                  label={<Text variant="headingSm">File name</Text>}
                                   placeholder="Enter filename or use variables."
                                   helpText="Can use variables from the PRODUCT and SHOP section"
                                   type="text"
+                                  error={errors?.message}
                                 />
                               </FormLayout>
                             </AlphaCard>
+                          </Box>
+
+                          <Box paddingBlockStart={"3"}>
+                            <Banner title="Filename Guidelines" status="warning">
+                              <List>
+                                <List.Item>Keep your filename relevant to the actual content .</List.Item>
+                                <List.Item>
+                                  Avoid keyword stuffing in filenames; use a concise, descriptive name instead.
+                                </List.Item>
+                                <List.Item>Keep filenames short—ideally 5 words or fewer.</List.Item>
+                                <List.Item>Separate words with hyphens (e.g., "apple-food.jpg").</List.Item>
+                                <List.Item>
+                                  Avoid using generic names like "IMG1234.jpg" or overly keyworded names like
+                                  "Best-food-planner.jpg."
+                                </List.Item>
+                              </List>
+                            </Banner>
                           </Box>
                         </Layout.Section>
                       </Layout>
@@ -138,15 +160,12 @@ export function BulkProductImageFilename() {
                 <VerticalStack gap={"4"}>
                   <AlphaCard>
                     <Text variant="bodyMd">
-                      Use custom text and variables to create alt text templates
-                      for images. Your custom text works as a static template,
-                      while the variables pull in dynamic values from your
-                      store's content.
+                      Use custom text and variables to create alt text templates for images. Your custom text works as a
+                      static template, while the variables pull in dynamic values from your store's content.
                     </Text>
                     <Box paddingBlockStart={"3"}>
                       <Text variant="bodyMd" fontWeight="bold">
-                        Use the following variables exactly as listed, including
-                        whitespace, to set image filename.
+                        Use the following variables exactly as listed, including whitespace, to set image filename.
                       </Text>
                     </Box>
                   </AlphaCard>

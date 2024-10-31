@@ -4,13 +4,10 @@ import { useMutation, useQuery, useQueryClient } from "react-query";
 import { useUI } from "../contexts/ui.context";
 import { useHomeSeo } from "../contexts/home.context";
 
-export const useMetafieldsQuery = ({
-  url,
-  fetchInit = {},
-  reactQueryOptions,
-}) => {
+export const useMetafieldsQuery = ({ url, fetchInit = {}, reactQueryOptions }) => {
   const authenticatedFetch = useAuthenticatedFetch();
   const { organization, setOrganization } = useHomeSeo();
+  const { setOpenModal } = useUI();
   const fetch = useMemo(() => {
     return async () => {
       const response = await authenticatedFetch(url, fetchInit);
@@ -39,7 +36,7 @@ export const useMetafieldsQuery = ({
 
 export const useCreateMetafield = (invalidationTarget) => {
   const fetch = useAuthenticatedFetch();
-  const { setCloseModal, setToggleToast } = useUI();
+  const { setCloseModal, setToggleToast, setOpenModal } = useUI();
   const queryClient = useQueryClient();
   async function createStatus(status) {
     return await fetch("/api/metafields/create", {
@@ -59,8 +56,44 @@ export const useCreateMetafield = (invalidationTarget) => {
           message: `Something went wrong`,
         });
       }
-      setCloseModal(); // metafieldList productList collectionList
-      if (invalidationTarget) queryClient.invalidateQueries(invalidationTarget);
+      if (invalidationTarget === "metafieldList") {
+        setCloseModal();
+        queryClient.invalidateQueries(invalidationTarget);
+      } else {
+        const updatedData = await data?.json();
+        const owner = updatedData?.owner;
+        const updatedInfo = updatedData?.dataByID;
+        if (owner?.toLowerCase() == "product") {
+          setOpenModal({
+            view: "CREATE_PRODUCT_SEO",
+            isOpen: true,
+            data: {
+              title: `Product SEO (${updatedInfo?.title})`,
+              info: updatedInfo,
+            },
+          });
+        }
+        if (owner?.toLowerCase() == "collection") {
+          setOpenModal({
+            view: "CREATE_COLLECTION_SEO",
+            isOpen: true,
+            data: {
+              title: `Collection SEO (${updatedInfo?.title})`,
+              info: updatedInfo,
+            },
+          });
+        }
+        if (owner?.toLowerCase() == "article") {
+          setOpenModal({
+            view: "ARTICLE_SEO",
+            isOpen: true,
+            data: {
+              title: `Article SEO (${updatedInfo?.title})`,
+              info: updatedInfo,
+            },
+          });
+        }
+      }
 
       setToggleToast({
         active: true,

@@ -21,6 +21,8 @@ import { Spinners } from "./Spinner";
 
 export function ArticleSchemaMarkup() {
   const { modal } = useUI();
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
   const { data, isSuccess, isLoading } = useSingleArticleQuery({
     url: `/api/blog/articleById/${modal?.data?.info?.blog_id}/${modal?.data?.info?.id}`,
   });
@@ -40,9 +42,7 @@ export function ArticleSchemaMarkup() {
   const [additionalAuthorUrl, setAdditionalAuthorUrl] = useState(null);
 
   useEffect(() => {
-    const metaData = data?.metafields
-      ? JSON.parse(data?.metafields.value)
-      : null;
+    const metaData = data?.metafields ? JSON.parse(data?.metafields.value) : null;
     const ownerMetaData = metaData?.article || null;
 
     setPushJson(metaData?.active);
@@ -54,30 +54,38 @@ export function ArticleSchemaMarkup() {
   }, [isSuccess]);
 
   const handleSubmit = useCallback(() => {
-    createMetafield({
-      type: "article",
-      owner: "ARTICLE",
-      ownerId: owner?.id,
-      active: pushJson,
-      blogId: owner?.blog_id || null,
-      data: {
-        showTags,
-        audienceType: audiance || null,
-        authorUrl: authorUrl || null,
-        showComments,
-        additionalAuthors:
-          additionalAuthors?.length > 0 ? additionalAuthors : [],
+    if (authorUrl?.length && additionalAuthors?.length == 0) {
+      return setErrors({
+        ...errors,
+        message: `Please add additional authors Name`,
+      });
+    }
+    setLoading(true);
+    createMetafield(
+      {
+        type: "article",
+        owner: "ARTICLE",
+        ownerId: owner?.id,
+        active: pushJson,
+        blogId: owner?.blog_id || null,
+        data: {
+          showTags,
+          audienceType: audiance || null,
+          authorUrl: authorUrl || null,
+          showComments,
+          additionalAuthors: additionalAuthors?.length > 0 ? additionalAuthors : [],
+        },
       },
-    });
-  }, [
-    showTags,
-    owner,
-    pushJson,
-    audiance,
-    authorUrl,
-    showComments,
-    additionalAuthors,
-  ]);
+      {
+        onSuccess: () => {
+          setLoading(false);
+        },
+        onError: () => {
+          setLoading(false);
+        },
+      }
+    );
+  }, [showTags, owner, pushJson, audiance, authorUrl, showComments, additionalAuthors]);
 
   const handleShowTagsChange = useCallback((value) => setShowTags(value), []);
   const handlePushJsonChange = () => setPushJson((prev) => !prev);
@@ -86,14 +94,10 @@ export function ArticleSchemaMarkup() {
     setAudience(value);
   };
   const handleAuthorUrlChange = useCallback((value) => setAuthorUrl(value), []);
-  const handleAdditionalAuthorNamneChange = useCallback(
-    (value) => setAdditionalAuthorName(value),
-    []
-  );
-  const handleAdditionalAuthorUrlChange = useCallback(
-    (value) => setAdditionalAuthorUrl(value),
-    []
-  );
+  const handleAdditionalAuthorNamneChange = useCallback((value) => {
+    setAdditionalAuthorName(value), setErrors({ ...errors, message: "" });
+  }, []);
+  const handleAdditionalAuthorUrlChange = useCallback((value) => setAdditionalAuthorUrl(value), []);
 
   const options = [
     { label: "General", value: "General" },
@@ -138,12 +142,7 @@ export function ArticleSchemaMarkup() {
           <Box paddingBlockStart={"4"}>
             <Form onSubmit={handleSubmit}>
               <FormLayout>
-                <TextField
-                  value={owner?.title}
-                  disabled
-                  label="Title"
-                  type="text"
-                />
+                <TextField value={owner?.title} disabled label="Title" type="text" />
                 {images && images.length > 0 && (
                   <VerticalStack gap={"2"}>
                     <Text>Images</Text>
@@ -162,13 +161,8 @@ export function ArticleSchemaMarkup() {
                   }}
                 >
                   <Text variant="bodyMd">Show all comments data</Text>
-                  <Switch
-                    checked={showComments}
-                    handleClick={handleShowCommentsChange}
-                  />
-                  <Text variant="bodySm">
-                    This shows all comments data on your jsonld.
-                  </Text>
+                  <Switch checked={showComments} handleClick={handleShowCommentsChange} />
+                  <Text variant="bodySm">This shows all comments data on your jsonld.</Text>
                 </div>
 
                 <TextField
@@ -177,9 +171,7 @@ export function ArticleSchemaMarkup() {
                   type="text"
                   placeholder="A link to a web page that uniquely identifies the author of the article"
                   onChange={handleAuthorUrlChange}
-                  connectedLeft={
-                    <TextField disabled value={owner?.author} type="text" />
-                  }
+                  connectedLeft={<TextField disabled value={owner?.author} type="text" />}
                 />
                 {additionalAuthors?.map((auth, index) => (
                   <TextField
@@ -187,16 +179,12 @@ export function ArticleSchemaMarkup() {
                     type="text"
                     disabled
                     placeholder="A link to a web page that uniquely identifies the author of the article"
-                    connectedLeft={
-                      <TextField disabled value={auth.name} type="text" />
-                    }
+                    connectedLeft={<TextField disabled value={auth.name} type="text" />}
                     connectedRight={
                       <Button
                         destructive
                         onClick={() => {
-                          setAdditionalAuthors((prev) =>
-                            prev.filter((_, i) => i !== index)
-                          );
+                          setAdditionalAuthors((prev) => prev.filter((_, i) => i !== index));
                         }}
                       >
                         Remove
@@ -216,18 +204,13 @@ export function ArticleSchemaMarkup() {
                       placeholder="Author name"
                       type="text"
                       onChange={handleAdditionalAuthorNamneChange}
-                      d
+                      error={errors?.message}
                     />
                   }
                   connectedRight={
                     <Button
                       primary
-                      disabled={
-                        !(
-                          additionalAuthorName &&
-                          additionalAuthorName.length > 0
-                        )
-                      }
+                      disabled={!(additionalAuthorName && additionalAuthorName.length > 0)}
                       onClick={() => {
                         setAdditionalAuthors((prev) => [
                           ...prev,
@@ -244,20 +227,11 @@ export function ArticleSchemaMarkup() {
                     </Button>
                   }
                 />
-                <Select
-                  label="Set audience type"
-                  options={options}
-                  onChange={handleAudienceChange}
-                  value={audiance}
-                />
-                <Checkbox
-                  label={`Show article tag information`}
-                  checked={showTags}
-                  onChange={handleShowTagsChange}
-                />
+                <Select label="Set audience type" options={options} onChange={handleAudienceChange} value={audiance} />
+                <Checkbox label={`Show article tag information`} checked={showTags} onChange={handleShowTagsChange} />
                 <HorizontalStack align="end">
-                  <Button primary submit>
-                    Save
+                  <Button primary submit disabled={loading}>
+                    {loading ? <Spinners /> : "Save"}
                   </Button>
                 </HorizontalStack>
               </FormLayout>

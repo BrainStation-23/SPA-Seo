@@ -3,12 +3,9 @@ import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { useUI } from "../contexts/ui.context";
 
-export const useProductsQuery = ({
-  url,
-  fetchInit = {},
-  reactQueryOptions,
-}) => {
+export const useProductsQuery = ({ url, fetchInit = {}, reactQueryOptions }) => {
   const authenticatedFetch = useAuthenticatedFetch();
+  const { modal } = useUI();
   const fetch = useMemo(() => {
     return async () => {
       const response = await authenticatedFetch(url, fetchInit);
@@ -20,7 +17,7 @@ export const useProductsQuery = ({
     ...reactQueryOptions,
     onSuccess: (data) => {},
     refetchOnWindowFocus: false,
-    // enabled: Object.keys(shop).length === 0,
+    enabled: !modal?.isOpen,
   });
 };
 
@@ -42,7 +39,7 @@ export const useProductsQueryByID = ({ url, id }) => {
 
 export const useCreateProductSeo = () => {
   const fetch = useAuthenticatedFetch();
-  const { setCloseModal, setToggleToast } = useUI();
+  const { setCloseModal, setToggleToast, setOpenModal } = useUI();
   const queryClient = useQueryClient();
   async function createStatus(status) {
     return await fetch("/api/product/update-product-seo", {
@@ -62,8 +59,18 @@ export const useCreateProductSeo = () => {
           message: `Something went wrong`,
         });
       }
-      setCloseModal();
-      queryClient.invalidateQueries("productList");
+
+      const updatedData = await data?.json();
+      const updatedInfo = updatedData?.productByID;
+
+      setOpenModal({
+        view: "CREATE_PRODUCT_SEO",
+        isOpen: true,
+        data: {
+          title: `Product SEO (${updatedInfo?.title})`,
+          info: updatedInfo,
+        },
+      });
 
       setToggleToast({
         active: true,
@@ -82,7 +89,7 @@ export const useCreateProductSeo = () => {
 
 export const useUpdateProductSeoImgAlt = () => {
   const fetch = useAuthenticatedFetch();
-  const { setCloseModal, setToggleToast } = useUI();
+  const { setCloseModal, setToggleToast, setOpenModal } = useUI();
   const queryClient = useQueryClient();
   async function createStatus(status) {
     return await fetch(`/api/product/update-image-alt`, {
@@ -102,8 +109,19 @@ export const useUpdateProductSeoImgAlt = () => {
           message: `Something went wrong`,
         });
       }
-      setCloseModal();
-      queryClient.invalidateQueries("productList");
+
+      const updatedData = await data.json();
+      const updatedInfo = updatedData?.productByID;
+      console.log("updatedInfo", updatedInfo);
+
+      setOpenModal({
+        view: "CREATE_PRODUCT_SEO",
+        isOpen: true,
+        data: {
+          title: `Product SEO (${updatedInfo?.title})`,
+          info: updatedInfo,
+        },
+      });
 
       setToggleToast({
         active: true,

@@ -15,33 +15,19 @@ import {
   HorizontalStack,
 } from "@shopify/polaris";
 import { RefreshIcon } from "@shopify/polaris-icons";
-import Switch from "./commonUI/Switch/Switch";
 import { Spinners } from "./Spinner";
-import {
-  useImageOptimizerQuery,
-  useSaveImageOptimizerSettings,
-  useBulkUpdateAltText,
-} from "../hooks/useImageOptimizer";
+import { useImageOptimizerQuery, useBulkUpdateAltText } from "../hooks/useImageOptimizer";
 
 export function ImageAltOptimizer() {
+  const [errors, setErrors] = useState({});
   const { data, isSuccess, isLoading } = useImageOptimizerQuery({
     url: "/api/metafields/get/image-optimizer",
   });
-
-  const {
-    mutate: saveImageOptimizerSettings,
-    isLoading: isSavingImageOptimizerSettings,
-    isSuccess: isSuccessSavingImageOptimizerSettings,
-  } = useSaveImageOptimizerSettings();
-  const { mutate: runBulkImageUpdate, isLoading: isBulkAltUpdating } =
-    useBulkUpdateAltText();
+  const { mutate: runBulkImageUpdate, isLoading: isBulkAltUpdating } = useBulkUpdateAltText();
 
   const [productImageAlt, setProductImageAlt] = useState(null);
   const [collectionImgeAlt, setCollectionImageAlt] = useState(null);
   const [articleImageAlt, setArticleImageAlt] = useState(null);
-  const [productAltStatus, setProductAltStatus] = useState(false);
-  const [collectionAltStatus, setCollectionAltStatus] = useState(false);
-  const [articleAltStatus, setArticleAltStatus] = useState(false);
   const [isChanged, setIsChanged] = useState(false);
 
   useEffect(() => {
@@ -50,56 +36,72 @@ export function ImageAltOptimizer() {
       setProductImageAlt(metadata?.altText?.product || null);
       setCollectionImageAlt(metadata?.altText?.collection || null);
       setArticleImageAlt(metadata?.altText?.article || null);
-      setProductAltStatus(metadata?.altText?.productStatus || false);
-      setCollectionAltStatus(metadata?.altText?.collectionStatus || false);
-      setArticleAltStatus(metadata?.altText?.articleStatus || false);
     }
   }, [isSuccess]);
-
-  useEffect(() => {
-    if (isSuccessSavingImageOptimizerSettings) {
-      setIsChanged(false);
-    }
-  }, [isSuccessSavingImageOptimizerSettings]);
-
-  const handleParoductAltStatusChange = () => {
-    setProductAltStatus((prev) => !prev);
-    setIsChanged(true);
-  };
-  const handleCollectionAltStatusChange = () => {
-    setCollectionAltStatus((prev) => !prev);
-    setIsChanged(true);
-  };
-  const handleArticleAltStatusChange = () => {
-    setArticleAltStatus((prev) => !prev);
-    setIsChanged(true);
-  };
 
   const handleProductImageAltChange = useCallback((value) => {
     setProductImageAlt(value);
     setIsChanged(true);
+    setErrors({ ...errors, productImageAlt: "" });
   }, []);
   const handleCollectionImageAltChange = useCallback((value) => {
     setCollectionImageAlt(value);
     setIsChanged(true);
+    setErrors({ ...errors, collectionImgeAlt: "" });
   }, []);
   const handleArticleImageAltChange = useCallback((value) => {
     setArticleImageAlt(value);
     setIsChanged(true);
+    setErrors({ ...errors, articleImageAlt: "" });
   }, []);
 
   const handleSubmit = () => {
-    saveImageOptimizerSettings({
-      type: "altText",
-      data: {
-        product: productImageAlt,
-        productStatus: productAltStatus,
-        collection: collectionImgeAlt,
-        collectionStatus: collectionAltStatus,
-        article: articleImageAlt,
-        articleStatus: articleAltStatus,
+    let altTextChenge = [];
+    if (productImageAlt !== data.data.altText.product) {
+      altTextChenge.push("product");
+    }
+    if (collectionImgeAlt !== data.data.altText.collection) {
+      altTextChenge.push("collection");
+    }
+    if (articleImageAlt !== data.data.altText.article) {
+      altTextChenge.push("article");
+    }
+
+    if (productImageAlt.length > 125 || productImageAlt.length < 1) {
+      return setErrors({
+        ...errors,
+        productImageAlt: `Product Image Alt must be between 1 to 125 characters `,
+      });
+    }
+    if (collectionImgeAlt.length > 125 || collectionImgeAlt.length < 1) {
+      return setErrors({
+        ...errors,
+        collectionImgeAlt: `Collection Image Alt must be between 1 to 125 characters`,
+      });
+    }
+    if (articleImageAlt.length > 125 || articleImageAlt.length < 1) {
+      return setErrors({
+        ...errors,
+        articleImageAlt: `Article Image Alt must be between 1 to 125 characters`,
+      });
+    }
+
+    runBulkImageUpdate(
+      {
+        type: "altText",
+        data: {
+          altTextChenge,
+          product: productImageAlt,
+          collection: collectionImgeAlt,
+          article: articleImageAlt,
+        },
       },
-    });
+      {
+        onSuccess: () => {
+          altTextChenge = [];
+        },
+      }
+    );
   };
 
   return (
@@ -113,35 +115,8 @@ export function ImageAltOptimizer() {
           subtitle="Alt tags helps you improve accessibility, relevance between images and content, and increase the ability to rank high in Google Images."
           primaryAction={
             <HorizontalStack gap={"2"}>
-              <Button
-                plain
-                onClick={() => {
-                  setProductImageAlt("{{ product.title }} {{ shop.name }}");
-                  setArticleImageAlt("{{ product.title }} {{ shop.name }}");
-                  setCollectionImageAlt(
-                    "{{ collection.title }} {{ shop.name }}"
-                  );
-                  setIsChanged(true);
-                }}
-              >
-                Restore default
-              </Button>
-              <Button
-                primary
-                disabled={!isChanged}
-                loading={isSavingImageOptimizerSettings}
-                onClick={handleSubmit}
-              >
-                Save settings
-              </Button>
-              <Button
-                primary
-                icon={RefreshIcon}
-                disabled={isChanged}
-                loading={isBulkAltUpdating}
-                onClick={runBulkImageUpdate}
-              >
-                Sync Alt Text
+              <Button primary icon={RefreshIcon} loading={isBulkAltUpdating} onClick={handleSubmit}>
+                Sync
               </Button>
             </HorizontalStack>
           }
@@ -156,15 +131,7 @@ export function ImageAltOptimizer() {
                         <Layout.Section oneThird>
                           <VerticalStack>
                             <Text variant="headingMd">Product Image Alt</Text>
-                            <Text variant="bodyMd">
-                              Can use variables in the PRODUCT and SHOP section
-                            </Text>
-                            <Box paddingBlockStart={"4"}>
-                              <Switch
-                                checked={productAltStatus}
-                                handleClick={handleParoductAltStatusChange}
-                              />
-                            </Box>
+                            <Text variant="bodyMd">Can use variables in the PRODUCT and SHOP section</Text>
                           </VerticalStack>
                         </Layout.Section>
                         <Layout.Section>
@@ -174,12 +141,10 @@ export function ImageAltOptimizer() {
                                 <TextField
                                   value={productImageAlt}
                                   onChange={handleProductImageAltChange}
-                                  label={
-                                    <Text variant="headingSm">Alt Text</Text>
-                                  }
+                                  label={<Text variant="headingSm">Alt Text</Text>}
                                   placeholder="Enter alt text or use variables"
-                                  helpText="Can use variables from the PRODUCT and SHOP section"
                                   type="text"
+                                  error={errors?.productImageAlt}
                                 />
                               </FormLayout>
                             </AlphaCard>
@@ -192,19 +157,8 @@ export function ImageAltOptimizer() {
                       <Layout>
                         <Layout.Section oneThird>
                           <VerticalStack>
-                            <Text variant="headingMd">
-                              Collection Image Alt
-                            </Text>
-                            <Text variant="bodyMd">
-                              Can use variables in the COLLECTION and SHOP
-                              section
-                            </Text>
-                            <Box paddingBlockStart={"4"}>
-                              <Switch
-                                checked={collectionAltStatus}
-                                handleClick={handleCollectionAltStatusChange}
-                              />
-                            </Box>
+                            <Text variant="headingMd">Collection Image Alt</Text>
+                            <Text variant="bodyMd">Can use variables in the COLLECTION and SHOP section</Text>
                           </VerticalStack>
                         </Layout.Section>
                         <Layout.Section>
@@ -214,12 +168,10 @@ export function ImageAltOptimizer() {
                                 <TextField
                                   value={collectionImgeAlt}
                                   onChange={handleCollectionImageAltChange}
-                                  label={
-                                    <Text variant="headingSm">Alt Text</Text>
-                                  }
+                                  label={<Text variant="headingSm">Alt Text</Text>}
                                   placeholder="Enter alt text or use variables"
-                                  helpText="Can use variables from the COLLECTION and SHOP section"
                                   type="text"
+                                  error={errors?.collectionImgeAlt}
                                 />
                               </FormLayout>
                             </AlphaCard>
@@ -233,16 +185,8 @@ export function ImageAltOptimizer() {
                         <Layout.Section oneThird>
                           <VerticalStack>
                             <Text variant="headingMd">Blog Post Image Alt</Text>
-                            <Text variant="bodyMd">
-                              Can use variables in the BLOG POST and SHOP
-                              section
-                            </Text>
-                            <Box paddingBlockStart={"4"}>
-                              <Switch
-                                checked={articleAltStatus}
-                                handleClick={handleArticleAltStatusChange}
-                              />
-                            </Box>
+                            <Text variant="bodyMd">Can use variables in the BLOG POST and SHOP section</Text>
+                            <Box paddingBlockStart={"4"}></Box>
                           </VerticalStack>
                         </Layout.Section>
                         <Layout.Section>
@@ -252,12 +196,10 @@ export function ImageAltOptimizer() {
                                 <TextField
                                   value={articleImageAlt}
                                   onChange={handleArticleImageAltChange}
-                                  label={
-                                    <Text variant="headingSm">Alt Text</Text>
-                                  }
+                                  label={<Text variant="headingSm">Alt Text</Text>}
                                   placeholder="Enter alt text or use variables"
-                                  helpText="Can use variables from the BLOG POST and SHOP section"
                                   type="text"
+                                  error={errors?.articleImageAlt}
                                 />
                               </FormLayout>
                             </AlphaCard>
@@ -272,15 +214,12 @@ export function ImageAltOptimizer() {
                 <VerticalStack gap={"4"}>
                   <AlphaCard>
                     <Text variant="bodyMd">
-                      Use custom text and variables to create alt text templates
-                      for images. Your custom text works as a static template,
-                      while the variables pull in dynamic values from your
-                      store's content.
+                      Use custom text and variables to create alt text templates for images. Your custom text works as a
+                      static template, while the variables pull in dynamic values from your store's content.
                     </Text>
                     <Box paddingBlockStart={"3"}>
                       <Text variant="bodyMd" fontWeight="bold">
-                        Use the following variables exactly as listed, including
-                        whitespace, to set image alt text.
+                        Use the following variables exactly as listed, including whitespace, to set image alt text.
                       </Text>
                     </Box>
                   </AlphaCard>

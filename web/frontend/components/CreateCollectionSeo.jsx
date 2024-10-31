@@ -4,9 +4,11 @@ import { InputField } from "./commonUI/InputField";
 import { useUI } from "../contexts/ui.context";
 import TextareaField from "./commonUI/TextareaField";
 import { useCreateCollectionSeo } from "../hooks/useCollectionsQuery";
+import { Spinners } from "./Spinner";
 
 export function CreateCollectionSeo() {
   const { modal } = useUI();
+  const [isLoading, setIsLoading] = useState(false);
   const { mutate: createOrUpdateSeo, isError } = useCreateCollectionSeo();
 
   const [formData, setFormData] = useState({
@@ -41,13 +43,20 @@ export function CreateCollectionSeo() {
         seo_description: `SEO description must be 160 characters or fewer. Currently, it is ${obj.seo_description.length} characters.`,
       });
     }
-
+    setIsLoading(true);
     const info = {
       id: modal?.data?.info?.id,
       seoTitle: obj.seo_title,
       seoDescription: obj?.seo_description,
     };
-    createOrUpdateSeo(info);
+    createOrUpdateSeo(info, {
+      onSuccess: () => {
+        setIsLoading(false);
+      },
+      onError: () => {
+        setIsLoading(false);
+      },
+    });
   };
 
   const handleChange = (value, name) => {
@@ -88,8 +97,8 @@ export function CreateCollectionSeo() {
             placeholder="Enter Meta Description"
             error={errors?.seo_description}
           />
-          <Button primary submit>
-            Submit
+          <Button primary submit loading={isLoading}>
+            {isLoading ? <Spinners /> : "Submit"}
           </Button>
         </FormLayout>
       </Form>

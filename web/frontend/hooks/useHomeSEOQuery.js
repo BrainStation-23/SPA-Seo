@@ -59,11 +59,7 @@ export const useCreateHomeSeo = () => {
   });
 };
 
-export const useCreateGlobalFileSeo = ({
-  url,
-  fetchInit = {},
-  reactQueryOptions,
-}) => {
+export const useCreateGlobalFileSeo = ({ url, fetchInit = {}, reactQueryOptions }) => {
   const authenticatedFetch = useAuthenticatedFetch();
   const fetch = useMemo(() => {
     return async () => {

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Box,
   Divider,
@@ -22,14 +22,43 @@ import { useCreateMetafield } from "../hooks/useMetafieldQuery";
 import Switch from "./commonUI/Switch/Switch";
 
 export default function CompanyProfile() {
+  const [loading, setLoading] = useState(false);
   const { organization, setOrganization } = useHomeSeo();
-  const { mutate: createMetafield, isError: isErrorOnCreatingMetafield } =
-    useCreateMetafield("metafieldList");
+  const { mutate: createMetafield } = useCreateMetafield("metafieldList");
+  const [hasSocialErrors, setHasSocialErrors] = useState(false);
+  const [hasIndustryErrors, setHasIndustryErrors] = useState(false);
+
   const handleCheckedChange = () => {
-    setOrganization({
-      ...organization,
-      status: !organization.status,
-    });
+    setOrganization((prev) => ({
+      ...prev,
+      status: !prev.status,
+    }));
+  };
+
+  const handleSave = () => {
+    const industryList = organization?.industry.join(",") || "";
+    if (!industryList) {
+      return setHasIndustryErrors(true);
+    }
+    setLoading(true);
+    createMetafield(
+      {
+        type: "organization",
+        data: {
+          ...organization,
+          industry: industryList,
+        },
+        owner: "SHOP",
+      },
+      {
+        onSuccess: () => {
+          setLoading(false);
+        },
+        onError: () => {
+          setLoading(false);
+        },
+      }
+    );
   };
 
   return (
@@ -40,24 +69,18 @@ export default function CompanyProfile() {
       title={"Company profile settings"}
       primaryAction={{
         content: "Save",
-        onAction: () => {
-          const industryList = organization?.industry.join(", ");
-
-          createMetafield({
-            type: "organization",
-            data: {
-              ...organization,
-              industry: industryList,
-            },
-            owner: "SHOP",
-          });
-        },
+        loading: loading,
+        disabled: loading || hasSocialErrors,
+        onAction: handleSave,
       }}
     >
       <Box paddingInlineStart={"32"} paddingInlineEnd={"32"}>
         <BusinessTypeInformation />
         <Divider />
-        <IndustryInformation />
+        <IndustryInformation
+          hasIndustryErrors={hasIndustryErrors}
+          setHasIndustryErrors={setHasIndustryErrors}
+        />
         <Divider />
         <BrandInformation />
         <Divider />
@@ -71,18 +94,18 @@ export default function CompanyProfile() {
             <Divider />
           </>
         )}
-        <SocialMediaInformation />
+        <SocialMediaInformation setHasSocialErrors={setHasSocialErrors} />
         <Divider />
         <Box paddingBlockStart={"5"}>
           <Layout>
             <Layout.Section oneThird>
               <Box paddingBlockEnd={"4"}>
-                <Text variant="headingMd">Show or hide settings </Text>
+                <Text variant="headingMd">Show or hide settings</Text>
               </Box>
               <Box>
                 <Text variant="bodyMd">
                   Inject your organization information for search engines like
-                  googles to crawl
+                  Google to crawl.
                 </Text>
               </Box>
             </Layout.Section>
