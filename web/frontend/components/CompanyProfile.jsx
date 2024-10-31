@@ -17,6 +17,7 @@ export default function CompanyProfile() {
   const [loading, setLoading] = useState(false);
   const { organization, setOrganization } = useHomeSeo();
   const { mutate: createMetafield, isError: isErrorOnCreatingMetafield } = useCreateMetafield("metafieldList");
+  const [hasSocialErrors, setHasSocialErrors] = useState(false);
   const handleCheckedChange = () => {
     setOrganization({
       ...organization,
@@ -33,7 +34,7 @@ export default function CompanyProfile() {
       primaryAction={{
         content: "Save",
         loading: loading,
-        disabled: loading,
+        disabled: loading || hasSocialErrors,
         onAction: () => {
           const industryList = organization?.industry.join(", ");
           setLoading(true);
@@ -75,7 +76,7 @@ export default function CompanyProfile() {
             <Divider />
           </>
         )}
-        <SocialMediaInformation />
+        <SocialMediaInformation setHasSocialErrors={setHasSocialErrors} />
         <Divider />
         <Box paddingBlockStart={"5"}>
           <Layout>
