@@ -9,6 +9,7 @@ import { useUI } from "../contexts/ui.context";
 export default function HTMLSitemap() {
   const { shop, setToggleToast } = useUI();
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     category: [],
     isActiveSitemap: false,
@@ -25,6 +26,7 @@ export default function HTMLSitemap() {
 
   const handleChange = (value) => {
     setFormData({ ...formData, limit: value });
+    setErrors({ ...errors, message: "" });
   };
   const { data, isLoading } = useHtmlSitemapQuery({
     url: "/api/html-sitemap/info",
@@ -44,7 +46,15 @@ export default function HTMLSitemap() {
         message: `Limit can not be zero or negative`,
       });
     }
-    createOrUpdateHtmlSitemap(htmlSitemap);
+    setLoading(true);
+    createOrUpdateHtmlSitemap(htmlSitemap, {
+      onSuccess: () => {
+        setLoading(false);
+      },
+      onError: () => {
+        setLoading(false);
+      },
+    });
   };
 
   useEffect(() => {
@@ -62,8 +72,8 @@ export default function HTMLSitemap() {
           <div className="seo_score_page_title_container">
             <div className="seo_score_page_title">HTML Sitemap</div>
             <div className="">
-              <Button primary submit>
-                Submit
+              <Button primary submit disabled={loading}>
+                {loading ? <Spinners /> : "Submit"}
               </Button>
             </div>
           </div>

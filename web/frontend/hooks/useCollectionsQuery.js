@@ -5,6 +5,7 @@ import { useUI } from "../contexts/ui.context";
 
 export const useCollectionsQuery = ({ url, fetchInit = {}, reactQueryOptions }) => {
   const authenticatedFetch = useAuthenticatedFetch();
+  const { modal } = useUI();
   const fetch = useMemo(() => {
     return async () => {
       const response = await authenticatedFetch(url, fetchInit);
@@ -16,6 +17,7 @@ export const useCollectionsQuery = ({ url, fetchInit = {}, reactQueryOptions }) 
     ...reactQueryOptions,
     onSuccess: (data) => {},
     refetchOnWindowFocus: false,
+    enabled: !modal?.isOpen,
     // enabled: Object.keys(shop).length === 0,
   });
 };
