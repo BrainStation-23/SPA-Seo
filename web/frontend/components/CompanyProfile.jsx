@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { Box, Divider, Page, Layout, AlphaCard, Text, VerticalStack } from "@shopify/polaris";
+import {
+  Box,
+  Divider,
+  Page,
+  Layout,
+  AlphaCard,
+  Text,
+  VerticalStack,
+} from "@shopify/polaris";
 import {
   IndustryInformation,
   BrandInformation,
@@ -29,6 +37,9 @@ export default function CompanyProfile() {
 
   const handleSave = () => {
     const industryList = organization?.industry.join(",") || "";
+    if (!industryList) {
+      return setHasIndustryErrors(true);
+    }
     setLoading(true);
     createMetafield(
       {
@@ -59,14 +70,17 @@ export default function CompanyProfile() {
       primaryAction={{
         content: "Save",
         loading: loading,
-        disabled: loading || hasSocialErrors || hasIndustryErrors,
+        disabled: loading || hasSocialErrors,
         onAction: handleSave,
       }}
     >
       <Box paddingInlineStart={"32"} paddingInlineEnd={"32"}>
         <BusinessTypeInformation />
         <Divider />
-        <IndustryInformation setHasIndustryErrors={setHasIndustryErrors} />
+        <IndustryInformation
+          hasIndustryErrors={hasIndustryErrors}
+          setHasIndustryErrors={setHasIndustryErrors}
+        />
         <Divider />
         <BrandInformation />
         <Divider />
@@ -90,7 +104,8 @@ export default function CompanyProfile() {
               </Box>
               <Box>
                 <Text variant="bodyMd">
-                  Inject your organization information for search engines like Google to crawl.
+                  Inject your organization information for search engines like
+                  Google to crawl.
                 </Text>
               </Box>
             </Layout.Section>
@@ -98,10 +113,15 @@ export default function CompanyProfile() {
               <Box>
                 <AlphaCard>
                   <VerticalStack gap={"6"}>
-                    <Text variant="bodyMd">Add organization snippet in storefront.</Text>
+                    <Text variant="bodyMd">
+                      Add organization snippet in storefront.
+                    </Text>
                     <VerticalStack gap={"2"}>
                       <Text variant="headingSm">Status</Text>
-                      <Switch checked={organization?.status} handleClick={handleCheckedChange} />
+                      <Switch
+                        checked={organization?.status}
+                        handleClick={handleCheckedChange}
+                      />
                     </VerticalStack>
                   </VerticalStack>
                 </AlphaCard>

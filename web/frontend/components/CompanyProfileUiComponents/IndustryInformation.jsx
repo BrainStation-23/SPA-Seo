@@ -1,9 +1,22 @@
 import React, { useEffect, useState } from "react";
-import { Layout, Box, Text, AlphaCard, Select, VerticalStack, TextField, Tag, Button } from "@shopify/polaris";
+import {
+  Layout,
+  Box,
+  Text,
+  AlphaCard,
+  Select,
+  VerticalStack,
+  TextField,
+  Tag,
+  Button,
+} from "@shopify/polaris";
 import { useHomeSeo } from "../../contexts/home.context";
 import { useUI } from "../../contexts/ui.context";
 
-export default function IndustryInformation({ setHasIndustryErrors }) {
+export default function IndustryInformation({
+  hasIndustryErrors,
+  setHasIndustryErrors,
+}) {
   const { setToggleToast } = useUI();
   const { organization, setOrganization } = useHomeSeo();
 
@@ -15,7 +28,10 @@ export default function IndustryInformation({ setHasIndustryErrors }) {
     { label: "Arts and Crafts", value: "Arts and Crafts" },
     { label: "Baby and Kids", value: "Baby and Kids" },
     { label: "Books, Music and Video", value: "Books, Music and Video" },
-    { label: "Business equipment and Supplies", value: "Business equipment and Supplies" },
+    {
+      label: "Business equipment and Supplies",
+      value: "Business equipment and Supplies",
+    },
     { label: "Clothing", value: "Clothing" },
     { label: "Electronics", value: "Electronics" },
     { label: "Food and Drink", value: "Food and Drink" },
@@ -36,12 +52,15 @@ export default function IndustryInformation({ setHasIndustryErrors }) {
     options.map((option) => ({
       ...option,
       disabled: organization?.industry?.some(
-        (selected) => selected.trim().toLowerCase() === option.value.trim().toLowerCase()
+        (selected) =>
+          selected.trim().toLowerCase() === option.value.trim().toLowerCase()
       ),
     }));
 
   const handleAddSelection = () => {
-    const valueToAdd = selectedIndustry === "Other" ? otherIndustry : selectedIndustry;
+    setHasIndustryErrors(false);
+    const valueToAdd =
+      selectedIndustry === "Other" ? otherIndustry : selectedIndustry;
     const isExists = organization?.industry?.some(
       (org) => org.trim().toLowerCase() === valueToAdd.trim().toLowerCase()
     );
@@ -70,10 +89,6 @@ export default function IndustryInformation({ setHasIndustryErrors }) {
     });
   };
 
-  useEffect(() => {
-    setHasIndustryErrors(organization?.industry?.length === 0);
-  }, [organization?.industry]);
-
   return (
     <Box paddingBlockStart={"5"} paddingBlockEnd={"5"}>
       <Layout>
@@ -82,7 +97,9 @@ export default function IndustryInformation({ setHasIndustryErrors }) {
             <Text variant="headingMd">Industry</Text>
           </Box>
           <Box>
-            <Text variant="bodyMd">Let search engines like Google know your industry</Text>
+            <Text variant="bodyMd">
+              Let search engines like Google know your industry
+            </Text>
           </Box>
         </Layout.Section>
         <Layout.Section oneHalf>
@@ -96,7 +113,11 @@ export default function IndustryInformation({ setHasIndustryErrors }) {
                       options={getOptionsWithDisabled()}
                       onChange={(value) => setSelectedIndustry(value)}
                       value={selectedIndustry}
+                      error={
+                        hasIndustryErrors && "Please select a specific industry"
+                      }
                     />
+
                     {selectedIndustry === "Other" && (
                       <TextField
                         label="Enter other industry"
