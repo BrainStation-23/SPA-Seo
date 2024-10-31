@@ -26,6 +26,7 @@ export const useBulkUpdateAltText = () => {
           message: `Something went wrong`,
         });
       }
+      queryClient.invalidateQueries("ImageOptimizerSettings");
 
       setToggleToast({
         active: true,
