@@ -16,7 +16,6 @@ import sitemapRoute from "./routes/htmlsitemap.js";
 import UninstallCleanupRouter from "./routes/uninstall.js";
 import { errorRouter, updateErrorInsightsRouter } from "./routes/404error.js";
 import imageCompression from "./routes/imageCompression.js";
-import "dotenv/config";
 
 const PORT = parseInt(
   process.env.BACKEND_PORT || process.env.PORT || "3000",
