@@ -16,7 +16,7 @@ import sitemapRoute from "./routes/htmlsitemap.js";
 import UninstallCleanupRouter from "./routes/uninstall.js";
 import { errorRouter, updateErrorInsightsRouter } from "./routes/404error.js";
 import imageCompression from "./routes/imageCompression.js";
-import sharp from "sharp";
+import "dotenv/config";
 
 const PORT = parseInt(
   process.env.BACKEND_PORT || process.env.PORT || "3000",
@@ -54,7 +54,7 @@ app.get("/api/shop", async (_req, res) => {
   const response = await shopify.api.rest.Shop.all({
     session: res.locals.shopify.session,
   });
-
+  console.log(process.env.AI_API_KEY, "shopify.api.rest.Shop ........");
   let shop = {
     id: response?.data[0]?.id,
     name: response.data[0]?.name,

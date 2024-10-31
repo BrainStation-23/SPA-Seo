@@ -22,7 +22,7 @@
   resolved "https://registry.npmjs.org/@babel/compat-data/-/compat-data-7.22.3.tgz"
   integrity sha512-aNtko9OPOwVESUFp3MZfD8Uzxl7JzSeJpd7npIoxCasU37PFbAQRpKglkaKwlHOyeJdrREpo8TW8ldrkYWwvIQ==
 
-"@babel/core@^7.0.0", "@babel/core@^7.0.0-0", "@babel/core@^7.16.12":
+"@babel/core@^7.16.12":
   version "7.22.1"
   resolved "https://registry.npmjs.org/@babel/core/-/core-7.22.1.tgz"
   integrity sha512-Hkqu7J4ynysSXxmAahpN1jjRwVJ+NdpraFLIWflgjpVob3KNyK3/tIUc7Q7szed8WMp0JNa7Qtd1E9Oo22F9gA==
@@ -304,10 +304,17 @@
   dependencies:
     "@jridgewell/trace-mapping" "0.3.9"
 
-"@esbuild/win32-x64@0.17.18":
+"@emnapi/runtime@^1.2.0":
+  version "1.3.1"
+  resolved "https://registry.npmjs.org/@emnapi/runtime/-/runtime-1.3.1.tgz"
+  integrity sha512-kEBmG8KyqtxJZv+ygbEim+KCGtIq1fC22Ms3S4ziXmYKm8uyoLX0MHONVKwp+9opg390VaKRNt4a7A9NwmpNhw==
+  dependencies:
+    tslib "^2.4.0"
+
+"@esbuild/linux-x64@0.17.18":
   version "0.17.18"
-  resolved "https://registry.npmjs.org/@esbuild/win32-x64/-/win32-x64-0.17.18.tgz"
-  integrity sha512-qU25Ma1I3NqTSHJUOKi9sAH1/Mzuvlke0ioMJRthLXKm7JiSKVwFghlGbDLOO2sARECGhja4xYfRAZNPAkooYg==
+  resolved "https://registry.npmjs.org/@esbuild/linux-x64/-/linux-x64-0.17.18.tgz"
+  integrity sha512-66RmRsPlYy4jFl0vG80GcNRdirx4nVWAzJmXkevgphP1qf4dsLQCpSKGM3DUQCojwU1hnepI63gNZdrr02wHUA==
 
 "@gar/promisify@^1.0.1":
   version "1.1.3"
@@ -324,17 +331,36 @@
   resolved "https://registry.npmjs.org/@iarna/toml/-/toml-2.2.5.tgz"
   integrity sha512-trnsAYxU3xnS1gPHPyU961coFyLkh4gAD/0zQ5mymY4yOZ+CYvsPqUbOFSw0aDM4y0tV7tiFxL/1XfXPNC6IPg==
 
+"@img/sharp-libvips-linux-x64@1.0.4":
+  version "1.0.4"
+  resolved "https://registry.npmjs.org/@img/sharp-libvips-linux-x64/-/sharp-libvips-linux-x64-1.0.4.tgz"
+  integrity sha512-MmWmQ3iPFZr0Iev+BAgVMb3ZyC4KeFc3jFxnNbEPas60e1cIfevbtuyf9nDGIzOaW9PdnDciJm+wFFaTlj5xYw==
+
+"@img/sharp-libvips-linuxmusl-x64@1.0.4":
+  version "1.0.4"
+  resolved "https://registry.npmjs.org/@img/sharp-libvips-linuxmusl-x64/-/sharp-libvips-linuxmusl-x64-1.0.4.tgz"
+  integrity sha512-viYN1KX9m+/hGkJtvYYp+CCLgnJXwiQB39damAO7WMdKWlIhmYTfHjwSbQeUK/20vY154mwezd9HflVFM1wVSw==
+
+"@img/sharp-linux-x64@0.33.5":
+  version "0.33.5"
+  resolved "https://registry.npmjs.org/@img/sharp-linux-x64/-/sharp-linux-x64-0.33.5.tgz"
+  integrity sha512-opC+Ok5pRNAzuvq1AG0ar+1owsu842/Ab+4qvU879ippJBHvyY5n2mxF1izXqkPYlGuP/M556uh53jRLJmzTWA==
+  optionalDependencies:
+    "@img/sharp-libvips-linux-x64" "1.0.4"
+
+"@img/sharp-linuxmusl-x64@0.33.5":
+  version "0.33.5"
+  resolved "https://registry.npmjs.org/@img/sharp-linuxmusl-x64/-/sharp-linuxmusl-x64-0.33.5.tgz"
+  integrity sha512-WT+d/cgqKkkKySYmqoZ8y3pxx7lx9vVejxW/W4DOFMYVSkErR+w7mf2u8m/y4+xHe7yY9DAXQMWQhpnMuFfScw==
+  optionalDependencies:
+    "@img/sharp-libvips-linuxmusl-x64" "1.0.4"
+
 "@img/sharp-wasm32@^0.33.5", "@img/sharp-wasm32@0.33.5":
   version "0.33.5"
   resolved "https://registry.npmjs.org/@img/sharp-wasm32/-/sharp-wasm32-0.33.5.tgz"
   integrity sha512-ykUW4LVGaMcU9lu9thv85CbRMAwfeadCJHRsg2GmeRa/cJxsVY9Rbd57JcMxBkKHag5U/x7TSBpScF4U8ElVzg==
   dependencies:
     "@emnapi/runtime" "^1.2.0"
-
-"@img/sharp-win32-x64@0.33.5":
-  version "0.33.5"
-  resolved "https://registry.npmjs.org/@img/sharp-win32-x64/-/sharp-win32-x64-0.33.5.tgz"
-  integrity sha512-MpY/o8/8kj+EcnxwvrP4aTJSWw/aZ7JIGR4aBeZkZw5B7/Jn+tY9/VNwtcoGmdT7GfggGIU4kygOMSbYnOrAbg==
 
 "@jridgewell/gen-mapping@^0.3.0", "@jridgewell/gen-mapping@^0.3.2":
   version "0.3.3"
@@ -861,7 +887,7 @@
     react-fast-compare "^3.2.0"
     react-transition-group "^4.4.2"
 
-"@shopify/shopify-api@^11.3.0", "@shopify/shopify-api@^7.1.0":
+"@shopify/shopify-api@^11.3.0":
   version "11.3.0"
   resolved "https://registry.npmjs.org/@shopify/shopify-api/-/shopify-api-11.3.0.tgz"
   integrity sha512-bqREKbm+u4yUYy1JotToOlf9d2RcXgIV7THGuzMm9bAyW6ZOw2yKXhUuUibOA4NMHPJE0mHrEV3xTypmKfuCOw==
@@ -877,6 +903,19 @@
     node-fetch "^2.6.1"
     tslib "^2.6.3"
     uuid "^10.0.0"
+
+"@shopify/shopify-api@^7.1.0":
+  version "7.2.0"
+  resolved "https://registry.npmjs.org/@shopify/shopify-api/-/shopify-api-7.2.0.tgz"
+  integrity sha512-mjdVYIVw5Ko8y5yqT7gHtw2vnT4aOavPp3Ju0r8rhg4V314T0gMKtuPn8OJ1lljjtZnR8vxpyEOBFLJanfyODQ==
+  dependencies:
+    "@shopify/network" "^3.2.1"
+    compare-versions "^5.0.3"
+    isbot "^3.6.10"
+    jose "^4.9.1"
+    node-fetch "^2.6.1"
+    tslib "^2.0.3"
+    uuid "^9.0.0"
 
 "@shopify/shopify-app-express@^2.1.1":
   version "2.1.2"
@@ -1048,7 +1087,7 @@
   dependencies:
     "@types/react" "*"
 
-"@types/react@*", "@types/react@>=18.0.0":
+"@types/react@*":
   version "18.2.8"
   resolved "https://registry.npmjs.org/@types/react/-/react-18.2.8.tgz"
   integrity sha512-lTyWUNrd8ntVkqycEEplasWy2OxNlShj3zqS0LuB1ENUGis5HodmhM7DtCoUGbxj3VW/WsGA0DUhpG6XrM7gPA==
@@ -1496,7 +1535,7 @@ browser-process-hrtime@^1.0.0:
   resolved "https://registry.npmjs.org/browser-process-hrtime/-/browser-process-hrtime-1.0.0.tgz"
   integrity sha512-9o5UecI3GhkpM6DrXr69PblIuWxPKk9Y0jHBRhdocZ2y7YECBFCsHm79Pr3OyR2AvjhDkabFJaDJMYRazHgsow==
 
-browserslist@^4.21.3, "browserslist@>= 4.21.0":
+browserslist@^4.21.3:
   version "4.21.7"
   resolved "https://registry.npmjs.org/browserslist/-/browserslist-4.21.7.tgz"
   integrity sha512-BauCXrQ7I2ftSqd2mvKHGo85XR0u7Ru3C/Hxsy/0TkfCtjrmAbPdzLGasmoiBxplpDXlPvdjX9u7srIMfgasNA==
@@ -1797,7 +1836,7 @@ color-json@3.0.5:
   resolved "https://registry.npmjs.org/color-json/-/color-json-3.0.5.tgz"
   integrity sha512-DG4zae1GmHDBNsYTUe+GJiDnuKutxs2vVSkPRQqbeA6oEGBRQyRixV+HmIByasCfyf9L0CwHo8vOoiHqe7Lzng==
 
-color-name@~1.1.4:
+color-name@^1.0.0, color-name@~1.1.4:
   version "1.1.4"
   resolved "https://registry.npmjs.org/color-name/-/color-name-1.1.4.tgz"
   integrity sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==
@@ -1806,6 +1845,14 @@ color-name@1.1.3:
   version "1.1.3"
   resolved "https://registry.npmjs.org/color-name/-/color-name-1.1.3.tgz"
   integrity sha512-72fSenhMw2HZMTVHeCA9KCmpEIbzWiQsjN+BHcBbS9vr1mtt+vJjPdksIBNUmKAW8TFUDPJK5SUU3QhE9NEXDw==
+
+color-string@^1.9.0:
+  version "1.9.1"
+  resolved "https://registry.npmjs.org/color-string/-/color-string-1.9.1.tgz"
+  integrity sha512-shrVawQFojnZv6xM40anx4CkoDP+fZsw/ZerEMsW/pyzsRbElpsL/DBVW7q3ExxwusdNXI3lXpuhEZkzs8p5Eg==
+  dependencies:
+    color-name "^1.0.0"
+    simple-swizzle "^0.2.2"
 
 color-support@^1.1.2, color-support@^1.1.3:
   version "1.1.3"
@@ -2258,6 +2305,11 @@ dot-prop@^7.2.0:
   dependencies:
     type-fest "^2.11.2"
 
+dotenv@^16.4.5:
+  version "16.4.5"
+  resolved "https://registry.npmjs.org/dotenv/-/dotenv-16.4.5.tgz"
+  integrity sha512-ZmdL2rui+eB2YwhsWzjInR8LldtZHGDoQ1ugH85ppHKwpUHL7j7rN0Ti9NCnGiQbhaZ11FpR+7ao1dNsmduNUg==
+
 eastasianwidth@^0.2.0:
   version "0.2.0"
   resolved "https://registry.npmjs.org/eastasianwidth/-/eastasianwidth-0.2.0.tgz"
@@ -2302,7 +2354,7 @@ encodeurl@~1.0.2:
   resolved "https://registry.npmjs.org/encodeurl/-/encodeurl-1.0.2.tgz"
   integrity sha512-TPJXq8JqFaVYm2CWmPvnP2Iyo4ZSM7/QKcSmuMLDObfpH5fi7RUGmd/rTDf+rut/saiDiQEeVTNgAmJEdAOx0w==
 
-encoding@^0.1.0, encoding@^0.1.12:
+encoding@^0.1.12:
   version "0.1.13"
   resolved "https://registry.npmjs.org/encoding/-/encoding-0.1.13.tgz"
   integrity sha512-ETBauow1T35Y/WZMkio9jiM0Z5xjHHmJ4XmjZOq1l/dXz3lr2sRn87nJy20RupqSh1F2m3HHPSp8ShIPQJrJ3A==
@@ -2350,10 +2402,10 @@ error-stack-parser@^2.0.2, error-stack-parser@^2.0.3:
   dependencies:
     stackframe "^1.3.4"
 
-esbuild-windows-64@0.14.54:
+esbuild-linux-64@0.14.54:
   version "0.14.54"
-  resolved "https://registry.npmjs.org/esbuild-windows-64/-/esbuild-windows-64-0.14.54.tgz"
-  integrity sha512-AoHTRBUuYwXtZhjXZbA1pGfTo8cJo3vZIcWGLiUcTNgHpJJMC1rVA44ZereBHMJtotyN71S8Qw0npiCIkW96cQ==
+  resolved "https://registry.npmjs.org/esbuild-linux-64/-/esbuild-linux-64-0.14.54.tgz"
+  integrity sha512-EgjAgH5HwTbtNsTqQOXWApBaPVdDn7XcK+/PtJwZLT1UmpLoznPd8c5CxqsH2dQK3j05YsB3L17T8vE7cp4cCg==
 
 esbuild@^0.14.27:
   version "0.14.54"
@@ -2382,7 +2434,7 @@ esbuild@^0.14.27:
     esbuild-windows-64 "0.14.54"
     esbuild-windows-arm64 "0.14.54"
 
-esbuild@>=0.8.26, esbuild@0.17.18:
+esbuild@0.17.18:
   version "0.17.18"
   resolved "https://registry.npmjs.org/esbuild/-/esbuild-0.17.18.tgz"
   integrity sha512-z1lix43jBs6UKjcZVKOw2xx69ffE2aG0PygLL5qJ9OS/gy0Ewd1gW/PUQIOIQGXBHWNywSc0floSKoMFF8aK2w==
@@ -2978,14 +3030,7 @@ graphql-request@5.2.0:
     extract-files "^9.0.0"
     form-data "^3.0.0"
 
-graphql-tag@^2.11.0:
-  version "2.12.6"
-  resolved "https://registry.npmjs.org/graphql-tag/-/graphql-tag-2.12.6.tgz"
-  integrity sha512-FdSNcu2QQcWnM2VNvSCCDCVS5PpPqpzgFT8+GXzqJuoDd0CBncxCY278u4mhRO7tMgo2JjgJA5aZ+nWSQ/Z+xg==
-  dependencies:
-    tslib "^2.1.0"
-
-"graphql@^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0", "graphql@^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0", "graphql@14 - 16", graphql@16.4.0:
+graphql@16.4.0:
   version "16.4.0"
   resolved "https://registry.npmjs.org/graphql/-/graphql-16.4.0.tgz"
   integrity sha512-tYDNcRvKCcfHREZYje3v33NSrSD/ZpbWWdPtBtUUuXx9NCo/2QDxYzNqCnMvfsrnbwRpEHMovVrPu/ERoLrIRg==
@@ -3604,7 +3649,7 @@ lazystream@^1.0.0:
   dependencies:
     readable-stream "^2.0.5"
 
-leaflet@^1.9.0, leaflet@^1.9.4:
+leaflet@^1.9.4:
   version "1.9.4"
   resolved "https://registry.npmjs.org/leaflet/-/leaflet-1.9.4.tgz"
   integrity sha512-nxS1ynzJOmOlHp+iL3FyWqK89GtNL8U8rvlMOsQdTTssxZwCXh8N2NB3GDQOL+YR3XnWyZAxwQixURb+FA74PA==
@@ -4515,7 +4560,7 @@ prelude-ls@~1.1.2:
   resolved "https://registry.npmjs.org/prelude-ls/-/prelude-ls-1.1.2.tgz"
   integrity sha512-ESF23V4SKG6lVSGZgYNpbsiaAkdab6ZgOxe52p7+Kid3W3u3bxR4Vfd/o21dmN7jSt0IwgZ4v5MUd26FEtXE9w==
 
-prettier@^2.6.0, prettier@^2.6.2, prettier@>=2.0.0:
+prettier@^2.6.0, prettier@^2.6.2:
   version "2.8.8"
   resolved "https://registry.npmjs.org/prettier/-/prettier-2.8.8.tgz"
   integrity sha512-tdN8qQGvNjw4CHbY+XXk0JgCXn9QiF21a55rBe5LJAU+kDyC4WQn4+awm2Xfk2lQMk5fKup9XgzTZtGkjBdP9Q==
@@ -4667,7 +4712,7 @@ rc@1.2.8:
     minimist "^1.2.0"
     strip-json-comments "~2.0.1"
 
-"react-dom@^16.14.0 || ^17.0.0 || ^18.0.0", react-dom@^18.0.0, react-dom@^18.2.0, react-dom@>=16.6.0, react-dom@>=16.8:
+react-dom@^18.2.0:
   version "18.3.1"
   resolved "https://registry.npmjs.org/react-dom/-/react-dom-18.3.1.tgz"
   integrity sha512-5m4nQKp+rZRb09LNH59GM4BxTh9251/ylbKIbpe7TpGxfJ+9kv6BLkLBXIjjspbgbnIBNqlI23tRnTWT0snUIw==
@@ -4739,7 +4784,7 @@ react-transition-group@^4.4.2:
     loose-envify "^1.4.0"
     prop-types "^15.6.2"
 
-react@*, "react@^16.0.0 || ^17.0.0 || ^18.0.0", "react@^16.14.0 || ^17.0.0 || ^18.0.0", "react@^16.8.0 || ^17.0.0 || ^18.0.0", react@^18.0.0, react@^18.2.0, react@^18.3.1, react@>=16.6.0, react@>=16.8, react@>=18.0.0, react@18.2.0:
+react@^18.2.0, react@18.2.0:
   version "18.2.0"
   resolved "https://registry.npmjs.org/react/-/react-18.2.0.tgz"
   integrity sha512-/3IjMdb2L9QbBdWiW5e3P2/npwMBaU9mHCSCUzNln0ZCYbcfTsGbTJrU/kGemdH2IWmB2ioZ+zkxtmq6g09fGQ==
@@ -4962,11 +5007,6 @@ semver@^6.3.0:
   resolved "https://registry.npmjs.org/semver/-/semver-6.3.0.tgz"
   integrity sha512-b39TBaTSfV6yBrapU89p5fKekE2m/NwnDocOVruQFS1/veMgdzuPcnOM34M6CwxW8jH/lxEa5rBoDeUwu5HHTw==
 
-semver@^6.3.0:
-  version "6.3.0"
-  resolved "https://registry.npmjs.org/semver/-/semver-6.3.0.tgz"
-  integrity sha512-b39TBaTSfV6yBrapU89p5fKekE2m/NwnDocOVruQFS1/veMgdzuPcnOM34M6CwxW8jH/lxEa5rBoDeUwu5HHTw==
-
 semver@^7.3.5, semver@^7.3.7, semver@^7.3.8, semver@^7.5.0, semver@^7.5.1, semver@^7.5.4, semver@^7.6.3:
   version "7.6.3"
   resolved "https://registry.npmjs.org/semver/-/semver-7.6.3.tgz"
@@ -5085,7 +5125,7 @@ shebang-regex@^3.0.0:
   resolved "https://registry.npmjs.org/shebang-regex/-/shebang-regex-3.0.0.tgz"
   integrity sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==
 
-"shopify-app-template-node@file:C:\\Users\\BS557\\Desktop\\work\\SPA-Seo\\web":
+"shopify-app-template-node@file:/home/bs830/Documents/working/shopify app/SEO-app/web":
   version "1.0.0"
   resolved "file:web"
   dependencies:
@@ -5095,11 +5135,13 @@ shebang-regex@^3.0.0:
     compression "^1.7.4"
     cross-env "^7.0.3"
     serve-static "^1.14.1"
+    sharp "^0.33.5"
 
-"shopify-frontend-template-react@file:C:\\Users\\BS557\\Desktop\\work\\SPA-Seo\\web\\frontend":
+"shopify-frontend-template-react@file:/home/bs830/Documents/working/shopify app/SEO-app/web/frontend":
   version "1.0.0"
   resolved "file:web/frontend"
   dependencies:
+    "@img/sharp-wasm32" "^0.33.5"
     "@shopify/app-bridge" "^3.1.0"
     "@shopify/app-bridge-react" "^3.1.0"
     "@shopify/app-bridge-utils" "^3.1.0"
@@ -5575,7 +5617,7 @@ ts-node@^10.9.1:
     v8-compile-cache-lib "^3.0.1"
     yn "3.1.1"
 
-tslib@^2, tslib@^2.0.3, tslib@^2.1.0, tslib@^2.4.0, tslib@^2.4.1, tslib@^2.5.0, tslib@^2.6.3:
+tslib@^2, tslib@^2.0.3, tslib@^2.4.0, tslib@^2.4.1, tslib@^2.5.0, tslib@^2.6.3:
   version "2.6.3"
   resolved "https://registry.npmjs.org/tslib/-/tslib-2.6.3.tgz"
   integrity sha512-xNvxJEOUiWPGhUuUdQgAJPKOOJfGnIyKySOc09XkKsgdUV/3E2zvwZYdejjmRgPCgcym1juLH3226yA7sEFJKQ==
@@ -5641,11 +5683,6 @@ type-is@~1.6.18:
   dependencies:
     media-typer "0.3.0"
     mime-types "~2.1.24"
-
-typescript@>=2.7:
-  version "5.6.2"
-  resolved "https://registry.npmjs.org/typescript/-/typescript-5.6.2.tgz"
-  integrity sha512-NW8ByodCSNCwZeghjN3o+JX5OFH0Ojg6sadjEKY4huZ52TqbJTJnDo5+Tw98lSy63NZvi4n+ez5m2u5d4PkZyw==
 
 ufo@^0.8.5:
   version "0.8.6"
