@@ -60,7 +60,7 @@ export const useImageOptimizerQuery = ({ url, fetchInit = {}, reactQueryOptions 
 
 export const useSaveImageOptimizerSettings = () => {
   const fetch = useAuthenticatedFetch();
-  const { setToggleToast } = useUI();
+  const { setToggleToast, setCloseModal } = useUI();
   const queryClient = useQueryClient();
   async function saveImageOptimizerSettings(status) {
     return await fetch("/api/metafields/save/image-optimizer", {

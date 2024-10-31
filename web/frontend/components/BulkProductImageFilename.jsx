@@ -13,6 +13,7 @@ import {
   TextField,
   Button,
   HorizontalStack,
+  Banner,
 } from "@shopify/polaris";
 import { RefreshIcon } from "@shopify/polaris-icons";
 import { useImageOptimizerQuery } from "../hooks/useImageOptimizer";
@@ -40,7 +41,7 @@ export function BulkProductImageFilename() {
   }, []);
 
   const handleSubmit = () => {
-    const forbiddenChars = /[^a-zA-Z0-9-_]/;
+    const forbiddenChars = /[^a-z-]/;
 
     if (filename === null || filename?.length === 0) {
       return setErrors({
@@ -48,10 +49,10 @@ export function BulkProductImageFilename() {
         message: `Filename cannot be empty`,
       });
     }
-    if (forbiddenChars.test(filename)) {
+    if (forbiddenChars.test(filename) || filename.includes(" ") || filename.split("-").length > 5) {
       return setErrors({
         ...errors,
-        message: `Filename contains invalid characters. Use only alphanumeric characters, dashes, and underscores.`,
+        message: `Filename contains invalid characters. Use only characters, dashes, small latter.`,
       });
     }
 
@@ -131,6 +132,23 @@ export function BulkProductImageFilename() {
                                 />
                               </FormLayout>
                             </AlphaCard>
+                          </Box>
+
+                          <Box paddingBlockStart={"3"}>
+                            <Banner title="Filename Guidelines" status="warning">
+                              <List>
+                                <List.Item>Keep your filename relevant to the actual content .</List.Item>
+                                <List.Item>
+                                  Avoid keyword stuffing in filenames; use a concise, descriptive name instead.
+                                </List.Item>
+                                <List.Item>Keep filenames short—ideally 5 words or fewer.</List.Item>
+                                <List.Item>Separate words with hyphens (e.g., "apple-food.jpg").</List.Item>
+                                <List.Item>
+                                  Avoid using generic names like "IMG1234.jpg" or overly keyworded names like
+                                  "Best-food-planner.jpg."
+                                </List.Item>
+                              </List>
+                            </Banner>
                           </Box>
                         </Layout.Section>
                       </Layout>

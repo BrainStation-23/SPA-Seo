@@ -56,7 +56,7 @@ export function ImageAltOptimizer() {
   }, []);
 
   const handleSubmit = () => {
-    const altTextChenge = [];
+    let altTextChenge = [];
     if (productImageAlt !== data.data.altText.product) {
       altTextChenge.push("product");
     }
@@ -86,15 +86,22 @@ export function ImageAltOptimizer() {
       });
     }
 
-    runBulkImageUpdate({
-      type: "altText",
-      data: {
-        altTextChenge,
-        product: productImageAlt,
-        collection: collectionImgeAlt,
-        article: articleImageAlt,
+    runBulkImageUpdate(
+      {
+        type: "altText",
+        data: {
+          altTextChenge,
+          product: productImageAlt,
+          collection: collectionImgeAlt,
+          article: articleImageAlt,
+        },
       },
-    });
+      {
+        onSuccess: () => {
+          altTextChenge = [];
+        },
+      }
+    );
   };
 
   return (
