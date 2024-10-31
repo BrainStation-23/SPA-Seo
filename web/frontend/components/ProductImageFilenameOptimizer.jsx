@@ -39,7 +39,7 @@ function ImageTextField({ image, product, shop }) {
       return "Filename cannot be empty.";
     }
     if (forbiddenChars.test(filename) || filename.includes(" ") || filename.split("-").length > 5) {
-      return "Filename contains invalid characters. Use only characters, dashes, small latter.";
+      return "Filename contains invalid characters. Use only characters, dashes or small latter.";
     }
 
     if (filename.length > 50) {
@@ -96,19 +96,6 @@ export function ProductImageFilenameOptimizer() {
   return (
     <Box paddingBlockStart={"2"}>
       <Text variant="headingMd">Product Image Filename Optimizer</Text>
-      <Box paddingBlockStart={"3"}>
-        <Banner title="Filename Guidelines" status="warning">
-          <List>
-            <List.Item>Keep your filename relevant to the actual content .</List.Item>
-            <List.Item>Avoid keyword stuffing in filenames; use a concise, descriptive name instead.</List.Item>
-            <List.Item>Keep filenames short—ideally 5 words or fewer.</List.Item>
-            <List.Item>Separate words with hyphens (e.g., "apple-food.jpg").</List.Item>
-            <List.Item>
-              Avoid using generic names like "IMG1234.jpg" or overly keyworded names like "Best-food-planner.jpg."
-            </List.Item>
-          </List>
-        </Banner>
-      </Box>
       <div style={{ marginBottom: "1rem" }}></div>
       <Layout>
         <Layout.Section>
@@ -118,6 +105,19 @@ export function ProductImageFilenameOptimizer() {
                 <ImageTextField key={index} image={image} product={product} shop={shop} />
               ))}
             </VerticalStack>
+          </Box>
+          <Box paddingBlockStart={"10"}>
+            <Banner title="Filename Guidelines" status="warning">
+              <List>
+                <List.Item>Keep your filename relevant to the actual content .</List.Item>
+                <List.Item>Avoid keyword stuffing in filenames; use a concise, descriptive name instead.</List.Item>
+                <List.Item>Keep filenames short—ideally 5 words or fewer.</List.Item>
+                <List.Item>Separate words with hyphens (e.g., "apple-food.jpg").</List.Item>
+                <List.Item>
+                  Avoid using generic names like "IMG1234.jpg" or overly keyworded names like "Best-food-planner.jpg."
+                </List.Item>
+              </List>
+            </Banner>
           </Box>
         </Layout.Section>
         <Layout.Section oneThird>
