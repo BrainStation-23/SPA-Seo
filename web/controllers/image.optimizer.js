@@ -2,6 +2,8 @@ import shopify from "../shopify.js";
 import { extname, basename } from "path";
 import { getProductByID } from "./products.js";
 import { SaveImageAltOptimizerMetafiled } from "./metafields.js";
+import { v4 as uuidv4 } from "uuid";
+
 const fetchAllFromDataSource = async ({ session, query, datasource }) => {
   let allData = [];
   let hasNextPage = true;
@@ -24,11 +26,15 @@ const fetchAllFromDataSource = async ({ session, query, datasource }) => {
         },
       });
 
-      const products = response.body.data[`${datasource}`].edges.map((edge) => edge.node);
+      const products = response.body.data[`${datasource}`].edges.map(
+        (edge) => edge.node
+      );
       const pageInfo = response.body.data[`${datasource}`].pageInfo;
       const endCursor =
         response.body.data[`${datasource}`].edges.length > 0
-          ? response.body.data[`${datasource}`].edges[response.body.data[`${datasource}`].edges.length - 1].cursor
+          ? response.body.data[`${datasource}`].edges[
+              response.body.data[`${datasource}`].edges.length - 1
+            ].cursor
           : null;
       allData = allData.concat(products);
 
@@ -80,7 +86,10 @@ const translateAltText = (altTextSettings, owner, type, shop) => {
           ownerData = "";
           break;
       }
-    } else if (ownerType.toLocaleLowerCase() == "product" && type == "product") {
+    } else if (
+      ownerType.toLocaleLowerCase() == "product" &&
+      type == "product"
+    ) {
       switch (property.toLocaleLowerCase()) {
         case "title":
           ownerData = owner.title;
@@ -98,11 +107,17 @@ const translateAltText = (altTextSettings, owner, type, shop) => {
           ownerData = "";
           break;
       }
-    } else if (ownerType.toLocaleLowerCase() == "collection" && type == "collection") {
+    } else if (
+      ownerType.toLocaleLowerCase() == "collection" &&
+      type == "collection"
+    ) {
       if (property.toLocaleLowerCase() == "title") {
         ownerData = owner.title;
       }
-    } else if (ownerType.toLocaleLowerCase() == "article" && type == "article") {
+    } else if (
+      ownerType.toLocaleLowerCase() == "article" &&
+      type == "article"
+    ) {
       switch (property.toLocaleLowerCase()) {
         case "title":
           ownerData = owner.title;
@@ -125,7 +140,13 @@ const translateAltText = (altTextSettings, owner, type, shop) => {
   return altText;
 };
 
-const updateImageAltManually = async ({ session, shopData, datasource, metafieldData, type }) => {
+const updateImageAltManually = async ({
+  session,
+  shopData,
+  datasource,
+  metafieldData,
+  type,
+}) => {
   try {
     const client = new shopify.api.clients.Graphql({
       apiVersion: "2024-10",
@@ -138,12 +159,19 @@ const updateImageAltManually = async ({ session, shopData, datasource, metafield
     while (hasNextSlice) {
       const slice = datasource.slice(
         start,
-        start + batchSize < datasource.length ? start + batchSize : datasource.length
+        start + batchSize < datasource.length
+          ? start + batchSize
+          : datasource.length
       );
 
       let mutation_query = ``;
       slice.forEach((data, index) => {
-        const altText = translateAltText(metafieldData.altText[`${type}`], data, type, shopData);
+        const altText = translateAltText(
+          metafieldData.altText[`${type}`],
+          data,
+          type,
+          shopData
+        );
 
         if (type == "collection") {
           mutation_query += `collection_${index}: collectionUpdate(input: { id: "${data.id}", image: { altText: "${altText}" } }) {
@@ -214,7 +242,9 @@ export const BulkUpdateAltText = async (req, res, next) => {
     }
 
     if (!metafieldData) {
-      return res.status(400).json({ message: "No optimization settings was specified" });
+      return res
+        .status(400)
+        .json({ message: "No optimization settings was specified" });
     }
 
     console.log("got metafield data");
@@ -396,7 +426,10 @@ function sanitizeFilename(filename) {
 
 function parseFilenameFromSrc(url) {
   const full_filename = url.substring(url.lastIndexOf("/") + 1).split("?")[0];
-  const filename_without_extension = full_filename.substring(0, full_filename.lastIndexOf("."));
+  const filename_without_extension = full_filename.substring(
+    0,
+    full_filename.lastIndexOf(".")
+  );
   const fileExtension = full_filename.substring(full_filename.lastIndexOf("."));
   return { filename: filename_without_extension, fileExt: fileExtension };
 }
@@ -433,7 +466,12 @@ export const updateProductImageFilename = async (req, res, next) => {
     const shop = queryData.body.data.shop,
       product = queryData.body.data.product;
 
-    const filename = translateAltText(fileNameSettings, product, "product", shop);
+    const filename = translateAltText(
+      fileNameSettings,
+      product,
+      "product",
+      shop
+    );
 
     const input = [
       {
@@ -459,85 +497,174 @@ export const updateProductImageFilename = async (req, res, next) => {
       },
     });
 
-    if (productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors.length > 0) {
-      throw new Error(JSON.stringify(productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors));
+    if (
+      productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors
+        .length > 0
+    ) {
+      return res.status(400).json({
+        message:
+          productImageFilenameUpdateResponse.body.data.fileUpdate
+            .userErrors?.[0].message,
+      });
     }
     const product_id = productId.split("/").pop();
-    const productDataById = await getProductByID(res.locals.shopify.session, product_id);
-    return res.status(200).json({ message: "Product image filename updated", productDataById });
+    const productDataById = await getProductByID(
+      res.locals.shopify.session,
+      product_id
+    );
+    return res
+      .status(200)
+      .json({ message: "Product image filename updated", productDataById });
   } catch (error) {
     console.error(error);
-    return res.status(400).json({ message: "Error updating product image filename" });
+    return res
+      .status(400)
+      .json({ message: "Error updating product image filename" });
   }
 };
+
+// async function batchUpdateImageFileName({ input, client }) {
+//   function wait(ms) {
+//     return new Promise((resolve) => setTimeout(resolve, ms));
+//   }
+
+//   try {
+//     console.log("starting batch update");
+//     const batchSize = 10;
+//     let start = 0,
+//       hasNextSlice = true;
+
+//     while (hasNextSlice) {
+//       const slice = input.slice(start, start + batchSize);
+//       const productImageFilenameUpdateResponse = await client.query({
+//         data: {
+//           query: `
+//         mutation FileUpdate($input: [FileUpdateInput!]!) {
+//           fileUpdate(files: $input) {
+//             userErrors {
+//               code
+//               field
+//               message
+//             }
+//             files {
+//               id
+//               fileStatus
+//               fileErrors {
+//                 code
+//                 details
+//                 message
+//               }
+//             }
+//           }
+//         }
+//         `,
+//           variables: { input: slice },
+//         },
+//       });
+
+//       if (productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors.length > 0) {
+//         console.log("something happened");
+//         console.log(productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors);
+//         // throw productImageFilenameUpdateResponse.body.data.fileUpdate
+//         //   .userErrors;
+//       }
+
+//       if (start + batchSize >= input.length) {
+//         hasNextSlice = false;
+//       } else start += batchSize;
+
+//       await wait(1000 * 30);
+//     }
+
+//     console.log("All product image filename updated successfully");
+//     return true;
+//   } catch (error) {
+//     console.log("Error updating product image filename");
+//     throw error;
+//     return false;
+//   }
+// }
 
 async function batchUpdateImageFileName({ input, client }) {
   function wait(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  try {
-    console.log("starting batch update");
-    const batchSize = 10;
-    let start = 0,
-      hasNextSlice = true;
-
-    while (hasNextSlice) {
-      const slice = input.slice(start, start + batchSize);
+  async function updateFile(file, attempt = 1) {
+    try {
       const productImageFilenameUpdateResponse = await client.query({
         data: {
           query: `
-        mutation FileUpdate($input: [FileUpdateInput!]!) {
-          fileUpdate(files: $input) {
-            userErrors {
-              code
-              field
-              message
-            }
-            files {
-              id
-              fileStatus
-              fileErrors {
-                code
-                details
-                message
+            mutation FileUpdate($input: [FileUpdateInput!]!) {
+              fileUpdate(files: $input) {
+                userErrors {
+                  code
+                  field
+                  message
+                }
+                files {
+                  id
+                  fileStatus
+                  fileErrors {
+                    code
+                    details
+                    message
+                  }
+                }
               }
             }
-          }
-        }
-        `,
-          variables: { input: slice },
+          `,
+          variables: { input: [file] },
         },
       });
 
-      if (productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors.length > 0) {
-        console.log("something happened");
-        console.log(productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors);
-        // throw productImageFilenameUpdateResponse.body.data.fileUpdate
-        //   .userErrors;
+      const userErrors =
+        productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors;
+      if (userErrors.length > 0) {
+        const fileLockedErrors = userErrors.filter(
+          (error) => error.code === "FILE_LOCKED"
+        );
+
+        if (fileLockedErrors.length > 0) {
+          console.log(`File locked for file ID ${file.id}, retrying...`);
+          if (attempt <= 5) {
+            const delay = Math.pow(2, attempt) * 200; // Exponential backoff
+            await wait(delay);
+            return await updateFile(file, attempt + 1);
+          } else {
+            console.log(`Max retries reached for file ID ${file.id}.`);
+          }
+        } else {
+          console.log("Other errors encountered:", userErrors);
+        }
       }
+    } catch (error) {
+      console.log(`Error updating file ID ${file.id}:`, error);
+      throw error;
+    }
+  }
 
-      if (start + batchSize >= input.length) {
-        hasNextSlice = false;
-      } else start += batchSize;
+  try {
+    console.log("Starting single-file updates");
 
-      await wait(1000 * 30);
+    for (const file of input) {
+      await updateFile(file);
+      await wait(500); // Optional delay between files to avoid API rate limits
     }
 
-    console.log("All product image filename updated successfully");
+    console.log("All product image filenames updated successfully");
     return true;
   } catch (error) {
-    console.log("Error updating product image filename");
+    console.log("🚀 ~ batchUpdateImageFileName ~ error:", error);
     throw error;
-    return false;
   }
 }
 
 function generateFileName(originalName) {
-  const timestamp = Date.now();
+  const uniqueId = uuidv4();
   const ext = extname(originalName);
   const baseName = basename(originalName, ext);
-  return `${baseName}-${timestamp}${ext}`;
+  return `${baseName}-${uniqueId}${ext}`;
 }
 
 async function saveGlobalImageFilenameToMetafield({ session, filename }) {
@@ -591,8 +718,12 @@ async function saveGlobalImageFilenameToMetafield({ session, filename }) {
         },
       });
 
-      if (createMetafieldDefinition.body.data.metafieldDefinitionCreate.userErrors.length > 0) {
-        throw createMetafieldDefinition.body.data.metafieldDefinitionCreate.userErrors;
+      if (
+        createMetafieldDefinition.body.data.metafieldDefinitionCreate.userErrors
+          .length > 0
+      ) {
+        throw createMetafieldDefinition.body.data.metafieldDefinitionCreate
+          .userErrors;
       }
     }
 
@@ -708,28 +839,19 @@ export const bulkUpdateProductImageFilename = async (req, res, next) => {
     `,
     });
 
-    const input = [],
-      map = new Map();
+    const input = [];
     allProducts.forEach((productData) => {
       productData.media.edges
         .filter((e) => e.node.mediaContentType === "IMAGE")
         .forEach(({ node }) => {
           const { fileExt } = parseFilenameFromSrc(node.preview.image.url);
-          const filename = sanitizeFilename(translateAltText(fileNameSettings, productData, "product", shop));
-
-          if (map.has(filename)) {
-            map.set(filename, map.get(filename) + 1);
-            input.push({
-              id: node.id,
-              filename: generateFileName(filename + fileExt),
-            });
-          } else {
-            map.set(filename, 0);
-            input.push({
-              id: node.id,
-              filename: filename + fileExt,
-            });
-          }
+          const filename = sanitizeFilename(
+            translateAltText(fileNameSettings, productData, "product", shop)
+          );
+          input.push({
+            id: node.id,
+            filename: generateFileName(filename + fileExt),
+          });
         });
     });
 
@@ -738,6 +860,8 @@ export const bulkUpdateProductImageFilename = async (req, res, next) => {
     return res.status(200).json({ message: "Product image filename updated" });
   } catch (error) {
     console.error(error);
-    return res.status(400).json({ message: "Error updating product image filename" });
+    return res
+      .status(400)
+      .json({ message: "Error updating product image filename" });
   }
 };
