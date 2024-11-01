@@ -472,9 +472,13 @@ export const updateProductImageFilename = async (req, res, next) => {
 };
 
 async function batchUpdateImageFileName({ input, client }) {
+  function wait(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
   try {
     console.log("starting batch update");
-    const batchSize = 20;
+    const batchSize = 10;
     let start = 0,
       hasNextSlice = true;
 
@@ -489,6 +493,15 @@ async function batchUpdateImageFileName({ input, client }) {
               code
               field
               message
+            }
+            files {
+              id
+              fileStatus
+              fileErrors {
+                code
+                details
+                message
+              }
             }
           }
         }
@@ -507,6 +520,8 @@ async function batchUpdateImageFileName({ input, client }) {
       if (start + batchSize >= input.length) {
         hasNextSlice = false;
       } else start += batchSize;
+
+      await wait(1000 * 30);
     }
 
     console.log("All product image filename updated successfully");
