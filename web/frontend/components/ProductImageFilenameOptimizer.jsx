@@ -15,10 +15,14 @@ import {
 } from "@shopify/polaris";
 import { useUI } from "../contexts/ui.context";
 import { useSingleImageFilenameUpdate } from "../hooks/useImageOptimizer";
+import { validateFilename } from "../utils/validFileName";
 
 function parseFilenameFromSrc(url) {
   const full_filename = url.substring(url.lastIndexOf("/") + 1).split("?")[0];
-  const filename_without_extension = full_filename.substring(0, full_filename.lastIndexOf("."));
+  const filename_without_extension = full_filename.substring(
+    0,
+    full_filename.lastIndexOf(".")
+  );
   const fileExtension = full_filename.substring(full_filename.lastIndexOf("."));
   return { filename: filename_without_extension, fileExt: fileExtension };
 }
@@ -33,20 +37,7 @@ function ImageTextField({ image, product, shop }) {
     setFilename(value);
     setErrors("");
   }, []);
-  const validateFilename = (filename) => {
-    const forbiddenChars = /[^a-z-]/;
-    if (!filename) {
-      return "Filename cannot be empty.";
-    }
-    if (forbiddenChars.test(filename) || filename.includes(" ") || filename.split("-").length > 5) {
-      return "Filename contains invalid characters. Use only characters, dashes or small latter.";
-    }
 
-    if (filename.length > 50) {
-      return "Filename must not exceed 50 characters.";
-    }
-    return null;
-  };
   const handleSave = () => {
     const validationError = validateFilename(filename);
     if (validationError) {
@@ -61,17 +52,28 @@ function ImageTextField({ image, product, shop }) {
       productId: product.id,
       shop: shop,
     });
+    setErrors("");
   };
   return (
     <HorizontalStack gap={"2"} blockAlign="center">
       <Thumbnail source={image?.url ? image?.url : image?.src} />
       <HorizontalStack gap={"1"}>
         <Box width="400px">
-          <TextField onChange={handleFilenameChange} value={filename} type="text" error={errors} />
+          <TextField
+            onChange={handleFilenameChange}
+            value={filename}
+            type="text"
+            error={errors}
+          />
         </Box>
         <Text>{fileExt}</Text>
       </HorizontalStack>
-      <Button loading={isLoading} disabled={filename === prev_filename} primary onClick={handleSave}>
+      <Button
+        loading={isLoading}
+        disabled={filename === prev_filename}
+        primary
+        onClick={handleSave}
+      >
         Save
       </Button>
     </HorizontalStack>
@@ -102,19 +104,34 @@ export function ProductImageFilenameOptimizer() {
           <Box paddingBlockStart={"4"}>
             <VerticalStack gap={"4"}>
               {images?.map((image, index) => (
-                <ImageTextField key={index} image={image} product={product} shop={shop} />
+                <ImageTextField
+                  key={index}
+                  image={image}
+                  product={product}
+                  shop={shop}
+                />
               ))}
             </VerticalStack>
           </Box>
           <Box paddingBlockStart={"10"}>
             <Banner title="Filename Guidelines" status="warning">
               <List>
-                <List.Item>Keep your filename relevant to the actual content .</List.Item>
-                <List.Item>Avoid keyword stuffing in filenames; use a concise, descriptive name instead.</List.Item>
-                <List.Item>Keep filenames short—ideally 5 words or fewer.</List.Item>
-                <List.Item>Separate words with hyphens (e.g., "apple-food.jpg").</List.Item>
                 <List.Item>
-                  Avoid using generic names like "IMG1234.jpg" or overly keyworded names like "Best-food-planner.jpg."
+                  Keep your filename relevant to the actual content .
+                </List.Item>
+                <List.Item>
+                  Avoid keyword stuffing in filenames; use a concise,
+                  descriptive name instead.
+                </List.Item>
+                <List.Item>
+                  Keep filenames short—ideally 5 words or fewer.
+                </List.Item>
+                <List.Item>
+                  Separate words with hyphens (e.g., "apple-food.jpg").
+                </List.Item>
+                <List.Item>
+                  Avoid using generic names like "IMG1234.jpg" or overly key
+                  word names like "Best-food-planner.jpg."
                 </List.Item>
               </List>
             </Banner>
@@ -124,12 +141,13 @@ export function ProductImageFilenameOptimizer() {
           <VerticalStack gap={"2"}>
             <AlphaCard background="bg-app-selected">
               <Text variant="bodyMd">
-                You can use the following variables to dynamically generate the content based on the product and shop
-                information.
+                You can use the following variables to dynamically generate the
+                content based on the product and shop information.
               </Text>
               <Box paddingBlockStart={"3"}>
                 <Text variant="bodyMd" fontWeight="bold">
-                  Use the following variables exactly as listed, including whitespace, to set image alt text.
+                  Use the following variables exactly as listed, including
+                  whitespace, to set image alt text.
                 </Text>
               </Box>
             </AlphaCard>

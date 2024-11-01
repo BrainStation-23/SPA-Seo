@@ -41,7 +41,11 @@ export const useBulkUpdateAltText = () => {
   });
 };
 
-export const useImageOptimizerQuery = ({ url, fetchInit = {}, reactQueryOptions }) => {
+export const useImageOptimizerQuery = ({
+  url,
+  fetchInit = {},
+  reactQueryOptions,
+}) => {
   const authenticatedFetch = useAuthenticatedFetch();
   const fetch = useMemo(() => {
     return async () => {
@@ -98,8 +102,8 @@ export const useSaveImageOptimizerSettings = () => {
 
 export const useSingleImageFilenameUpdate = () => {
   const fetch = useAuthenticatedFetch();
-  const { setCloseModal, setToggleToast, setOpenModal } = useUI();
-  const queryClient = useQueryClient();
+  const { setToggleToast, setOpenModal } = useUI();
+
   async function updateSingleImageFilename(status) {
     return await fetch("/api/image-optimizer/filename", {
       method: "POST",
@@ -113,9 +117,10 @@ export const useSingleImageFilenameUpdate = () => {
   return useMutation((status) => updateSingleImageFilename(status), {
     onSuccess: async (data) => {
       if (data?.status === 400) {
+        const response = await data.json();
         return setToggleToast({
           active: true,
-          message: `Something went wrong`,
+          message: response?.message || `Something went wrong`,
         });
       }
 
