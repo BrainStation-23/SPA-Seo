@@ -1442,6 +1442,21 @@ auto-bind@^5.0.1:
   resolved "https://registry.npmjs.org/auto-bind/-/auto-bind-5.0.1.tgz"
   integrity sha512-ooviqdwwgfIfNmDwo94wlshcdzfO64XV0Cg6oDsDYBJfITDz1EngD2z7DkbvCWn+XIMsIqW27sEVF6qcpJrRcg==
 
+axios@^0.26.0:
+  version "0.26.1"
+  resolved "https://registry.npmjs.org/axios/-/axios-0.26.1.tgz"
+  integrity sha512-fPwcX4EvnSHuInCMItEhAGnaSEXRBjtzh9fOtsE6E1G6p7vl7edEeZe11QHf18+6+9gR5PbKV/sGKNaD8YaMeA==
+  dependencies:
+    follow-redirects "^1.14.8"
+
+azure-openai@^0.9.4:
+  version "0.9.4"
+  resolved "https://registry.npmjs.org/azure-openai/-/azure-openai-0.9.4.tgz"
+  integrity sha512-7uii4ZInxzu2zjLg45PdvgOaw3ps18tEAw0Yux9mo8anX4PwnCMSS9xdlKNiNQyyEKPogvAcxH2PIufHXFLx6Q==
+  dependencies:
+    axios "^0.26.0"
+    form-data "^4.0.0"
+
 balanced-match@^1.0.0:
   version "1.0.2"
   resolved "https://registry.npmjs.org/balanced-match/-/balanced-match-1.0.2.tgz"
@@ -2745,7 +2760,7 @@ find-versions@5.1.0:
   dependencies:
     semver-regex "^4.0.5"
 
-follow-redirects@^1.0.0:
+follow-redirects@^1.0.0, follow-redirects@^1.14.8:
   version "1.15.2"
   resolved "https://registry.npmjs.org/follow-redirects/-/follow-redirects-1.15.2.tgz"
   integrity sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA==
@@ -5150,6 +5165,7 @@ shebang-regex@^3.0.0:
     react-leaflet "^4.2.1"
     react-query "^3.34.19"
     react-router-dom "^6.3.0"
+    uuid "^11.0.2"
     vite "^2.8.6"
 
 side-channel@^1.0.4:
@@ -5784,6 +5800,11 @@ uuid@^10.0.0:
   version "10.0.0"
   resolved "https://registry.npmjs.org/uuid/-/uuid-10.0.0.tgz"
   integrity sha512-8XkAphELsDnEGrDxUOHB3RGvXz6TeuYSGEZBOjtTtPm2lwhGBjLgOzLHB63IUWfBpNucQjND6d3AOudO+H3RWQ==
+
+uuid@^11.0.2:
+  version "11.0.2"
+  resolved "https://registry.npmjs.org/uuid/-/uuid-11.0.2.tgz"
+  integrity sha512-14FfcOJmqdjbBPdDjFQyk/SdT4NySW4eM0zcG+HqbHP5jzuH56xO3J1DGhgs/cEMCfwYi3HQI1gnTO62iaG+tQ==
 
 "uuid@^7.0.0 || ^8.0.0":
   version "8.3.2"
