@@ -66,6 +66,7 @@ app.get("/api/shop", async (_req, res) => {
 });
 
 app.use("/api/product", productsRoute);
+// app.use("/api/product", productsRoute);
 app.use("/api/collection", collectionsRoute);
 app.use("/api/metafields", metafieldsRoute);
 app.use("/api/seo", seoInsightsRoute);
@@ -77,6 +78,7 @@ app.use("/api/html-sitemap", sitemapRoute);
 app.use("/api/jsonld", jsonLdRoute);
 app.use("/api/uninstall", UninstallCleanupRouter);
 app.use("/api/image-compression", imageCompression);
+app.use("/api/products", productsRoute);
 
 app.use(shopify.cspHeaders());
 app.use(serveStatic(STATIC_PATH, { index: false }));

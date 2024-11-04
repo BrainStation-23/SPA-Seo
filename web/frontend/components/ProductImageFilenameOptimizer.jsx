@@ -11,9 +11,11 @@ import {
   Divider,
   TextField,
   Button,
+  Banner,
 } from "@shopify/polaris";
 import { useUI } from "../contexts/ui.context";
 import { useSingleImageFilenameUpdate } from "../hooks/useImageOptimizer";
+import { validateFilename } from "../utils/validFileName";
 
 function parseFilenameFromSrc(url) {
   const full_filename = url.substring(url.lastIndexOf("/") + 1).split("?")[0];
@@ -29,11 +31,29 @@ function ImageTextField({ image, product, shop }) {
   const { filename: prev_filename, fileExt } = parseFilenameFromSrc(image?.url);
   const { mutate: updateFilename, isLoading } = useSingleImageFilenameUpdate();
   const [filename, setFilename] = useState(prev_filename);
+  const [errors, setErrors] = useState("");
 
   const handleFilenameChange = useCallback((value) => {
     setFilename(value);
+    setErrors("");
   }, []);
 
+  const handleSave = () => {
+    const validationError = validateFilename(filename);
+    if (validationError) {
+      setErrors(validationError);
+      return;
+    }
+
+    updateFilename({
+      id: image.id,
+      fileNameSettings: filename,
+      fileExt: fileExt,
+      productId: product.id,
+      shop: shop,
+    });
+    setErrors("");
+  };
   return (
     <HorizontalStack gap={"2"} blockAlign="center">
       <Thumbnail source={image?.url ? image?.url : image?.src} />
@@ -43,6 +63,7 @@ function ImageTextField({ image, product, shop }) {
             onChange={handleFilenameChange}
             value={filename}
             type="text"
+            error={errors}
           />
         </Box>
         <Text>{fileExt}</Text>
@@ -51,15 +72,7 @@ function ImageTextField({ image, product, shop }) {
         loading={isLoading}
         disabled={filename === prev_filename}
         primary
-        onClick={() => {
-          updateFilename({
-            id: image.id,
-            fileNameSettings: filename,
-            fileExt: fileExt,
-            productId: product.id,
-            shop: shop,
-          });
-        }}
+        onClick={handleSave}
       >
         Save
       </Button>
@@ -82,10 +95,10 @@ export function ProductImageFilenameOptimizer() {
         originalSrc: node.preview.image.url,
       };
     });
-  console.log("product", product, shop);
   return (
     <Box paddingBlockStart={"2"}>
       <Text variant="headingMd">Product Image Filename Optimizer</Text>
+      <div style={{ marginBottom: "1rem" }}></div>
       <Layout>
         <Layout.Section>
           <Box paddingBlockStart={"4"}>
@@ -99,6 +112,29 @@ export function ProductImageFilenameOptimizer() {
                 />
               ))}
             </VerticalStack>
+          </Box>
+          <Box paddingBlockStart={"10"}>
+            <Banner title="Filename Guidelines" status="warning">
+              <List>
+                <List.Item>
+                  Keep your filename relevant to the actual content .
+                </List.Item>
+                <List.Item>
+                  Avoid keyword stuffing in filenames; use a concise,
+                  descriptive name instead.
+                </List.Item>
+                <List.Item>
+                  Keep filenames short—ideally 5 words or fewer.
+                </List.Item>
+                <List.Item>
+                  Separate words with hyphens (e.g., "apple-food.jpg").
+                </List.Item>
+                <List.Item>
+                  Avoid using generic names like "IMG1234.jpg" or overly key
+                  word names like "Best-food-planner.jpg."
+                </List.Item>
+              </List>
+            </Banner>
           </Box>
         </Layout.Section>
         <Layout.Section oneThird>

@@ -13,13 +13,16 @@ import {
   TextField,
   Button,
   HorizontalStack,
+  Banner,
 } from "@shopify/polaris";
 import { RefreshIcon } from "@shopify/polaris-icons";
 import { useImageOptimizerQuery } from "../hooks/useImageOptimizer";
 import { useBulkImageFilenameUpdate } from "../hooks/useImageOptimizer";
 import { Spinners } from "./Spinner";
+import { validateFilename } from "../utils/validFileName";
 
 export function BulkProductImageFilename() {
+  const [errors, setErrors] = useState("");
   const {
     data,
     isSuccess: isFetchSuccess,
@@ -40,15 +43,16 @@ export function BulkProductImageFilename() {
 
   const handleProductImageAltChange = useCallback((value) => {
     setFilename(value);
+    setErrors("");
   }, []);
 
   const handleSubmit = () => {
-    if (filename === null || filename.length === 0) {
-      return setToggleToast({
-        active: true,
-        message: `Filename cannot be empty`,
-      });
+    const validationError = validateFilename(filename);
+    if (validationError) {
+      setErrors(validationError);
+      return;
     }
+
     bulkUpdate({ fileNameSettings: filename });
   };
 
@@ -124,9 +128,40 @@ export function BulkProductImageFilename() {
                                   placeholder="Enter filename or use variables."
                                   helpText="Can use variables from the PRODUCT and SHOP section"
                                   type="text"
+                                  error={errors}
                                 />
                               </FormLayout>
                             </AlphaCard>
+                          </Box>
+
+                          <Box paddingBlockStart={"3"}>
+                            <Banner
+                              title="Filename Guidelines"
+                              status="warning"
+                            >
+                              <List>
+                                <List.Item>
+                                  Keep your filename relevant to the actual
+                                  content .
+                                </List.Item>
+                                <List.Item>
+                                  Avoid keyword stuffing in filenames; use a
+                                  concise, descriptive name instead.
+                                </List.Item>
+                                <List.Item>
+                                  Keep filenames short—ideally 5 words or fewer.
+                                </List.Item>
+                                <List.Item>
+                                  Separate words with hyphens (e.g.,
+                                  "apple-food.jpg").
+                                </List.Item>
+                                <List.Item>
+                                  Avoid using generic names like "IMG1234.jpg"
+                                  or overly keyword names like
+                                  "Best-food-planner.jpg."
+                                </List.Item>
+                              </List>
+                            </Banner>
                           </Box>
                         </Layout.Section>
                       </Layout>

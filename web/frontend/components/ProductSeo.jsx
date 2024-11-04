@@ -11,10 +11,7 @@ import { ImageCompression } from "./ImageCompression";
 export default function ProductSeo() {
   const [selected, setSelected] = useState(0);
 
-  const handleTabChange = useCallback(
-    (selectedTabIndex) => setSelected(selectedTabIndex),
-    []
-  );
+  const handleTabChange = useCallback((selectedTabIndex) => setSelected(selectedTabIndex), []);
 
   const tabs = [
     {
@@ -27,11 +24,7 @@ export default function ProductSeo() {
       content: "Product Image alt",
       panelID: "accepts-Product-alt-content-1",
     },
-    {
-      id: "accepts-Product-scan-alt-1",
-      content: "Scan for SEO issues",
-      panelID: "accepts-Product-alt-content-1",
-    },
+
     {
       id: "product-json-ld",
       content: "SEO Markup Generator (JSON-LD)",
@@ -47,6 +40,11 @@ export default function ProductSeo() {
       content: "Product Image Compression",
       panelID: "accepts-Product-alt-content-1",
     },
+    {
+      id: "accepts-Product-scan-alt-1",
+      content: "Scan for SEO issues",
+      panelID: "accepts-Product-alt-content-1",
+    },
   ];
 
   return (
@@ -58,10 +56,10 @@ export default function ProductSeo() {
           </div>
         )}
         {selected === 1 && <AltimageCreate />}
-        {selected === 2 && <ProductScan />}
-        {selected === 3 && <GenerateJsonld obj_type={"Product"} />}
-        {selected === 4 && <ProductImageFilenameOptimizer />}
-        {selected === 5 && <ImageCompression />}
+        {selected === 2 && <GenerateJsonld obj_type={"Product"} />}
+        {selected === 3 && <ProductImageFilenameOptimizer />}
+        {selected === 4 && <ImageCompression />}
+        {selected === 5 && <ProductScan />}
       </Tabs>
     </div>
   );

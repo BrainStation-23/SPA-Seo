@@ -5,6 +5,7 @@ import { useUI } from "../contexts/ui.context";
 
 export const useBlogsQuery = ({ url, fetchInit = {}, reactQueryOptions }) => {
   const authenticatedFetch = useAuthenticatedFetch();
+  const { modal } = useUI();
   const fetch = useMemo(() => {
     return async () => {
       const response = await authenticatedFetch(url, fetchInit);
@@ -16,15 +17,11 @@ export const useBlogsQuery = ({ url, fetchInit = {}, reactQueryOptions }) => {
     ...reactQueryOptions,
     onSuccess: (data) => {},
     refetchOnWindowFocus: false,
-    // enabled: Object.keys(shop).length === 0,
+    enabled: !modal?.isOpen,
   });
 };
 
-export const useArticlesQuery = ({
-  url,
-  fetchInit = {},
-  reactQueryOptions,
-}) => {
+export const useArticlesQuery = ({ url, fetchInit = {}, reactQueryOptions }) => {
   const authenticatedFetch = useAuthenticatedFetch();
   const fetch = useMemo(() => {
     return async () => {
@@ -45,11 +42,7 @@ export const useArticlesQuery = ({
   });
 };
 
-export const useSingleArticleQuery = ({
-  url,
-  fetchInit = {},
-  reactQueryOptions,
-}) => {
+export const useSingleArticleQuery = ({ url, fetchInit = {}, reactQueryOptions }) => {
   const authenticatedFetch = useAuthenticatedFetch();
   const fetch = useMemo(() => {
     return async () => {
@@ -68,11 +61,7 @@ export const useSingleArticleQuery = ({
   });
 };
 
-export const useArticlesSeoQuery = ({
-  url,
-  fetchInit = {},
-  reactQueryOptions,
-}) => {
+export const useArticlesSeoQuery = ({ url, fetchInit = {}, reactQueryOptions }) => {
   const authenticatedFetch = useAuthenticatedFetch();
   const fetch = useMemo(() => {
     return async () => {
@@ -93,7 +82,7 @@ export const useArticlesSeoQuery = ({
 
 export const useUpdateBlogSeo = () => {
   const fetch = useAuthenticatedFetch();
-  const { setToggleToast } = useUI();
+  const { setToggleToast, setOpenModal } = useUI();
   const queryClient = useQueryClient();
   async function createStatus(status) {
     return await fetch("/api/blog/update-article-seo", {
@@ -114,7 +103,18 @@ export const useUpdateBlogSeo = () => {
         });
       }
 
-      queryClient.invalidateQueries("articleSeo");
+      // queryClient.invalidateQueries("articleSeo");
+      const updatedData = await data?.json();
+      const updatedInfo = updatedData?.article;
+
+      setOpenModal({
+        view: "ARTICLE_SEO",
+        isOpen: true,
+        data: {
+          title: `Article SEO (${updatedInfo?.title})`,
+          info: updatedInfo,
+        },
+      });
 
       setToggleToast({
         active: true,
@@ -133,7 +133,7 @@ export const useUpdateBlogSeo = () => {
 
 export const useUpdateArticleSeoImgAlt = () => {
   const fetch = useAuthenticatedFetch();
-  const { setToggleToast } = useUI();
+  const { setToggleToast, setOpenModal } = useUI();
   const queryClient = useQueryClient();
   async function createStatus(status) {
     return await fetch(`/api/blog/update-article-image-alt`, {
@@ -153,8 +153,16 @@ export const useUpdateArticleSeoImgAlt = () => {
           message: `Something went wrong`,
         });
       }
-      queryClient.invalidateQueries("singleArticle");
-
+      const updatedData = await data?.json();
+      const updatedInfo = updatedData?.articleData;
+      setOpenModal({
+        view: "ARTICLE_SEO",
+        isOpen: true,
+        data: {
+          title: `Article SEO (${updatedInfo?.title})`,
+          info: updatedInfo,
+        },
+      });
       setToggleToast({
         active: true,
         message: `Submit Successfully`,

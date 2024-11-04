@@ -9,17 +9,14 @@ import {
   GetArticleMetafield,
   SetShopMetafield,
 } from "../graphql/metafields.js";
-
+import { getProductByID } from "./products.js";
+import { getCollectionByID } from "./collections.js";
+import { getArticleById } from "./blog.js";
 async function initializeMetafield(client, type, functionType) {
   try {
     console.log("initializing metafield", type);
     const namespace = "bs-23-seo-app";
-    const key =
-      functionType === "jsonld"
-        ? "json-ld"
-        : functionType === "image"
-        ? "image-optimizer"
-        : "";
+    const key = functionType === "jsonld" ? "json-ld" : functionType === "image" ? "image-optimizer" : "";
     const description =
       functionType === "jsonld"
         ? "Metafield for generating json-ld for SEO"
@@ -35,24 +32,14 @@ async function initializeMetafield(client, type, functionType) {
     if (response.body.data.metafieldDefinitions.edges.length == 0) {
       const metafieldCreationResponse = await client.query({
         data: {
-          query: CreateShopMetafieldDefinition(
-            type,
-            namespace,
-            key,
-            description
-          ),
+          query: CreateShopMetafieldDefinition(type, namespace, key, description),
         },
       });
 
-      if (
-        metafieldCreationResponse.body.data.metafieldDefinitionCreate.userErrors
-          .length > 0
-      ) {
+      if (metafieldCreationResponse.body.data.metafieldDefinitionCreate.userErrors.length > 0) {
         throw new Error({
           status: 400,
-          error:
-            metafieldCreationResponse.body.data.metafieldDefinitionCreate
-              .userErrors,
+          error: metafieldCreationResponse.body.data.metafieldDefinitionCreate.userErrors,
         });
       }
 
@@ -94,6 +81,16 @@ async function manageArticleMetafield(session, ownerId, blogId, data, active) {
 export const MetafieldCreate = async (req, res, next) => {
   try {
     let { type, data, owner, ownerId, blogId } = req.body;
+    let ownerNumberId = owner === "ARTICLE" ? ownerId : ownerId?.split("/").pop();
+
+    if (owner == "ARTICLE") {
+      await manageArticleMetafield(res.locals.shopify.session, ownerId, blogId, data, req.body.active);
+
+      return res.status(200).json({
+        message: "saved metafield successfully",
+      });
+    }
+
     const client = new shopify.api.clients.Graphql({
       apiVersion: "2024-10",
       session: res.locals.shopify.session,
@@ -134,9 +131,7 @@ export const MetafieldCreate = async (req, res, next) => {
     }
 
     if (prevData.body.data[`${owner.toLowerCase()}`].metafield) {
-      prevData = JSON.parse(
-        prevData.body.data[`${owner.toLowerCase()}`].metafield.value
-      );
+      prevData = JSON.parse(prevData.body.data[`${owner.toLowerCase()}`].metafield.value);
     } else {
       prevData = {};
     }
@@ -173,15 +168,21 @@ export const MetafieldCreate = async (req, res, next) => {
         error: setMetafieldResponse.body.data.metafieldsSet.userErrors,
       });
     }
-
+    let dataByID = {};
+    if (owner == "PRODUCT") {
+      dataByID = await getProductByID(res.locals.shopify.session, ownerNumberId);
+    } else if (owner == "COLLECTION") {
+      dataByID = await getCollectionByID(res.locals.shopify.session, ownerNumberId);
+    } else if (owner == "ARTICLE") {
+      dataByID = await getArticleById(res.locals.shopify.session, ownerNumberId);
+    }
     return res.status(200).json({
+      dataByID,
+      owner,
       message: "saved metafield successfully",
     });
   } catch (error) {
-    console.error(
-      "Failed to create shop metafield:",
-      error.response?.errors || error.message
-    );
+    console.error("Failed to create shop metafield:", error.response?.errors || error.message);
     console.error(error);
     return res.status(500).json({ error: "Internal server error" });
   }
@@ -213,20 +214,79 @@ export const GetImageOptimizerSettings = async (req, res, next) => {
       data: metafieldData,
     });
   } catch (error) {
-    console.error(
-      "Failed to get shop metafield:",
-      error.response?.errors || error.message
-    );
+    console.error("Failed to get shop metafield:", error.response?.errors || error.message);
     return res.status(500).json({ error: "Internal server error" });
   }
 };
 
-export const SaveImageOptimizerSettings = async (req, res, next) => {
+export const SaveImageAltOptimizerMetafiled = async (req, res, nest) => {
   try {
     const client = new shopify.api.clients.Graphql({
       session: res.locals.shopify.session,
     });
     let { data, type } = req.body;
+    console.log("data", data, type);
+    await initializeMetafield(client, "SHOP", "image");
+
+    let metafieldData = await client.query({
+      data: {
+        query: GetShopMetafield({
+          namespace: "bs-23-seo-app",
+          key: "image-optimizer",
+        }),
+      },
+    });
+
+    if (metafieldData.body.data.shop.metafield) {
+      metafieldData = JSON.parse(metafieldData.body.data.shop.metafield.value);
+    } else {
+      metafieldData = null;
+    }
+
+    let shopId = await client.query({
+      data: {
+        query: GetShopId,
+      },
+    });
+    shopId = shopId.body.data.shop.id;
+
+    const setMetafieldResponse = await client.query({
+      data: {
+        query: SetShopMetafield,
+        variables: {
+          metafields: [
+            {
+              key: "image-optimizer",
+              namespace: "bs-23-seo-app",
+              ownerId: shopId,
+              value: JSON.stringify({
+                ...metafieldData,
+                [type === "altText" ? "altText" : "fileName"]: data,
+              }),
+            },
+          ],
+        },
+      },
+    });
+
+    if (setMetafieldResponse.body.data.metafieldsSet.userErrors.length > 0) {
+      throw new Error({
+        error: setMetafieldResponse.body.data.metafieldsSet.userErrors,
+      });
+    }
+    return;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const SaveImageOptimizerSettings = async (req, res, nest) => {
+  try {
+    const client = new shopify.api.clients.Graphql({
+      session: res.locals.shopify.session,
+    });
+    let { data, type } = req.body;
+    console.log("data", data, type);
     await initializeMetafield(client, "SHOP", "image");
 
     let metafieldData = await client.query({
@@ -310,10 +370,7 @@ export const GetMetafields = async (req, res, next) => {
       data: metafieldData,
     });
   } catch (error) {
-    console.error(
-      "Failed to get shop metafield:",
-      error.response?.errors || error.message
-    );
+    console.error("Failed to get shop metafield:", error.response?.errors || error.message);
     return res.status(500).json({ error: "Internal server error" });
   }
 };

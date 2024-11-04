@@ -1,17 +1,10 @@
 import React, { useEffect, useState } from "react";
-import {
-  Layout,
-  Box,
-  Text,
-  AlphaCard,
-  VerticalStack,
-  Form,
-  Button,
-} from "@shopify/polaris";
+import { Layout, Box, Text, AlphaCard, VerticalStack, Form, Button, Spinner } from "@shopify/polaris";
 import TextareaField from "./commonUI/TextareaField";
 import { useCreateHomeSeo, useHomeSEOQuery } from "../hooks/useHomeSEOQuery";
 
 export default function HomeSeo() {
+  const [isLoading, setIsLoading] = useState(false);
   const { data } = useHomeSEOQuery({ url: "/api/home/get-home-seo" });
   const { mutate: createOrUpdateSeo, isError } = useCreateHomeSeo();
 
@@ -51,11 +44,19 @@ export default function HomeSeo() {
         seo_description: `SEO description must be 160 characters or fewer. Currently, it is ${value?.seo_description?.length} characters.`,
       });
     }
+    setIsLoading(true);
 
     const obj = {
       homeSeo: value,
     };
-    createOrUpdateSeo(obj);
+    createOrUpdateSeo(obj, {
+      onSuccess: () => {
+        setIsLoading(false);
+      },
+      onError: () => {
+        setIsLoading(false);
+      },
+    });
   };
 
   useEffect(() => {
@@ -69,16 +70,12 @@ export default function HomeSeo() {
       <div className="seo_score_page_title_container">
         <div className="seo_score_page_title">Homepage SEO</div>
         <div className="">
-          <Button primary submit>
-            Submit
+          <Button primary submit disabled={isLoading}>
+            {isLoading ? <Spinner size="small" /> : "Submit"}
           </Button>
         </div>
       </div>
-      <Box
-        paddingInlineStart={"32"}
-        paddingInlineEnd={"32"}
-        paddingBlockStart={"4"}
-      >
+      <Box paddingInlineStart={"32"} paddingInlineEnd={"32"} paddingBlockStart={"4"}>
         <Box paddingBlockEnd={"5"}>
           <Layout>
             <Layout.Section oneThird>
@@ -87,9 +84,8 @@ export default function HomeSeo() {
               </Box>
               <Box>
                 <Text variant="bodyMd">
-                  The meta title helps with SEO by including keywords that
-                  improve ranking and serve as the clickable headline in search
-                  results
+                  The meta title helps with SEO by including keywords that improve ranking and serve as the clickable
+                  headline in search results
                 </Text>
               </Box>
             </Layout.Section>
@@ -121,9 +117,8 @@ export default function HomeSeo() {
               </Box>
               <Box>
                 <Text variant="bodyMd">
-                  The meta description provides a brief summary that encourages
-                  users to click through to your site by explaining what your
-                  business offers
+                  The meta description provides a brief summary that encourages users to click through to your site by
+                  explaining what your business offers
                 </Text>
               </Box>
             </Layout.Section>

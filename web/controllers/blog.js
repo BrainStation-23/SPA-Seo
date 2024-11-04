@@ -34,10 +34,7 @@ export const getBlogList = async (req, res, next) => {
 
     return res.status(200).json(blogs);
   } catch (err) {
-    console.log(
-      "🚀 ~ file: description.js:73 ~ descriptionController ~ err:",
-      err
-    );
+    console.log("🚀 ~ file: description.js:73 ~ descriptionController ~ err:", err);
     res.status(400).json({ err });
   }
 };
@@ -77,10 +74,7 @@ export const getArticleList = async (req, res, next) => {
 
     return res.status(200).json(articles);
   } catch (err) {
-    console.log(
-      "🚀 ~ file: description.js:73 ~ descriptionController ~ err:",
-      err
-    );
+    console.log("🚀 ~ file: description.js:73 ~ descriptionController ~ err:", err);
     res.status(400).json({ err });
   }
 };
@@ -95,17 +89,12 @@ export const getArticleSeoContent = async (req, res, next) => {
       article_id: id,
     });
 
-    const highlight = response?.data?.find(
-      (data) => data?.key === "seo-blog-article"
-    );
+    const highlight = response?.data?.find((data) => data?.key === "seo-blog-article");
     const highlightList = highlight?.value ? JSON.parse(highlight?.value) : "";
 
     return res.status(200).json(highlightList);
   } catch (err) {
-    console.log(
-      "🚀 ~ file: description.js:73 ~ descriptionController ~ err:",
-      err
-    );
+    console.log("🚀 ~ file: description.js:73 ~ descriptionController ~ err:", err);
     res.status(400).json({ err });
   }
 };
@@ -134,6 +123,18 @@ export const getSingleArticle = async (req, res) => {
   }
 };
 
+export const getArticleById = async (session, blog_id, id) => {
+  try {
+    const article = await shopify.api.rest.Article.find({
+      session,
+      blog_id,
+      id,
+    });
+    return article;
+  } catch (error) {
+    console.log(error);
+  }
+};
 export const updateArticleSeo = async (req, res) => {
   const { seoObj } = req.body;
 
@@ -149,7 +150,10 @@ export const updateArticleSeo = async (req, res) => {
     await metafield.save({
       update: true,
     });
-    return res.status(200).json(metafield);
+    const blog_id = seoObj?.blog_id;
+    const article_id = seoObj?.id;
+    const article = await getArticleById(res.locals.shopify.session, blog_id, article_id);
+    return res.status(200).json({ metafield, article });
   } catch (error) {
     console.log(error);
   }
@@ -169,15 +173,14 @@ export const updateImageSeoAltController = async (req, res, next) => {
     await article.save({
       update: true,
     });
-
-    return res
-      .status(200)
-      .json({ status: "Success", message: "Successfully updated" });
+    const articleData = await shopify.api.rest.Article.find({
+      session: res.locals.shopify.session,
+      blog_id: blogId,
+      id: id,
+    });
+    return res.status(200).json({ status: "Success", message: "Successfully updated", articleData });
   } catch (err) {
-    console.log(
-      "🚀 ~ file: description.js:73 ~ descriptionController ~ err:",
-      err
-    );
+    console.log("🚀 ~ file: description.js:73 ~ descriptionController ~ err:", err);
     res.status(400).json({ err });
   }
 };

@@ -116,9 +116,62 @@ export const productsController = async (req, res, next) => {
   }
 };
 
+export const getProductByID = async (session, id) => {
+  try {
+    const query = `
+    query {
+      product(id: "gid://shopify/Product/${id}") {
+        id
+        title
+        description
+        status
+        handle
+        tags
+        vendor
+         media(first: 250) {
+              edges {
+                node {
+                  id
+									alt
+                  mediaContentType
+                  preview {
+										status
+                    image {
+                      url
+                    }
+                  }
+                }
+              }
+            }
+        featuredImage {
+          altText
+          url
+          width
+        }
+        seo {
+          description
+          title
+        }
+        metafield(namespace: "bs-23-seo-app", key: "json-ld") {
+          value
+        }
+      }
+    }
+  `;
+
+    const client = new shopify.api.clients.Graphql({ session });
+
+    const productInfo = await client.query({ data: query });
+    return productInfo?.body?.data?.product;
+  } catch (err) {
+    console.log("🚀 ~ getProductByID ~ error:", err);
+    throw err;
+  }
+};
 export const getProductControllerByID = async (req, res, next) => {
   try {
     const { id } = req.params;
+    console.log("🚀 ~ file: description.js:73 ~ descriptionController ~ id", id);
 
     const response = await shopify.api.rest.Product.find({
       session: res.locals.shopify.session,
@@ -126,34 +179,6 @@ export const getProductControllerByID = async (req, res, next) => {
       fields: "id,images,title,metafields_global_title_tag",
     });
 
-    const query = `
-    query {
-      product(id: "gid://shopify/Product/${id}") {
-        id
-        title
-        description
-        images(first: 5) {
-          edges {
-            node {
-              id
-              originalSrc
-              altText
-            }
-          }
-        }
-        seo {
-          description
-          title
-        }
-      }
-    }
-  `;
-
-    const client = new shopify.api.clients.Graphql({
-      session: res.locals.shopify.session,
-    });
-
-    const productInfo = await client.query({ data: query });
     return res.status(200).json(response);
   } catch (err) {
     console.log("🚀 ~ file: description.js:73 ~ descriptionController ~ err:", err);
@@ -165,6 +190,7 @@ export const updateProductSEO = async (req, res, next) => {
   try {
     const { id, seoTitle, seoDescription } = req.body;
 
+    const productID = id?.split("/").pop();
     const mutation = `
     mutation productUpdate($input: ProductInput!) {
       productUpdate(input: $input) {
@@ -209,8 +235,8 @@ export const updateProductSEO = async (req, res, next) => {
       console.error("Errors:", response.body.data.productUpdate.userErrors);
       return res.status(400).json({ error: response.body.data.productUpdate.userErrors });
     } else {
-      console.log("Updated product SEO:", response.body.data.productUpdate.product);
-      return res.status(200).json({ product: response.body.data.productUpdate.product });
+      const productByID = await getProductByID(res.locals.shopify.session, productID);
+      return res.status(200).json({ product: response.body.data.productUpdate.product, productByID });
     }
   } catch (error) {
     console.error("Failed to update product SEO:", error.response?.errors || error.message);
@@ -267,27 +293,42 @@ export const updateProductBulkSeo = async (req, res) => {
 
 export const updateImageSeoAltController = async (req, res, next) => {
   try {
+    console.log("tryyyy");
     const { id, imageId, altText } = req.body;
-
-    const mutation = `mutation productImageUpdate($productId: ID!, $image: ImageInput!) {
-      productImageUpdate(productId: $productId, image: $image) {
-        image {
-          id
-          altText
-        }
-        userErrors {
-          field
-          message
-        }
-      }
-    }`;
-
+    const productID = id?.split("/").pop();
+    console.log("pid", productID, id, imageId, altText);
+    // const mutation = `mutation productImageUpdate($productId: ID!, $image: ImageInput!) {
+    //   productImageUpdate(productId: $productId, image: $image) {
+    //     image {
+    //       id
+    //       altText
+    //     }
+    //     userErrors {
+    //       field
+    //       message
+    //     }
+    //   }
+    // }`;
+    const mutation = `mutation productUpdateMedia($media: [UpdateMediaInput!]!, $productId: ID!) {
+  productUpdateMedia(media: $media, productId: $productId) {
+    media {
+      id
+      alt
+    }
+    userErrors {
+        field
+        message
+    }
+  }
+}`;
     const variables = {
       productId: id,
-      image: {
-        id: imageId,
-        altText: altText,
-      },
+      media: [
+        {
+          id: imageId,
+          alt: altText,
+        },
+      ],
     };
 
     const client = new shopify.api.clients.Graphql({
@@ -303,9 +344,10 @@ export const updateImageSeoAltController = async (req, res, next) => {
 
     if (response.body.data?.productImageUpdate?.userErrors?.length > 0) {
       console.error("Errors:", response.body.data.productImageUpdate.userErrors);
-      return res.status(400).json({ error: response.body.data?.productImageUpdate?.userErrors });
+      return res.status(400).json({ error: response.body.data?.productUpdateMedia?.userErrors });
     } else {
-      return res.status(200).json({ product: response.body.data.productImageUpdate.image });
+      const productByID = await getProductByID(res.locals.shopify.session, productID);
+      return res.status(200).json({ product: response.body.data.productUpdateMedia.media, productByID });
     }
   } catch (err) {
     console.log("🚀 ~ file: description.js:73 ~ descriptionController ~ err:", err);

@@ -1,5 +1,8 @@
 import shopify from "../shopify.js";
 import { extname, basename } from "path";
+import { getProductByID } from "./products.js";
+import { SaveImageAltOptimizerMetafiled } from "./metafields.js";
+import { v4 as uuidv4 } from "uuid";
 
 const fetchAllFromDataSource = async ({ session, query, datasource }) => {
   let allData = [];
@@ -163,14 +166,12 @@ const updateImageAltManually = async ({
 
       let mutation_query = ``;
       slice.forEach((data, index) => {
-        const altText = metafieldData.altText[`${type}Status`]
-          ? translateAltText(
-              metafieldData.altText[`${type}`],
-              data,
-              type,
-              shopData
-            )
-          : "";
+        const altText = translateAltText(
+          metafieldData.altText[`${type}`],
+          data,
+          type,
+          shopData
+        );
 
         if (type == "collection") {
           mutation_query += `collection_${index}: collectionUpdate(input: { id: "${data.id}", image: { altText: "${altText}" } }) {
@@ -206,9 +207,12 @@ const updateImageAltManually = async ({
 
 export const BulkUpdateAltText = async (req, res, next) => {
   try {
+    const { altTextChenge } = req?.body?.data;
+    const session = res.locals.shopify.session;
     const client = new shopify.api.clients.Graphql({
-      session: res.locals.shopify.session,
+      session,
     });
+    await SaveImageAltOptimizerMetafiled(req, res, next);
 
     let metafieldData = null,
       shopData = await client.query({
@@ -246,10 +250,12 @@ export const BulkUpdateAltText = async (req, res, next) => {
     console.log("got metafield data");
 
     const input = [];
-    const allProducts = await fetchAllFromDataSource({
-      datasource: "products",
-      session: res.locals.shopify.session,
-      query: `
+    if (altTextChenge.includes("product")) {
+      console.log("getting all products");
+      const allProducts = await fetchAllFromDataSource({
+        datasource: "products",
+        session: res.locals.shopify.session,
+        query: `
       query ($first: Int!, $after: String) {
         products(first: $first, after: $after, reverse: true) {
           edges {
@@ -278,31 +284,29 @@ export const BulkUpdateAltText = async (req, res, next) => {
         }
       }
     `,
-    });
+      });
 
-    console.log("got all products");
+      console.log("got all products");
 
-    allProducts.forEach((productData) => {
-      const productAltText = metafieldData.altText.productStatus
-        ? translateAltText(
-            metafieldData.altText.product,
-            productData,
-            "product",
-            shopData.body.data.shop
-          )
-        : "";
+      allProducts.forEach((productData) => {
+        const productAltText = translateAltText(
+          metafieldData.altText.product,
+          productData,
+          "product",
+          shopData.body.data.shop
+        );
 
-      productData.media.edges.forEach(({ node }) => {
-        input.push({
-          id: node.id,
-          alt: productAltText,
+        productData.media.edges.forEach(({ node }) => {
+          input.push({
+            id: node.id,
+            alt: productAltText,
+          });
         });
       });
-    });
 
-    const productImageUpdateResponse = await client.query({
-      data: {
-        query: `
+      const productImageUpdateResponse = await client.query({
+        data: {
+          query: `
         mutation FileUpdate($input: [FileUpdateInput!]!) {
           fileUpdate(files: $input) {
             userErrors {
@@ -316,16 +320,18 @@ export const BulkUpdateAltText = async (req, res, next) => {
           }
         }
         `,
-        variables: { input },
-      },
-    });
+          variables: { input },
+        },
+      });
 
-    console.log("product image alt updated successfully");
-
-    const allCollections = await fetchAllFromDataSource({
-      datasource: "collections",
-      session: res.locals.shopify.session,
-      query: `
+      console.log("product image alt updated successfully");
+    }
+    if (altTextChenge.includes("collection")) {
+      console.log("getting all collection");
+      const allCollections = await fetchAllFromDataSource({
+        datasource: "collections",
+        session: res.locals.shopify.session,
+        query: `
         query ($first: Int!, $after: String) {
           collections(first: $first, after: $after, reverse: true) {
             edges {
@@ -346,24 +352,26 @@ export const BulkUpdateAltText = async (req, res, next) => {
           }
         }
       `,
-    });
+      });
 
-    console.log("got all collections");
+      console.log("got all collections");
 
-    await updateImageAltManually({
-      session: res.locals.shopify.session,
-      shopData: shopData.body.data.shop,
-      datasource: allCollections,
-      type: "collection",
-      metafieldData,
-    });
+      await updateImageAltManually({
+        session: res.locals.shopify.session,
+        shopData: shopData.body.data.shop,
+        datasource: allCollections,
+        type: "collection",
+        metafieldData,
+      });
 
-    console.log("collection image alt updated successfully");
-
-    const allArticles = await fetchAllFromDataSource({
-      datasource: "articles",
-      session: res.locals.shopify.session,
-      query: `
+      console.log("collection image alt updated successfully");
+    }
+    if (altTextChenge.includes("article")) {
+      console.log("getting all collection");
+      const allArticles = await fetchAllFromDataSource({
+        datasource: "articles",
+        session: res.locals.shopify.session,
+        query: `
         query ($first: Int!, $after: String) {
           articles(first: $first, after: $after) {
             edges {
@@ -389,19 +397,20 @@ export const BulkUpdateAltText = async (req, res, next) => {
           }
         }
         `,
-    });
+      });
 
-    console.log("got all articles");
+      console.log("got all articles");
 
-    await updateImageAltManually({
-      session: res.locals.shopify.session,
-      shopData: shopData.body.data.shop,
-      datasource: allArticles,
-      type: "article",
-      metafieldData,
-    });
+      await updateImageAltManually({
+        session: res.locals.shopify.session,
+        shopData: shopData.body.data.shop,
+        datasource: allArticles,
+        type: "article",
+        metafieldData,
+      });
 
-    console.log("article image alt updated successfully");
+      console.log("article image alt updated successfully");
+    }
 
     return res.status(200).json({ message: "Bulk update alt text" });
   } catch (error) {
@@ -431,7 +440,6 @@ export const updateProductImageFilename = async (req, res, next) => {
       session: res.locals.shopify.session,
     });
     const { id, fileNameSettings, fileExt, productId } = req.body;
-
     const queryData = await client.query({
       data: {
         query: `
@@ -493,14 +501,20 @@ export const updateProductImageFilename = async (req, res, next) => {
       productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors
         .length > 0
     ) {
-      throw new Error(
-        JSON.stringify(
-          productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors
-        )
-      );
+      return res.status(400).json({
+        message:
+          productImageFilenameUpdateResponse.body.data.fileUpdate
+            .userErrors?.[0].message,
+      });
     }
-
-    return res.status(200).json({ message: "Product image filename updated" });
+    const product_id = productId.split("/").pop();
+    const productDataById = await getProductByID(
+      res.locals.shopify.session,
+      product_id
+    );
+    return res
+      .status(200)
+      .json({ message: "Product image filename updated", productDataById });
   } catch (error) {
     console.error(error);
     return res
@@ -509,63 +523,148 @@ export const updateProductImageFilename = async (req, res, next) => {
   }
 };
 
-async function batchUpdateImageFileName({ input, client }) {
-  try {
-    console.log("starting batch update");
-    const batchSize = 20;
-    let start = 0,
-      hasNextSlice = true;
+// async function batchUpdateImageFileName({ input, client }) {
+//   function wait(ms) {
+//     return new Promise((resolve) => setTimeout(resolve, ms));
+//   }
 
-    while (hasNextSlice) {
-      const slice = input.slice(start, start + batchSize);
+//   try {
+//     console.log("starting batch update");
+//     const batchSize = 10;
+//     let start = 0,
+//       hasNextSlice = true;
+
+//     while (hasNextSlice) {
+//       const slice = input.slice(start, start + batchSize);
+//       const productImageFilenameUpdateResponse = await client.query({
+//         data: {
+//           query: `
+//         mutation FileUpdate($input: [FileUpdateInput!]!) {
+//           fileUpdate(files: $input) {
+//             userErrors {
+//               code
+//               field
+//               message
+//             }
+//             files {
+//               id
+//               fileStatus
+//               fileErrors {
+//                 code
+//                 details
+//                 message
+//               }
+//             }
+//           }
+//         }
+//         `,
+//           variables: { input: slice },
+//         },
+//       });
+
+//       if (productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors.length > 0) {
+//         console.log("something happened");
+//         console.log(productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors);
+//         // throw productImageFilenameUpdateResponse.body.data.fileUpdate
+//         //   .userErrors;
+//       }
+
+//       if (start + batchSize >= input.length) {
+//         hasNextSlice = false;
+//       } else start += batchSize;
+
+//       await wait(1000 * 30);
+//     }
+
+//     console.log("All product image filename updated successfully");
+//     return true;
+//   } catch (error) {
+//     console.log("Error updating product image filename");
+//     throw error;
+//     return false;
+//   }
+// }
+
+async function batchUpdateImageFileName({ input, client }) {
+  function wait(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  async function updateFile(file, attempt = 1) {
+    try {
       const productImageFilenameUpdateResponse = await client.query({
         data: {
           query: `
-        mutation FileUpdate($input: [FileUpdateInput!]!) {
-          fileUpdate(files: $input) {
-            userErrors {
-              code
-              field
-              message
+            mutation FileUpdate($input: [FileUpdateInput!]!) {
+              fileUpdate(files: $input) {
+                userErrors {
+                  code
+                  field
+                  message
+                }
+                files {
+                  id
+                  fileStatus
+                  fileErrors {
+                    code
+                    details
+                    message
+                  }
+                }
+              }
             }
-          }
-        }
-        `,
-          variables: { input: slice },
+          `,
+          variables: { input: [file] },
         },
       });
 
-      if (
-        productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors
-          .length > 0
-      ) {
-        console.log("something happened");
-        console.log(
-          productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors
+      const userErrors =
+        productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors;
+      if (userErrors.length > 0) {
+        const fileLockedErrors = userErrors.filter(
+          (error) => error.code === "FILE_LOCKED"
         );
-        // throw productImageFilenameUpdateResponse.body.data.fileUpdate
-        //   .userErrors;
-      }
 
-      if (start + batchSize >= input.length) {
-        hasNextSlice = false;
-      } else start += batchSize;
+        if (fileLockedErrors.length > 0) {
+          console.log(`File locked for file ID ${file.id}, retrying...`);
+          if (attempt <= 5) {
+            const delay = Math.pow(2, attempt) * 200; // Exponential backoff
+            await wait(delay);
+            return await updateFile(file, attempt + 1);
+          } else {
+            console.log(`Max retries reached for file ID ${file.id}.`);
+          }
+        } else {
+          console.log("Other errors encountered:", userErrors);
+        }
+      }
+    } catch (error) {
+      console.log(`Error updating file ID ${file.id}:`, error);
+      throw error;
+    }
+  }
+
+  try {
+    console.log("Starting single-file updates");
+
+    for (const file of input) {
+      await updateFile(file);
+      await wait(500); // Optional delay between files to avoid API rate limits
     }
 
-    console.log("All product image filename updated successfully");
+    console.log("All product image filenames updated successfully");
     return true;
   } catch (error) {
-    console.log("Error updating product image filename");
+    console.log("🚀 ~ batchUpdateImageFileName ~ error:", error);
     throw error;
-    return false;
   }
 }
 
 function generateFileName(originalName) {
-  const timestamp = Date.now();
+  const uniqueId = uuidv4();
   const ext = extname(originalName);
   const baseName = basename(originalName, ext);
-  return `${baseName}-${timestamp}${ext}`;
+  return `${baseName}-${uniqueId}${ext}`;
 }
 
 async function saveGlobalImageFilenameToMetafield({ session, filename }) {
@@ -740,8 +839,7 @@ export const bulkUpdateProductImageFilename = async (req, res, next) => {
     `,
     });
 
-    const input = [],
-      map = new Map();
+    const input = [];
     allProducts.forEach((productData) => {
       productData.media.edges
         .filter((e) => e.node.mediaContentType === "IMAGE")
@@ -750,20 +848,10 @@ export const bulkUpdateProductImageFilename = async (req, res, next) => {
           const filename = sanitizeFilename(
             translateAltText(fileNameSettings, productData, "product", shop)
           );
-
-          if (map.has(filename)) {
-            map.set(filename, map.get(filename) + 1);
-            input.push({
-              id: node.id,
-              filename: generateFileName(filename + fileExt),
-            });
-          } else {
-            map.set(filename, 0);
-            input.push({
-              id: node.id,
-              filename: filename + fileExt,
-            });
-          }
+          input.push({
+            id: node.id,
+            filename: generateFileName(filename + fileExt),
+          });
         });
     });
 
