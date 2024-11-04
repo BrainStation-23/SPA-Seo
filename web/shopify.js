@@ -31,6 +31,9 @@ const shopify = shopifyApp({
   },
   // This should be replaced with your preferred storage strategy
   sessionStorage: new SQLiteSessionStorage(DB_PATH),
+  AI_API_KEY: process.env.AI_API_KEY,
+  AI_DEPLOYMENT_NAME: process.env.AI_DEPLOYMENT_NAME,
+  AI_API_ENDPOINT: process.env.AI_DEPLOYMENT_NAME,
 });
 
 export default shopify;
