@@ -16,6 +16,7 @@ import sitemapRoute from "./routes/htmlsitemap.js";
 import UninstallCleanupRouter from "./routes/uninstall.js";
 import { errorRouter, updateErrorInsightsRouter } from "./routes/404error.js";
 import imageCompression from "./routes/imageCompression.js";
+import AIRouter from "./routes/AIRoute.js";
 
 const PORT = parseInt(
   process.env.BACKEND_PORT || process.env.PORT || "3000",
@@ -79,6 +80,7 @@ app.use("/api/jsonld", jsonLdRoute);
 app.use("/api/uninstall", UninstallCleanupRouter);
 app.use("/api/image-compression", imageCompression);
 app.use("/api/products", productsRoute);
+app.use("/api/AI", AIRouter);
 
 app.use(shopify.cspHeaders());
 app.use(serveStatic(STATIC_PATH, { index: false }));

@@ -1,5 +1,5 @@
 import { Configuration, OpenAIApi } from "azure-openai";
-import { apiKey, endPoint, deploymentName } from "../config/config";
+import { apiKey, endPoint, deploymentName } from "../config/config.js";
 
 class AzureOpenAIService {
   constructor() {
