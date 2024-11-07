@@ -5135,19 +5135,20 @@ shebang-regex@^3.0.0:
   resolved "https://registry.npmjs.org/shebang-regex/-/shebang-regex-3.0.0.tgz"
   integrity sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==
 
-"shopify-app-template-node@file:/home/bs830/Documents/working/shopify app/SEO-app/web":
+"shopify-app-template-node@file:/home/bs830/Documents/working/shopify app/SPA-Seo/web":
   version "1.0.0"
   resolved "file:web"
   dependencies:
     "@shopify/shopify-api" "^11.3.0"
     "@shopify/shopify-app-express" "^2.1.1"
     "@shopify/shopify-app-session-storage-sqlite" "^1.2.2"
+    azure-openai "^0.9.4"
     compression "^1.7.4"
     cross-env "^7.0.3"
     serve-static "^1.14.1"
     sharp "^0.33.5"
 
-"shopify-frontend-template-react@file:/home/bs830/Documents/working/shopify app/SEO-app/web/frontend":
+"shopify-frontend-template-react@file:/home/bs830/Documents/working/shopify app/SPA-Seo/web/frontend":
   version "1.0.0"
   resolved "file:web/frontend"
   dependencies:
