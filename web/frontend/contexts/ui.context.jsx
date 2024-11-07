@@ -11,6 +11,10 @@ const initialState = {
     active: false,
     message: "",
   },
+  useAI: {
+    active: false,
+    data: null,
+  },
 };
 
 export const UIContext = React.createContext(initialState);
@@ -57,6 +61,17 @@ function uiReducer(state, action) {
         },
       };
     }
+
+    case "TOGGLE_AI": {
+      return {
+        ...state,
+        useAI: {
+          ...state.useAI,
+          active: action.payload.active,
+          data: action.payload.data,
+        },
+      };
+    }
   }
 }
 
@@ -69,6 +84,9 @@ export const UIProvider = (props) => {
   const setToggleToast = (payload) =>
     dispatch({ type: "TOGGLE_TOAST", payload });
 
+  const setToggleAIButton = (payload) =>
+    dispatch({ type: "TOGGLE_AI", payload });
+
   const value = React.useMemo(
     () => ({
       ...state,
@@ -76,6 +94,7 @@ export const UIProvider = (props) => {
       setOpenModal,
       setCloseModal,
       setToggleToast,
+      setToggleAIButton,
     }),
     [state]
   );
