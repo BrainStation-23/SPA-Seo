@@ -22,7 +22,7 @@ export const useAIQuery = ({ url, fetchInit = {}, reactQueryOptions }) => {
   });
 };
 
-export const useCreateAIBasedSeo = () => {
+export const useCreateAIBasedSeo = (setAIKeywords) => {
   const fetch = useAuthenticatedFetch();
   const { setToggleToast } = useUI();
   const { setProductSeo } = useAI();
@@ -46,7 +46,7 @@ export const useCreateAIBasedSeo = () => {
       }
       const response = await data.json();
       setProductSeo(response?.aiContent);
-      console.log("🚀 ~ onSuccess: ~ data:", response);
+      setAIKeywords("");
 
       setToggleToast({
         active: true,

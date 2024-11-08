@@ -21,13 +21,16 @@ import { SearchIcon } from "@shopify/polaris-icons";
 import AIButton from "./commonUI/AIButton";
 
 export function CreateProductSeo() {
-  const [isLoading, setIsLoading] = useState(false);
   const { modal } = useUI();
   const { productSeo } = useAI();
-  console.log("🚀 ~ CreateProductSeo ~ productSeo:", productSeo);
-  const { mutate: createOrUpdateSeo, isError } = useCreateProductSeo();
-  const { mutate: createAISeo, isLoading: isAILoading } = useCreateAIBasedSeo();
   const [AIkeywords, setAIKeywords] = useState("");
+  const {
+    mutate: createOrUpdateSeo,
+    isError,
+    isLoading,
+  } = useCreateProductSeo();
+  const { mutate: createAISeo, isLoading: isAILoading } =
+    useCreateAIBasedSeo(setAIKeywords);
   const [formData, setFormData] = useState({
     seo_title: "",
     seo_description: "",
@@ -62,20 +65,12 @@ export function CreateProductSeo() {
         });
       }
 
-      setIsLoading(true);
       const info = {
         id: modal?.data?.info?.id,
         seoTitle: obj?.seo_title,
         seoDescription: obj?.seo_description,
       };
-      createOrUpdateSeo(info, {
-        onSuccess: () => {
-          setIsLoading(false);
-        },
-        onError: () => {
-          setIsLoading(false);
-        },
-      });
+      createOrUpdateSeo(info);
     },
     [createOrUpdateSeo]
   );
@@ -100,9 +95,26 @@ export function CreateProductSeo() {
     setAIKeywords(value);
   }, []);
 
-  const createSEOInfoWithAI = useCallback(() => {
-    createAISeo();
-  }, [createAISeo]);
+  const createSEOInfoWithAI = useCallback(
+    (key) => {
+      let productId = modal?.data?.info?.id.split("/").pop();
+      if (key === "scanProduct") {
+        const requestInfo = {
+          productId: productId,
+          key: "scanProduct",
+        };
+        createAISeo(requestInfo);
+      } else {
+        const requestInfo = {
+          productId: productId,
+          suggestionKeywords: AIkeywords,
+          key: "suggestion",
+        };
+        createAISeo(requestInfo);
+      }
+    },
+    [createAISeo, AIkeywords]
+  );
 
   return (
     <div className="product-ai-seo-generation-container">
@@ -110,7 +122,7 @@ export function CreateProductSeo() {
         <div className="ai-action-container">
           <div>
             <AIButton
-              onClick={createSEOInfoWithAI}
+              onClick={() => createSEOInfoWithAI("scanProduct")}
               icon={SearchIcon}
               title="Scan product with AI"
             />
@@ -127,7 +139,9 @@ export function CreateProductSeo() {
               // error={errors?.seo_title}
             />
             <div>
-              <Button primary>Submit</Button>
+              <Button primary onClick={() => createSEOInfoWithAI("suggestion")}>
+                Submit
+              </Button>
             </div>
           </div>
         </div>

@@ -3,7 +3,7 @@
 client_id = "695da14ec05f37f6cdd63a2b3c20b444"
 name = "SEOfy - Complete SEO Expert"
 handle = "seofy-complete-seo-expert"
-application_url = "https://obtain-employee-uncle-easy.trycloudflare.com"
+application_url = "https://establish-arise-sleeve-virus.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,9 +17,9 @@ scopes = "read_content,read_customers,read_products,read_themes,write_content,wr
 
 [auth]
 redirect_urls = [
-  "https://obtain-employee-uncle-easy.trycloudflare.com/auth/callback",
-  "https://obtain-employee-uncle-easy.trycloudflare.com/auth/shopify/callback",
-  "https://obtain-employee-uncle-easy.trycloudflare.com/api/auth/callback"
+  "https://establish-arise-sleeve-virus.trycloudflare.com/auth/callback",
+  "https://establish-arise-sleeve-virus.trycloudflare.com/auth/shopify/callback",
+  "https://establish-arise-sleeve-virus.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
