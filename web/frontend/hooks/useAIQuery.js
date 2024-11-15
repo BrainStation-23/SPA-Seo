@@ -63,6 +63,46 @@ export const useCreateAIBasedSeo = (setAIKeywords) => {
   });
 };
 
+export const useCreateSingleAIBasedSeo = () => {
+  const fetch = useAuthenticatedFetch();
+  const { setToggleToast } = useUI();
+  const { setProductSeo } = useAI();
+  async function createStatus(status) {
+    return await fetch("/api/AI/single-seo", {
+      method: "POST",
+      body: JSON.stringify(status),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  }
+
+  return useMutation((status) => createStatus(status), {
+    onSuccess: async (data, obj) => {
+      if (data?.status === 400) {
+        return setToggleToast({
+          active: true,
+          message: `Something went wrong`,
+        });
+      }
+      const response = await data.json();
+      setProductSeo(response?.aiContent);
+
+      setToggleToast({
+        active: true,
+        message: `Submit Successfully`,
+      });
+    },
+    onError: async () => {
+      setToggleToast({
+        active: true,
+        message: `Something went wrong`,
+      });
+    },
+    refetchOnWindowFocus: false,
+  });
+};
+
 export const useUpdateProductSeoImgAlt = () => {
   const fetch = useAuthenticatedFetch();
   const { setCloseModal, setToggleToast, setOpenModal } = useUI();

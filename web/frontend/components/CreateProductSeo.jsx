@@ -11,7 +11,10 @@ import { InputField } from "./commonUI/InputField";
 import { useCreateProductSeo } from "../hooks/useProductsQuery";
 import { useUI } from "../contexts/ui.context";
 import TextareaField from "./commonUI/TextareaField";
-import { useCreateAIBasedSeo } from "../hooks/useAIQuery";
+import {
+  useCreateAIBasedSeo,
+  useCreateSingleAIBasedSeo,
+} from "../hooks/useAIQuery";
 import AITitle from "./commonUI/AITitle";
 import AIContainerWithTitle from "./commonUI/AIComponent/AIContainerWithTitle";
 import { useCallback } from "react";
@@ -31,6 +34,7 @@ export function CreateProductSeo() {
   } = useCreateProductSeo();
   const { mutate: createAISeo, isLoading: isAILoading } =
     useCreateAIBasedSeo(setAIKeywords);
+  const { mutate: createSingleSeo } = useCreateSingleAIBasedSeo();
   const [formData, setFormData] = useState({
     seo_title: "",
     seo_description: "",
@@ -95,39 +99,25 @@ export function CreateProductSeo() {
     setAIKeywords(value);
   }, []);
 
-  const createSEOInfoWithAI = useCallback(
-    (key) => {
-      let productId = modal?.data?.info?.id.split("/").pop();
-      if (key === "scanProduct") {
-        const requestInfo = {
-          productId: productId,
-          key: "scanProduct",
-        };
-        createAISeo(requestInfo);
-      } else {
-        const requestInfo = {
-          productId: productId,
-          suggestionKeywords: AIkeywords,
-          key: "suggestion",
-        };
-        createAISeo(requestInfo);
-      }
-    },
-    [createAISeo, AIkeywords]
-  );
+  const createSEOInfoWithAI = useCallback(() => {
+    let productId = modal?.data?.info?.id.split("/").pop();
+
+    const requestInfo = {
+      productId: productId,
+      suggestionKeywords: AIkeywords,
+      key: "scanProduct",
+    };
+    createAISeo(requestInfo);
+  }, [createAISeo, AIkeywords]);
+
+  const handleAIChange = useCallback((value, name) => {
+    setFormData({ ...formData, [name]: value });
+  }, []);
 
   return (
     <div className="product-ai-seo-generation-container">
       <AIContainerWithTitle isAIButton={true}>
         <div className="ai-action-container">
-          <div>
-            <AIButton
-              onClick={() => createSEOInfoWithAI("scanProduct")}
-              icon={SearchIcon}
-              title="Scan product with AI"
-            />
-          </div>
-          OR
           <div className="ai-keywords-suggestion">
             <InputField
               value={AIkeywords}
@@ -139,9 +129,11 @@ export function CreateProductSeo() {
               // error={errors?.seo_title}
             />
             <div>
-              <Button primary onClick={() => createSEOInfoWithAI("suggestion")}>
-                Submit
-              </Button>
+              <AIButton
+                onClick={() => createSEOInfoWithAI()}
+                icon={SearchIcon}
+                title="Generate with AI"
+              />
             </div>
           </div>
         </div>
@@ -149,12 +141,15 @@ export function CreateProductSeo() {
           {isAILoading && <Spinner size="large" />}
           {productSeo?.metaTitle?.length > 0 && (
             <div>
-              <AITitle title={"Meta title suggestions"} />
+              <AITitle title={"Meta title AI suggestions"} />
               <div>
                 {productSeo?.metaTitle?.map((data, index) => (
                   <AITitleAndDes
+                    name="ai_metaTitle_title"
                     data={data}
                     handleChange={handleChange}
+                    onHandleSubmit={handleSubmit}
+                    onHandleRefetch={handleSubmit}
                     key={index}
                   />
                 ))}
@@ -163,13 +158,16 @@ export function CreateProductSeo() {
           )}
           {productSeo?.metaDescription?.length > 0 && (
             <div>
-              <AITitle title={"Meta description suggestions"} />
+              <AITitle title={"Meta description AI suggestions"} />
               <div>
                 {productSeo?.metaDescription?.map((data, index) => (
                   <AITitleAndDes
                     data={data}
+                    name="ai_metaDesc_title"
                     handleChange={handleChange}
+                    onHandleSubmit={handleSubmit}
                     key={index}
+                    onHandleRefetch={handleSubmit}
                   />
                 ))}
               </div>

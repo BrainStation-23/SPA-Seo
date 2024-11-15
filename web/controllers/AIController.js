@@ -16,23 +16,21 @@ export const aiSeoContentController = async (req, res, next) => {
     const messages = [
       {
         role: "user",
-        content: `Give me five suggestions for a meta title and description for better seo. Product information like ${JSON.stringify(
+        content: `Give me five suggestions for meta title and description for better seo. Product information like ${JSON.stringify(
           productInfo
         )}. Check the product information and ${
-          requestInfo?.key === "suggestion"
+          requestInfo?.suggestionKeywords
             ? `please consider these keywords: ${requestInfo?.suggestionKeywords}, for generating content`
-            : "give suggestions"
+            : "response must be new suggestions every time"
         }. Each suggestion should include:
       1. Meta Title
       2. Meta Description
-      just give the results in JSON format like result: {metaTitle: [], metaDescription:[]}
+      Response must be in JSON format like response: { result: {metaTitle: [], metaDescription:[]}}
       `,
       },
     ];
 
-    const aiContent = await seoAI.getAIResults(messages);
-    const message = aiContent?.data?.choices[0]?.message.content || "";
-    const response = formatJSONResult(message);
+    const response = await generateWithAI(messages);
     return res.status(200).json({
       status: "Success",
       aiContent: response,
@@ -41,5 +39,25 @@ export const aiSeoContentController = async (req, res, next) => {
     console.log("🚀 ~ aiSeoContentController ~ err:", err);
 
     res.status(400).json({ err });
+  }
+};
+
+async function generateWithAI(messages) {
+  try {
+    const aiContent = await seoAI.getAIResults(messages);
+    const message = aiContent?.data?.choices[0]?.message.content || "";
+    console.log("🚀 ~ generateWithAI ~ message:", message);
+    const response = formatJSONResult(message);
+    return response;
+  } catch (error) {
+    console.log("🚀 ~ generateWithAI ~ error:", error);
+  }
+}
+
+export const aiSeoSingleContent = async (req, res) => {
+  try {
+    const body = req.body;
+  } catch (error) {
+    console.log("🚀 ~ aiSeoSingleContent ~ error:", error);
   }
 };

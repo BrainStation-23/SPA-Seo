@@ -3,7 +3,13 @@ import { ResetIcon } from "@shopify/polaris-icons";
 import { Button, Icon } from "@shopify/polaris";
 import TextareaField from "../TextareaField";
 
-export default function AITitleAndDes({ data, handleChange }) {
+export default function AITitleAndDes({
+  name,
+  data,
+  handleChange,
+  onHandleSubmit,
+  onHandleRefetch,
+}) {
   return (
     <div className="ai-seo-title-and-des">
       <div className="ai-seo-input-text">
@@ -11,7 +17,7 @@ export default function AITitleAndDes({ data, handleChange }) {
           value={data}
           onChange={handleChange}
           type="text"
-          name="seo_ai_description"
+          name={name}
           placeholder="Enter Meta Description"
           // error={errors?.seo_description}
           rows={"2"}
@@ -19,12 +25,14 @@ export default function AITitleAndDes({ data, handleChange }) {
       </div>
       <div className="ai-seo-input-action">
         <div>
-          <Button outline>
+          <Button outline onClick={() => onHandleRefetch}>
             <Icon source={ResetIcon} tone="base" />
           </Button>
         </div>
         <div>
-          <Button primary>Use</Button>
+          <Button primary onClick={() => onHandleSubmit()}>
+            Use
+          </Button>
         </div>
       </div>
     </div>
