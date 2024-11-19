@@ -1,5 +1,4 @@
 import shopify from "../shopify.js";
-import { getAccessTokenForShop } from "../utils/getShopAccessToken.js";
 
 export const getErrorInsightsContent = async (req, res, next) => {
   try {
@@ -55,17 +54,17 @@ export const getErrorInsightsContent = async (req, res, next) => {
 };
 
 export const updateErrorInsightsSeo = async (req, res) => {
-  const { shop } = req.body;
-  const shopURL = shop.split("://")[1];
-  const accessToken = await getAccessTokenForShop(shopURL);
-
   try {
+    const shop = req.headers["x-forwarded-host"];
+    const session = await shopify.config.sessionStorage.findSessionsByShop(
+      shop
+    );
     const errorList = await fetch(
-      `${shop}/admin/api/2024-07/metafields.json?namespace=seo-app-bs23`,
+      `https://${shop}/admin/api/2024-07/metafields.json?namespace=seo-app-bs23`,
       {
         method: "GET",
         headers: {
-          "X-Shopify-Access-Token": accessToken?.[0]?.accessToken,
+          "X-Shopify-Access-Token": session?.[0]?.accessToken,
           "Content-Type": "application/json",
         },
       }
@@ -78,10 +77,10 @@ export const updateErrorInsightsSeo = async (req, res) => {
     const list = responseList?.value ? JSON.parse(responseList?.value) : [];
     const newList = [...list, req.body];
 
-    await fetch(`${shop}/admin/api/2024-07/metafields.json`, {
+    await fetch(`https://${shop}/admin/api/2024-07/metafields.json`, {
       method: "POST",
       headers: {
-        "X-Shopify-Access-Token": accessToken?.[0]?.accessToken,
+        "X-Shopify-Access-Token": session?.[0]?.accessToken,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
