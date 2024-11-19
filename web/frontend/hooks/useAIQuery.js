@@ -45,7 +45,7 @@ export const useCreateAIBasedSeo = (setAIKeywords) => {
         });
       }
       const response = await data.json();
-      setProductSeo(response?.aiContent);
+      setProductSeo(response?.aiContent?.result);
       setAIKeywords("");
 
       setToggleToast({
@@ -66,7 +66,7 @@ export const useCreateAIBasedSeo = (setAIKeywords) => {
 export const useCreateSingleAIBasedSeo = () => {
   const fetch = useAuthenticatedFetch();
   const { setToggleToast } = useUI();
-  const { setProductSeo } = useAI();
+  const { setProductSeo, productSeo } = useAI();
   async function createStatus(status) {
     return await fetch("/api/AI/single-seo", {
       method: "POST",
@@ -86,7 +86,18 @@ export const useCreateSingleAIBasedSeo = () => {
         });
       }
       const response = await data.json();
-      setProductSeo(response?.aiContent);
+
+      if (response?.aiResult?.name === "ai_metaTitle_title") {
+        let arr = [...productSeo?.metaTitle];
+        arr[response?.aiResult?.index] = response?.aiResult?.suggestion;
+        let metaSeo = { ...productSeo, metaTitle: arr };
+        setProductSeo(metaSeo);
+      } else {
+        let arr = [...productSeo?.metaDescription];
+        arr[response?.aiResult?.index] = response?.aiResult?.suggestion;
+        let descSeo = { ...productSeo, metaDescription: arr };
+        setProductSeo(descSeo);
+      }
 
       setToggleToast({
         active: true,

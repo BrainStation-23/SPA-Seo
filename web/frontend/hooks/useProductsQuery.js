@@ -3,7 +3,11 @@ import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { useUI } from "../contexts/ui.context";
 
-export const useProductsQuery = ({ url, fetchInit = {}, reactQueryOptions }) => {
+export const useProductsQuery = ({
+  url,
+  fetchInit = {},
+  reactQueryOptions,
+}) => {
   const authenticatedFetch = useAuthenticatedFetch();
   const { modal } = useUI();
   const fetch = useMemo(() => {
@@ -39,8 +43,7 @@ export const useProductsQueryByID = ({ url, id }) => {
 
 export const useCreateProductSeo = () => {
   const fetch = useAuthenticatedFetch();
-  const { setCloseModal, setToggleToast, setOpenModal } = useUI();
-  const queryClient = useQueryClient();
+  const { setToggleAIButton, setToggleToast, setOpenModal } = useUI();
   async function createStatus(status) {
     return await fetch("/api/product/update-product-seo", {
       method: "POST",
@@ -71,11 +74,11 @@ export const useCreateProductSeo = () => {
           info: updatedInfo,
         },
       });
-
       setToggleToast({
         active: true,
         message: `Submit Successfully`,
       });
+      setTimeout(() => setToggleAIButton({ active: false, data: null }), 500);
     },
     onError: async () => {
       setToggleToast({

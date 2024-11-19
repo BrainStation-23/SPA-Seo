@@ -3,7 +3,7 @@
 client_id = "695da14ec05f37f6cdd63a2b3c20b444"
 name = "SEOfy - Complete SEO Expert"
 handle = "seofy-complete-seo-expert"
-application_url = "https://bridge-kenneth-lane-damage.trycloudflare.com"
+application_url = "https://sounds-discharge-nasty-overall.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,9 +17,9 @@ scopes = "read_content,read_customers,read_products,read_themes,write_content,wr
 
 [auth]
 redirect_urls = [
-  "https://bridge-kenneth-lane-damage.trycloudflare.com/auth/callback",
-  "https://bridge-kenneth-lane-damage.trycloudflare.com/auth/shopify/callback",
-  "https://bridge-kenneth-lane-damage.trycloudflare.com/api/auth/callback"
+  "https://sounds-discharge-nasty-overall.trycloudflare.com/auth/callback",
+  "https://sounds-discharge-nasty-overall.trycloudflare.com/auth/shopify/callback",
+  "https://sounds-discharge-nasty-overall.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]

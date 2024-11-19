@@ -5,7 +5,6 @@ import {
   Form,
   InlineError,
   Spinner,
-  Icon,
 } from "@shopify/polaris";
 import { InputField } from "./commonUI/InputField";
 import { useCreateProductSeo } from "../hooks/useProductsQuery";
@@ -25,8 +24,10 @@ import AIButton from "./commonUI/AIButton";
 
 export function CreateProductSeo() {
   const { modal } = useUI();
-  const { productSeo } = useAI();
+  const { productSeo, setProductSeo } = useAI();
   const [AIkeywords, setAIKeywords] = useState("");
+  const [clickIndex, setClickIndex] = useState({});
+  let productId = modal?.data?.info?.id.split("/").pop();
   const {
     mutate: createOrUpdateSeo,
     isError,
@@ -34,7 +35,8 @@ export function CreateProductSeo() {
   } = useCreateProductSeo();
   const { mutate: createAISeo, isLoading: isAILoading } =
     useCreateAIBasedSeo(setAIKeywords);
-  const { mutate: createSingleSeo } = useCreateSingleAIBasedSeo();
+  const { mutate: createSingleSeo, isLoading: isSingleLoading } =
+    useCreateSingleAIBasedSeo();
   const [formData, setFormData] = useState({
     seo_title: "",
     seo_description: "",
@@ -100,8 +102,6 @@ export function CreateProductSeo() {
   }, []);
 
   const createSEOInfoWithAI = useCallback(() => {
-    let productId = modal?.data?.info?.id.split("/").pop();
-
     const requestInfo = {
       productId: productId,
       suggestionKeywords: AIkeywords,
@@ -110,24 +110,87 @@ export function CreateProductSeo() {
     createAISeo(requestInfo);
   }, [createAISeo, AIkeywords]);
 
-  const handleAIChange = useCallback((value, name) => {
-    setFormData({ ...formData, [name]: value });
-  }, []);
+  const handleAIChange = useCallback(
+    (value, name, index) => {
+      if (name === "ai_metaTitle_title") {
+        let arr = [...productSeo?.metaTitle];
+        arr[index] = value;
+        let metaSeo = { ...productSeo, metaTitle: arr };
+        setProductSeo(metaSeo);
+      } else {
+        let arr = [...productSeo?.metaDescription];
+        arr[index] = value;
+        let descSeo = { ...productSeo, metaDescription: arr };
+        setProductSeo(descSeo);
+      }
+    },
+    [productSeo]
+  );
+
+  const onHandleRefetch = useCallback(
+    (name, index) => {
+      const obj = {
+        name: name,
+        index: index,
+        productId: productId,
+      };
+      if (name === "ai_metaTitle_title") {
+        let item = productSeo?.metaTitle.find((_, i) => i === index);
+        createSingleSeo({ ...obj, prompt: item });
+      } else {
+        let item = productSeo?.metaDescription.find((_, i) => i === index);
+        createSingleSeo({ ...obj, prompt: item });
+      }
+      setClickIndex({
+        key: `${name}_${index}`,
+        isSubmit: false,
+        isRefetch: true,
+      });
+    },
+    [productSeo]
+  );
+
+  const onSubmitAIHandler = useCallback(
+    (name, index) => {
+      let info = {
+        id: modal?.data?.info?.id,
+        seoTitle: formData?.seo_title,
+        seoDescription: formData?.seo_description,
+      };
+
+      if (name === "ai_metaTitle_title") {
+        let item = productSeo?.metaTitle.find((_, i) => i === index);
+        info = { ...info, seoTitle: item };
+      } else {
+        let item = productSeo?.metaDescription.find((_, i) => i === index);
+        info = { ...info, seoDescription: item };
+      }
+      createOrUpdateSeo(info);
+      setClickIndex({
+        key: `${name}_${index}`,
+        isSubmit: true,
+        isRefetch: false,
+      });
+    },
+    [productSeo]
+  );
 
   return (
     <div className="product-ai-seo-generation-container">
       <AIContainerWithTitle isAIButton={true}>
         <div className="ai-action-container">
           <div className="ai-keywords-suggestion">
-            <InputField
-              value={AIkeywords}
-              onChange={handleChangeForKeyWords}
-              // label={"Enter keywords for suggestions"}
-              type="text"
-              name="ai_keywords_suggestion"
-              placeholder={"Enter keywords for suggestions"}
-              // error={errors?.seo_title}
-            />
+            <div className="ai-keywords-input">
+              <InputField
+                value={AIkeywords}
+                onChange={handleChangeForKeyWords}
+                // label={"Enter keywords for suggestions"}
+                type="text"
+                name="ai_keywords_suggestion"
+                placeholder={"Enter keywords for suggestions (optional)"}
+                // error={errors?.seo_title}
+              />
+            </div>
             <div>
               <AIButton
                 onClick={() => createSEOInfoWithAI()}
@@ -147,10 +210,13 @@ export function CreateProductSeo() {
                   <AITitleAndDes
                     name="ai_metaTitle_title"
                     data={data}
-                    handleChange={handleChange}
-                    onHandleSubmit={handleSubmit}
-                    onHandleRefetch={handleSubmit}
+                    handleChange={handleAIChange}
+                    onHandleSubmit={onSubmitAIHandler}
+                    onHandleRefetch={onHandleRefetch}
                     key={index}
+                    index={index}
+                    isLoading={isSingleLoading || isLoading}
+                    clickIndex={clickIndex}
                   />
                 ))}
               </div>
@@ -165,9 +231,12 @@ export function CreateProductSeo() {
                     data={data}
                     name="ai_metaDesc_title"
                     handleChange={handleChange}
-                    onHandleSubmit={handleSubmit}
+                    onHandleSubmit={onSubmitAIHandler}
                     key={index}
-                    onHandleRefetch={handleSubmit}
+                    onHandleRefetch={onHandleRefetch}
+                    index={index}
+                    isLoading={isSingleLoading || isLoading}
+                    clickIndex={clickIndex}
                   />
                 ))}
               </div>
@@ -176,7 +245,7 @@ export function CreateProductSeo() {
         </div>
       </AIContainerWithTitle>
       <div className="seo-form-container">
-        <AITitle title={"Create seo content"} />
+        <AITitle title={"SEO Information"} />
         {isError && <InlineError message={"Something went wrong"} />}
         <Form onSubmit={() => handleSubmit(formData)}>
           <FormLayout>

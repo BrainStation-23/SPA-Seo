@@ -57,6 +57,39 @@ async function generateWithAI(messages) {
 export const aiSeoSingleContent = async (req, res) => {
   try {
     const body = req.body;
+    const productInfo = await getProductByID(
+      res.locals.shopify.session,
+      body?.productId
+    );
+    const messages = [
+      {
+        role: "user",
+        content: `Give your best suggestions based on this prompt: ${
+          body.prompt
+        } for ${
+          body?.name === "ai_metaTitle_title"
+            ? "Meta Title"
+            : "Meta Description"
+        } for better seo. Product information like ${JSON.stringify(
+          productInfo
+        )}.
+      For the suggestion please follow the seo guidelines.
+      Response must be in JSON format like response: { result: {
+        suggestion:"example"
+      }}
+      `,
+      },
+    ];
+
+    const response = await generateWithAI(messages);
+    const newResult = {
+      ...req.body,
+      suggestion: response?.result?.suggestion,
+    };
+    return res.status(200).json({
+      status: "Success",
+      aiResult: newResult,
+    });
   } catch (error) {
     console.log("🚀 ~ aiSeoSingleContent ~ error:", error);
   }

@@ -14,7 +14,7 @@ function uiReducer(state, action) {
       return {
         ...state,
         productSeo: {
-          ...action.payload.result,
+          ...action.payload,
         },
       };
     }

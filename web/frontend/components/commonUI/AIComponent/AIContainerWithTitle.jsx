@@ -15,7 +15,13 @@ export default function AIContainerWithTitle({
   };
   return (
     <div className="ai-container">
-      {isAIButton && <AIButton onClick={onClickForAI} icon={MagicIcon} />}
+      {isAIButton && (
+        <AIButton
+          title={useAI.active ? "Close SEO" : "Use AI for SEO"}
+          onClick={onClickForAI}
+          icon={MagicIcon}
+        />
+      )}
       {useAI.active && (
         <div className="ai-content-generation">
           <AITitle title={title} />
