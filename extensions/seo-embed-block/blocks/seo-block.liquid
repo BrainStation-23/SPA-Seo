@@ -1,10 +1,9 @@
 {% if template == '404' %}
   <script>
-    fetch('https://identity-urls-cartoon-group.trycloudflare.com/api/404-error/update-error-insights', {
+    fetch('/apps/error-insights/insights/update-error-insights', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        shop: '{{ shop.url }}',
         url: window.location.href,
         referrer: document.referrer,
         timestamp: new Date().toISOString(),

@@ -78,6 +78,15 @@
   padding: 10px;
 }
 
+.seo-form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid rgba(221, 224, 228, 1);
+  border-radius: 10px;
+  padding: 12px 16px;
+}
+
 .app__product_image_container {
   padding-top: 12px;
   display: flex;

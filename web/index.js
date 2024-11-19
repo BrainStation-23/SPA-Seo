@@ -16,6 +16,9 @@ import sitemapRoute from "./routes/htmlsitemap.js";
 import UninstallCleanupRouter from "./routes/uninstall.js";
 import { errorRouter, updateErrorInsightsRouter } from "./routes/404error.js";
 import imageCompression from "./routes/imageCompression.js";
+import AIRouter from "./routes/AIRoute.js";
+import cors from "cors";
+import cookieParser from "cookie-parser";
 
 const PORT = parseInt(
   process.env.BACKEND_PORT || process.env.PORT || "3000",
@@ -28,9 +31,13 @@ const STATIC_PATH =
     : `${process.cwd()}/frontend/`;
 
 const app = express();
+app.use(
+  cors({
+    origin: "http://127.0.0.1:9292", // Allow requests from your local development server
+  })
+);
 app.use(express.json());
-
-app.use("/api/404-error", updateErrorInsightsRouter);
+app.use(cookieParser());
 
 // Set up Shopify authentication and webhook handling
 app.get(shopify.config.auth.path, shopify.auth.begin());
@@ -46,6 +53,7 @@ app.post(
 
 // If you are adding routes outside of the /api path, remember to
 // also add a proxy rule for them in web/frontend/vite.config.
+app.use("/api/insights", updateErrorInsightsRouter);
 
 app.use("/api/*", shopify.validateAuthenticatedSession());
 
@@ -53,7 +61,7 @@ app.get("/api/shop", async (_req, res) => {
   const response = await shopify.api.rest.Shop.all({
     session: res.locals.shopify.session,
   });
-  console.log(process.env.AI_API_KEY, "shopify.api.rest.Shop ........");
+
   let shop = {
     id: response?.data[0]?.id,
     name: response.data[0]?.name,
@@ -66,7 +74,6 @@ app.get("/api/shop", async (_req, res) => {
 });
 
 app.use("/api/product", productsRoute);
-// app.use("/api/product", productsRoute);
 app.use("/api/collection", collectionsRoute);
 app.use("/api/metafields", metafieldsRoute);
 app.use("/api/seo", seoInsightsRoute);
@@ -79,6 +86,7 @@ app.use("/api/jsonld", jsonLdRoute);
 app.use("/api/uninstall", UninstallCleanupRouter);
 app.use("/api/image-compression", imageCompression);
 app.use("/api/products", productsRoute);
+app.use("/api/AI", AIRouter);
 
 app.use(shopify.cspHeaders());
 app.use(serveStatic(STATIC_PATH, { index: false }));

@@ -2,12 +2,9 @@ import { useAuthenticatedFetch } from "./useAuthenticatedFetch";
 import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { useUI } from "../contexts/ui.context";
+import { useAI } from "../contexts/AI.context";
 
-export const useProductsQuery = ({
-  url,
-  fetchInit = {},
-  reactQueryOptions,
-}) => {
+export const useAIQuery = ({ url, fetchInit = {}, reactQueryOptions }) => {
   const authenticatedFetch = useAuthenticatedFetch();
   const { modal } = useUI();
   const fetch = useMemo(() => {
@@ -25,27 +22,12 @@ export const useProductsQuery = ({
   });
 };
 
-export const useProductsQueryByID = ({ url, id }) => {
-  const authenticatedFetch = useAuthenticatedFetch();
-  const fetch = useMemo(() => {
-    return async () => {
-      const response = await authenticatedFetch(url, {});
-      return response.json();
-    };
-  }, [url]);
-
-  return useQuery(url, fetch, {
-    onSuccess: (data) => {},
-    refetchOnWindowFocus: false,
-    enabled: id !== null,
-  });
-};
-
-export const useCreateProductSeo = () => {
+export const useCreateAIBasedSeo = (setAIKeywords) => {
   const fetch = useAuthenticatedFetch();
-  const { setToggleAIButton, setToggleToast, setOpenModal } = useUI();
+  const { setToggleToast } = useUI();
+  const { setProductSeo } = useAI();
   async function createStatus(status) {
-    return await fetch("/api/product/update-product-seo", {
+    return await fetch("/api/AI/seo-generation", {
       method: "POST",
       body: JSON.stringify(status),
       headers: {
@@ -62,23 +44,65 @@ export const useCreateProductSeo = () => {
           message: `Something went wrong`,
         });
       }
+      const response = await data.json();
+      setProductSeo(response?.aiContent?.result);
+      setAIKeywords("");
 
-      const updatedData = await data?.json();
-      const updatedInfo = updatedData?.productByID;
-
-      setOpenModal({
-        view: "CREATE_PRODUCT_SEO",
-        isOpen: true,
-        data: {
-          title: `Product SEO (${updatedInfo?.title})`,
-          info: updatedInfo,
-        },
-      });
       setToggleToast({
         active: true,
         message: `Submit Successfully`,
       });
-      setTimeout(() => setToggleAIButton({ active: false, data: null }), 500);
+    },
+    onError: async () => {
+      setToggleToast({
+        active: true,
+        message: `Something went wrong`,
+      });
+    },
+    refetchOnWindowFocus: false,
+  });
+};
+
+export const useCreateSingleAIBasedSeo = () => {
+  const fetch = useAuthenticatedFetch();
+  const { setToggleToast } = useUI();
+  const { setProductSeo, productSeo } = useAI();
+  async function createStatus(status) {
+    return await fetch("/api/AI/single-seo", {
+      method: "POST",
+      body: JSON.stringify(status),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  }
+
+  return useMutation((status) => createStatus(status), {
+    onSuccess: async (data, obj) => {
+      if (data?.status === 400) {
+        return setToggleToast({
+          active: true,
+          message: `Something went wrong`,
+        });
+      }
+      const response = await data.json();
+
+      if (response?.aiResult?.name === "ai_metaTitle_title") {
+        let arr = [...productSeo?.metaTitle];
+        arr[response?.aiResult?.index] = response?.aiResult?.suggestion;
+        let metaSeo = { ...productSeo, metaTitle: arr };
+        setProductSeo(metaSeo);
+      } else {
+        let arr = [...productSeo?.metaDescription];
+        arr[response?.aiResult?.index] = response?.aiResult?.suggestion;
+        let descSeo = { ...productSeo, metaDescription: arr };
+        setProductSeo(descSeo);
+      }
+
+      setToggleToast({
+        active: true,
+        message: `Submit Successfully`,
+      });
     },
     onError: async () => {
       setToggleToast({
@@ -125,46 +149,6 @@ export const useUpdateProductSeoImgAlt = () => {
           info: updatedInfo,
         },
       });
-
-      setToggleToast({
-        active: true,
-        message: `Submit Successfully`,
-      });
-    },
-    onError: async () => {
-      setToggleToast({
-        active: true,
-        message: `Something went wrong`,
-      });
-    },
-    refetchOnWindowFocus: false,
-  });
-};
-
-export const useProductUpdateBulkSeo = () => {
-  const fetch = useAuthenticatedFetch();
-  const { setCloseModal, setToggleToast } = useUI();
-  const queryClient = useQueryClient();
-  async function createStatus(status) {
-    return await fetch("/api/product/update-product-bulk-seo", {
-      method: "POST",
-      body: JSON.stringify(status),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-  }
-
-  return useMutation((status) => createStatus(status), {
-    onSuccess: async (data, obj) => {
-      if (data?.status === 400) {
-        return setToggleToast({
-          active: true,
-          message: `Something went wrong`,
-        });
-      }
-      setCloseModal();
-      queryClient.invalidateQueries("productList");
 
       setToggleToast({
         active: true,
