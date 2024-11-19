@@ -1,16 +1,44 @@
 import shopify from "../shopify.js";
 
-const fetchAllProducts = async (session) => {
+const fetchAllProducts = async (session, queryParams) => {
   let allProducts = [];
-  let hasNextPage = true;
   let variables = {
-    first: 200,
-    after: null,
+    count: 21,
+    cursor: null,
   };
 
-  const query = `
-    query ($first: Int!, $after: String) {
-      products(first: $first, after: $after, reverse: true) {
+  const query = generateProductQuery(queryParams?.action);
+  if (queryParams?.action == "prev") {
+    variables.cursor =
+      queryParams?.startCursor !== "undefined"
+        ? queryParams?.startCursor
+        : null;
+  } else if (queryParams?.action == "next") {
+    variables.cursor =
+      queryParams?.endCursor !== "undefined" ? queryParams?.endCursor : null;
+  }
+
+  const client = new shopify.api.clients.Graphql({
+    session: session,
+  });
+
+  const response = await client.query({
+    data: {
+      query: query,
+      variables: variables,
+    },
+  });
+  const pageInfo = response.body.data.products.pageInfo;
+  const products = response.body.data.products.edges.map((edge) => edge.node);
+  allProducts = allProducts.concat(products);
+
+  return { allProducts, pageInfo };
+};
+
+const generateProductQuery = (action) => {
+  let query = `
+    query ($count: Int!, $cursor: String) {
+      products(first: $count, after: $cursor, reverse: true, sortKey: CREATED_AT) {
         edges {
           node {
             id
@@ -64,54 +92,30 @@ const fetchAllProducts = async (session) => {
         pageInfo {
           hasNextPage
           hasPreviousPage
+          startCursor
+          endCursor
         }
       }
     }
   `;
-  const client = new shopify.api.clients.Graphql({
-    session: session,
-  });
 
-  while (hasNextPage) {
-    try {
-      const response = await client.query({
-        data: {
-          query: query,
-          variables: variables,
-        },
-      });
-
-      const products = response.body.data.products.edges.map((edge) => edge.node);
-      const pageInfo = response.body.data.products.pageInfo;
-      const endCursor =
-        response.body.data.products.edges.length > 0
-          ? response.body.data.products.edges[response.body.data.products.edges.length - 1].cursor
-          : null;
-      allProducts = allProducts.concat(products);
-
-      // Check if there is a next page
-      const hasNext = pageInfo.hasNextPage;
-      if (hasNext) {
-        variables = { ...variables, after: endCursor };
-      } else {
-        hasNextPage = false;
-      }
-    } catch (error) {
-      console.error("Error fetching customers:", error);
-      hasNextPage = false;
-    }
+  if (action === "prev") {
+    query = query.replace("first:", "last:");
+    query = query.replace("after:", "before:");
   }
-
-  return allProducts;
+  return query;
 };
 
 export const productsController = async (req, res, next) => {
   try {
-    const products = await fetchAllProducts(res.locals.shopify.session);
+    const data = await fetchAllProducts(res.locals.shopify.session, req.query);
 
-    return res.status(200).json(products);
+    return res.status(200).json(data);
   } catch (err) {
-    console.log("🚀 ~ file: description.js:73 ~ descriptionController ~ err:", err);
+    console.log(
+      "🚀 ~ file: description.js:73 ~ descriptionController ~ err:",
+      err
+    );
     res.status(400).json({ err });
   }
 };
@@ -171,7 +175,10 @@ export const getProductByID = async (session, id) => {
 export const getProductControllerByID = async (req, res, next) => {
   try {
     const { id } = req.params;
-    console.log("🚀 ~ file: description.js:73 ~ descriptionController ~ id", id);
+    console.log(
+      "🚀 ~ file: description.js:73 ~ descriptionController ~ id",
+      id
+    );
 
     const response = await shopify.api.rest.Product.find({
       session: res.locals.shopify.session,
@@ -181,7 +188,10 @@ export const getProductControllerByID = async (req, res, next) => {
 
     return res.status(200).json(response);
   } catch (err) {
-    console.log("🚀 ~ file: description.js:73 ~ descriptionController ~ err:", err);
+    console.log(
+      "🚀 ~ file: description.js:73 ~ descriptionController ~ err:",
+      err
+    );
     res.status(400).json({ err });
   }
 };
@@ -233,13 +243,24 @@ export const updateProductSEO = async (req, res, next) => {
 
     if (response.body.data.productUpdate.userErrors.length > 0) {
       console.error("Errors:", response.body.data.productUpdate.userErrors);
-      return res.status(400).json({ error: response.body.data.productUpdate.userErrors });
+      return res
+        .status(400)
+        .json({ error: response.body.data.productUpdate.userErrors });
     } else {
-      const productByID = await getProductByID(res.locals.shopify.session, productID);
-      return res.status(200).json({ product: response.body.data.productUpdate.product, productByID });
+      const productByID = await getProductByID(
+        res.locals.shopify.session,
+        productID
+      );
+      return res.status(200).json({
+        product: response.body.data.productUpdate.product,
+        productByID,
+      });
     }
   } catch (error) {
-    console.error("Failed to update product SEO:", error.response?.errors || error.message);
+    console.error(
+      "Failed to update product SEO:",
+      error.response?.errors || error.message
+    );
   }
 };
 
@@ -283,7 +304,10 @@ export const updateProductBulkSeo = async (req, res) => {
     data: mutation,
   });
 
-  console.log("🚀 ~ updateProductBulkSeo ~ response:", response.body.data?.productUpdate_0?.userErrors);
+  console.log(
+    "🚀 ~ updateProductBulkSeo ~ response:",
+    response.body.data?.productUpdate_0?.userErrors
+  );
   if (response.body?.data?.productUpdate_0?.userErrors?.length > 0) {
     return res.status(400).json({ error: response.body.data });
   } else {
@@ -343,14 +367,28 @@ export const updateImageSeoAltController = async (req, res, next) => {
     });
 
     if (response.body.data?.productImageUpdate?.userErrors?.length > 0) {
-      console.error("Errors:", response.body.data.productImageUpdate.userErrors);
-      return res.status(400).json({ error: response.body.data?.productUpdateMedia?.userErrors });
+      console.error(
+        "Errors:",
+        response.body.data.productImageUpdate.userErrors
+      );
+      return res
+        .status(400)
+        .json({ error: response.body.data?.productUpdateMedia?.userErrors });
     } else {
-      const productByID = await getProductByID(res.locals.shopify.session, productID);
-      return res.status(200).json({ product: response.body.data.productUpdateMedia.media, productByID });
+      const productByID = await getProductByID(
+        res.locals.shopify.session,
+        productID
+      );
+      return res.status(200).json({
+        product: response.body.data.productUpdateMedia.media,
+        productByID,
+      });
     }
   } catch (err) {
-    console.log("🚀 ~ file: description.js:73 ~ descriptionController ~ err:", err);
+    console.log(
+      "🚀 ~ file: description.js:73 ~ descriptionController ~ err:",
+      err
+    );
     res.status(400).json({ err });
   }
 };
@@ -373,7 +411,10 @@ export const showOrHideProductHighlightController = async (req, res, next) => {
 
     return res.status(200).json(metafield?.value);
   } catch (err) {
-    console.log("🚀 ~ file: description.js:73 ~ descriptionController ~ err:", err);
+    console.log(
+      "🚀 ~ file: description.js:73 ~ descriptionController ~ err:",
+      err
+    );
     res.status(400).json({ err });
   }
 };

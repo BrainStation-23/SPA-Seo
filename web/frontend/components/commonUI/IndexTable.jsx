@@ -6,27 +6,24 @@ export function IndexTableData({
   headings,
   resourceName,
   itemsPerPage = 20,
+  currentPage,
+  setCurrentPage,
+  setAction,
+  pageInfo,
 }) {
-  // Pagination state variables
-  const [currentPage, setCurrentPage] = useState(1);
-
-  // Calculate the index range for the current page
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-
-  // Get the data for the current page
-  const currentPageData = rowMarkup.slice(startIndex, endIndex);
+  const currentPageData = rowMarkup;
 
   const handlePrevious = () => {
-    if (currentPage > 1) {
+    if (pageInfo?.hasPreviousPage) {
       setCurrentPage(currentPage - 1);
+      setAction("prev");
     }
   };
 
   const handleNext = () => {
-    const totalPages = Math.ceil(rowMarkup.length / itemsPerPage);
-    if (currentPage < totalPages) {
+    if (pageInfo?.hasNextPage) {
       setCurrentPage(currentPage + 1);
+      setAction("next");
     }
   };
 
@@ -42,12 +39,12 @@ export function IndexTableData({
           {currentPageData}
         </IndexTable>
       </LegacyCard>
-      {rowMarkup?.length > 20 && (
+      {(pageInfo?.hasPreviousPage || pageInfo?.hasNextPage) && (
         <div className="center__align content__margin_top">
           <Pagination
-            hasPrevious={currentPage > 1}
+            hasPrevious={pageInfo?.hasPreviousPage}
             onPrevious={handlePrevious}
-            hasNext={currentPage < Math.ceil(rowMarkup.length / itemsPerPage)}
+            hasNext={pageInfo?.hasNextPage}
             onNext={handleNext}
           />
         </div>

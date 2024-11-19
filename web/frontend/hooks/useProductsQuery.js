@@ -3,7 +3,11 @@ import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { useUI } from "../contexts/ui.context";
 
-export const useProductsQuery = ({ url, fetchInit = {}, reactQueryOptions }) => {
+export const useProductsQuery = ({
+  url,
+  fetchInit = {},
+  reactQueryOptions,
+}) => {
   const authenticatedFetch = useAuthenticatedFetch();
   const { modal } = useUI();
   const fetch = useMemo(() => {
@@ -161,6 +165,7 @@ export const useProductUpdateBulkSeo = () => {
         });
       }
       setCloseModal();
+      console.log("ggs ggs ggs");
       queryClient.invalidateQueries("productList");
 
       setToggleToast({
