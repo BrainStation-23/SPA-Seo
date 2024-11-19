@@ -13,8 +13,7 @@
   },
   "dependencies": {
     "@shopify/app": "3.46.0",
-    "@shopify/cli": "3.46.0",
-    "azure-openai": "^0.9.4"
+    "@shopify/cli": "3.46.0"
   },
   "author": "bs830",
   "private": true,

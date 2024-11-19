@@ -46,7 +46,6 @@ async function generateWithAI(messages) {
   try {
     const aiContent = await seoAI.getAIResults(messages);
     const message = aiContent?.data?.choices[0]?.message.content || "";
-    console.log("🚀 ~ generateWithAI ~ message:", message);
     const response = formatJSONResult(message);
     return response;
   } catch (error) {
