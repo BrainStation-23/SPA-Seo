@@ -3,7 +3,7 @@
 client_id = "5979b1355fc1fc33469e698f5e91dabe"
 name = "app-development-kazi"
 handle = "new-testing-app-9"
-application_url = "https://steven-agents-delivers-gt.trycloudflare.com"
+application_url = "https://operating-cannon-creature-seq.trycloudflare.com"
 embedded = true
 
 [build]
@@ -12,9 +12,9 @@ dev_store_url = "demo-store-kazi.myshopify.com"
 
 [auth]
 redirect_urls = [
-  "https://steven-agents-delivers-gt.trycloudflare.com/auth/callback",
-  "https://steven-agents-delivers-gt.trycloudflare.com/auth/shopify/callback",
-  "https://steven-agents-delivers-gt.trycloudflare.com/api/auth/callback"
+  "https://operating-cannon-creature-seq.trycloudflare.com/auth/callback",
+  "https://operating-cannon-creature-seq.trycloudflare.com/auth/shopify/callback",
+  "https://operating-cannon-creature-seq.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]

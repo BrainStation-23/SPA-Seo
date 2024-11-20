@@ -12,8 +12,10 @@
     "deploy": "shopify app deploy"
   },
   "dependencies": {
+    "@lexical/react": "^0.20.0",
     "@shopify/app": "3.46.0",
-    "@shopify/cli": "3.46.0"
+    "@shopify/cli": "3.46.0",
+    "lexical": "^0.20.0"
   },
   "author": "bs830",
   "private": true,
