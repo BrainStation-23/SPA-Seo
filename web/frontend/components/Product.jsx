@@ -24,6 +24,14 @@ export default function Product() {
       url: `/api/product/list?page=${currentPage}&startCursor=${pageInfo?.startCursor}&endCursor=${pageInfo?.endCursor}&prevCursor=${prevCursor}&action=${action}`,
     });
 
+  const changePageCursorState = (pageNo, action) => {
+    if (data?.pageInfo) {
+      setPageInfo(data?.pageInfo);
+    }
+    setAction(action);
+    setCurrentPage(pageNo);
+  };
+
   const rowMarkup =
     (data &&
       data?.allProducts?.map((info, index) => (
@@ -78,15 +86,15 @@ export default function Product() {
     plural: "Products",
   };
 
-  useEffect(() => {
-    if (data?.pageInfo) {
-      setPageInfo(data?.pageInfo);
-    }
-  }, [isFetching]);
+  // useEffect(() => {
+  //   if (data?.pageInfo) {
+  //     setPageInfo(data?.pageInfo);
+  //   }
+  // }, [isFetching]);
 
   useEffect(() => {
     setPrevCursor(data?.pageInfo?.endCursor);
-    refetch();
+    refetch({ queryKey: "productList" });
   }, [currentPage]);
 
   return (
@@ -104,7 +112,7 @@ export default function Product() {
             headings={headings}
             resourceName={resourceName}
             currentPage={currentPage}
-            setCurrentPage={setCurrentPage}
+            changePage={changePageCursorState}
             setAction={setAction}
             pageInfo={data?.pageInfo}
           />

@@ -3,7 +3,7 @@ import shopify from "../shopify.js";
 const fetchAllProducts = async (session, queryParams) => {
   let allProducts = [];
   let variables = {
-    count: 21,
+    count: 20,
     cursor: null,
   };
 

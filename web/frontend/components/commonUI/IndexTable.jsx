@@ -5,25 +5,21 @@ export function IndexTableData({
   rowMarkup,
   headings,
   resourceName,
-  itemsPerPage = 20,
   currentPage,
-  setCurrentPage,
-  setAction,
+  changePage,
   pageInfo,
 }) {
   const currentPageData = rowMarkup;
 
   const handlePrevious = () => {
     if (pageInfo?.hasPreviousPage) {
-      setCurrentPage(currentPage - 1);
-      setAction("prev");
+      changePage(currentPage - 1, "prev");
     }
   };
 
   const handleNext = () => {
     if (pageInfo?.hasNextPage) {
-      setCurrentPage(currentPage + 1);
-      setAction("next");
+      changePage(currentPage + 1, "next");
     }
   };
 
