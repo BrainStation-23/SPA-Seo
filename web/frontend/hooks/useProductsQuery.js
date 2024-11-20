@@ -164,6 +164,7 @@ export const useProductUpdateBulkSeo = () => {
         });
       }
       setCloseModal();
+      console.log("ggs ggs ggs");
       queryClient.invalidateQueries("productList");
 
       setToggleToast({

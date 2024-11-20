@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   IndexTable,
   Text,
@@ -12,15 +12,29 @@ import { Spinners } from "./Spinner";
 import { useUI } from "../contexts/ui.context";
 
 export default function Product() {
-  const { setOpenModal ,modal} = useUI();
-  const { isError, isLoading, data } = useProductsQuery({
-    url: "/api/product/list",
-  });
+  const { setOpenModal, modal } = useUI();
 
+  // Pagination state variables
+  const [action, setAction] = useState(null);
+  const [pageInfo, setPageInfo] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [prevCursor, setPrevCursor] = useState(null);
+  const { isError, isLoading, data, isFetching, isRefetching, refetch } =
+    useProductsQuery({
+      url: `/api/product/list?page=${currentPage}&startCursor=${pageInfo?.startCursor}&endCursor=${pageInfo?.endCursor}&prevCursor=${prevCursor}&action=${action}`,
+    });
+
+  const changePageCursorState = (pageNo, action) => {
+    if (data?.pageInfo) {
+      setPageInfo(data?.pageInfo);
+    }
+    setAction(action);
+    setCurrentPage(pageNo);
+  };
 
   const rowMarkup =
     (data &&
-      data?.map((info, index) => (
+      data?.allProducts?.map((info, index) => (
         <IndexTable.Row id={info?.id} key={info?.id} position={index}>
           <IndexTable.Cell>
             <img
@@ -72,9 +86,20 @@ export default function Product() {
     plural: "Products",
   };
 
+  // useEffect(() => {
+  //   if (data?.pageInfo) {
+  //     setPageInfo(data?.pageInfo);
+  //   }
+  // }, [isFetching]);
+
+  useEffect(() => {
+    setPrevCursor(data?.pageInfo?.endCursor);
+    refetch({ queryKey: "productList" });
+  }, [currentPage]);
+
   return (
     <>
-      {isLoading && !isError ? (
+      {(isLoading || isRefetching) && !isError ? (
         <Spinners />
       ) : (
         <VerticalStack gap="2">
@@ -86,6 +111,10 @@ export default function Product() {
             rowMarkup={rowMarkup}
             headings={headings}
             resourceName={resourceName}
+            currentPage={currentPage}
+            changePage={changePageCursorState}
+            setAction={setAction}
+            pageInfo={data?.pageInfo}
           />
         </VerticalStack>
       )}
