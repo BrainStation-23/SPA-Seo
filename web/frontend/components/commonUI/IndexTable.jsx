@@ -1,35 +1,31 @@
 import { IndexTable, LegacyCard, Pagination } from "@shopify/polaris";
-import React, { useState } from "react";
+import React from "react";
+import { handleNext, handlePrevious } from "../../utils/paginationUtils";
+// import { Spinners } from "../Spinner";
 
 export function IndexTableData({
+  data,
   rowMarkup,
   headings,
   resourceName,
-  itemsPerPage = 20,
+  setSearchParams,
 }) {
-  // Pagination state variables
-  const [currentPage, setCurrentPage] = useState(1);
+  const currentPageData = rowMarkup;
+  // Handle Next button
+  // const handleNext = () => {
+  //   if (data?.pageInfo?.hasNextPage) {
+  //     const nextCursor = data?.pageInfo?.endCursor;
+  //     setSearchParams({ after: nextCursor });
+  //   }
+  // };
 
-  // Calculate the index range for the current page
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-
-  // Get the data for the current page
-  const currentPageData = rowMarkup.slice(startIndex, endIndex);
-
-  const handlePrevious = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
-
-  const handleNext = () => {
-    const totalPages = Math.ceil(rowMarkup.length / itemsPerPage);
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    }
-  };
-
+  // // Handle Previous button
+  // const handlePrevious = () => {
+  //   if (data?.pageInfo?.hasPreviousPage) {
+  //     const prevCursor = data?.pageInfo?.startCursor;
+  //     setSearchParams({ before: prevCursor });
+  //   }
+  // };
   return (
     <>
       <LegacyCard>
@@ -42,16 +38,22 @@ export function IndexTableData({
           {currentPageData}
         </IndexTable>
       </LegacyCard>
-      {rowMarkup?.length > 20 && (
-        <div className="center__align content__margin_top">
-          <Pagination
-            hasPrevious={currentPage > 1}
-            onPrevious={handlePrevious}
-            hasNext={currentPage < Math.ceil(rowMarkup.length / itemsPerPage)}
-            onNext={handleNext}
-          />
-        </div>
-      )}
+      {/* {isRefetching ? (
+        <Spinners />
+      ) : ( */}
+      <>
+        {(data?.pageInfo?.hasPreviousPage || data?.pageInfo?.hasNextPage) && (
+          <div className="center__align content__margin_top">
+            <Pagination
+              hasPrevious={data?.pageInfo?.hasPreviousPage}
+              onPrevious={() => handlePrevious(data, setSearchParams)}
+              hasNext={data?.pageInfo?.hasNextPage}
+              onNext={() => handleNext(data, setSearchParams)}
+            />
+          </div>
+        )}{" "}
+      </>
+      {/* )} */}
     </>
   );
 }

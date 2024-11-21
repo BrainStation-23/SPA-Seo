@@ -1,40 +1,79 @@
 import shopify from "../shopify.js";
 
-const fetchAllBlogs = async (session) => {
-  let allBlogs = [];
-  let hasNextPage = true;
-  let url = `/admin/api/2024-07/blogs.json`;
-  let params = { limit: 200 };
-  const client = new shopify.api.clients.Rest({ session });
-
-  while (hasNextPage) {
-    try {
-      const response = await client.get({ path: url, query: params });
-      allBlogs = allBlogs.concat(response?.body?.blogs);
-
-      // Check if there is a next page
-      const pageInfo = response?.pageInfo;
-      if (pageInfo && pageInfo?.nextPageUrl) {
-        params = pageInfo?.nextPage?.query;
-      } else {
-        hasNextPage = false;
+const blogQuery = (variables) => {
+  let query = `query ($count: Int!, $cursor: String) {
+    blogs(first: $count, after: $cursor, reverse: true) {
+      nodes {
+        id
+        handle
+        title
+        updatedAt
+        commentPolicy
+        feed {
+          path
+          location
+        }
+        createdAt
+        templateSuffix
+        tags
       }
-    } catch (error) {
-      console.error("Error fetching customers:", error);
-      hasNextPage = false;
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
     }
+  }`;
+  if (variables?.before) {
+    query = query.replace("first:", "last:");
+    query = query.replace("after:", "before:");
   }
+  return query;
+};
 
-  return allBlogs;
+const fetchAllBlogs = async (session, variables) => {
+  const query = blogQuery(variables);
+
+  const client = new shopify.api.clients.Graphql({
+    session: session,
+    apiVersion: "2024-10",
+  });
+
+  const response = await client.query({
+    data: {
+      query: query,
+      variables: variables,
+    },
+  });
+
+  const pageInfo = response.body.data?.blogs?.pageInfo;
+  const blogs = response.body.data?.blogs?.nodes;
+
+  return { blogs, pageInfo };
 };
 
 export const getBlogList = async (req, res, next) => {
   try {
-    const blogs = await fetchAllBlogs(res.locals.shopify.session);
+    const afterCursor = req?.query?.afterCursor;
+    const beforeCursor = req?.query?.beforeCursor;
+    const limit = req?.query?.limit;
+
+    let variables = {
+      count: +limit,
+      cursor: afterCursor || beforeCursor || null,
+      after: afterCursor || null,
+      before: beforeCursor || null,
+    };
+
+    const blogs = await fetchAllBlogs(res.locals.shopify.session, variables);
 
     return res.status(200).json(blogs);
   } catch (err) {
-    console.log("🚀 ~ file: description.js:73 ~ descriptionController ~ err:", err);
+    console.log(
+      "🚀 ~ file: description.js:73 ~ descriptionController ~ err:",
+      err
+    );
     res.status(400).json({ err });
   }
 };
@@ -74,7 +113,10 @@ export const getArticleList = async (req, res, next) => {
 
     return res.status(200).json(articles);
   } catch (err) {
-    console.log("🚀 ~ file: description.js:73 ~ descriptionController ~ err:", err);
+    console.log(
+      "🚀 ~ file: description.js:73 ~ descriptionController ~ err:",
+      err
+    );
     res.status(400).json({ err });
   }
 };
@@ -89,12 +131,17 @@ export const getArticleSeoContent = async (req, res, next) => {
       article_id: id,
     });
 
-    const highlight = response?.data?.find((data) => data?.key === "seo-blog-article");
+    const highlight = response?.data?.find(
+      (data) => data?.key === "seo-blog-article"
+    );
     const highlightList = highlight?.value ? JSON.parse(highlight?.value) : "";
 
     return res.status(200).json(highlightList);
   } catch (err) {
-    console.log("🚀 ~ file: description.js:73 ~ descriptionController ~ err:", err);
+    console.log(
+      "🚀 ~ file: description.js:73 ~ descriptionController ~ err:",
+      err
+    );
     res.status(400).json({ err });
   }
 };
@@ -152,7 +199,11 @@ export const updateArticleSeo = async (req, res) => {
     });
     const blog_id = seoObj?.blog_id;
     const article_id = seoObj?.id;
-    const article = await getArticleById(res.locals.shopify.session, blog_id, article_id);
+    const article = await getArticleById(
+      res.locals.shopify.session,
+      blog_id,
+      article_id
+    );
     return res.status(200).json({ metafield, article });
   } catch (error) {
     console.log(error);
@@ -178,9 +229,16 @@ export const updateImageSeoAltController = async (req, res, next) => {
       blog_id: blogId,
       id: id,
     });
-    return res.status(200).json({ status: "Success", message: "Successfully updated", articleData });
+    return res.status(200).json({
+      status: "Success",
+      message: "Successfully updated",
+      articleData,
+    });
   } catch (err) {
-    console.log("🚀 ~ file: description.js:73 ~ descriptionController ~ err:", err);
+    console.log(
+      "🚀 ~ file: description.js:73 ~ descriptionController ~ err:",
+      err
+    );
     res.status(400).json({ err });
   }
 };

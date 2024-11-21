@@ -1,20 +1,40 @@
-import React from "react";
-import { IndexTable, Text, HorizontalStack, VerticalStack, Button } from "@shopify/polaris";
+import React, { useEffect } from "react";
+import {
+  IndexTable,
+  Text,
+  HorizontalStack,
+  VerticalStack,
+  Button,
+  SkeletonBodyText,
+} from "@shopify/polaris";
 import { IndexTableData } from "./commonUI/IndexTable";
-import { Spinners } from "./Spinner";
 import { useUI } from "../contexts/ui.context";
 import { useBlogsQuery } from "../hooks/useBlogsQuery";
+import { useSearchParams } from "react-router-dom";
 
 export default function BlogPage() {
   const { setOpenModal } = useUI();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Extract `after` and `before` from URL
+  const afterCursor = searchParams.get("after");
+  const beforeCursor = searchParams.get("before");
   const { isError, isLoading, data } = useBlogsQuery({
-    url: "/api/blog/list",
+    afterCursor,
+    beforeCursor,
+    limit: 10,
   });
 
+  useEffect(() => {
+    return () => {
+      // Clear URL search parameters on unmount
+      setSearchParams({});
+    };
+  }, []);
 
   const rowMarkup =
     (data &&
-      data?.map((info, index) => (
+      data?.blogs?.map((info, index) => (
         <IndexTable.Row id={info?.id} key={info?.id} position={index}>
           <IndexTable.Cell>
             <Text as="span">{info?.title}</Text>
@@ -47,7 +67,11 @@ export default function BlogPage() {
       ))) ||
     [];
 
-  const headings = [{ title: "Name" }, { title: "Tags" }, { title: "Action", alignment: "center" }];
+  const headings = [
+    { title: "Name" },
+    { title: "Tags" },
+    { title: "Action", alignment: "center" },
+  ];
 
   const resourceName = {
     singular: "Product",
@@ -56,16 +80,23 @@ export default function BlogPage() {
 
   return (
     <>
-      {isLoading && !isError ? (
-        <Spinners />
-      ) : (
-        <VerticalStack gap="2">
-          <div className="seo_score_page_title_container">
-            <div className="seo_score_page_title">Blog SEO</div>
-          </div>
-          <IndexTableData isLoading={isLoading} rowMarkup={rowMarkup} headings={headings} resourceName={resourceName} />
-        </VerticalStack>
-      )}
+      <VerticalStack gap="2">
+        <div className="seo_score_page_title_container">
+          <div className="seo_score_page_title">Blog SEO</div>
+        </div>
+        {isLoading && !isError ? (
+          <SkeletonBodyText lines={20} />
+        ) : (
+          <IndexTableData
+            data={data}
+            isLoading={isLoading}
+            rowMarkup={rowMarkup}
+            headings={headings}
+            resourceName={resourceName}
+            setSearchParams={setSearchParams}
+          />
+        )}
+      </VerticalStack>
     </>
   );
 }

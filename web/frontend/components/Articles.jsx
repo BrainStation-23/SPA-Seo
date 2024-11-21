@@ -1,36 +1,42 @@
-import React from "react";
-import {
-  IndexTable,
-  Text,
-  HorizontalStack,
-  VerticalStack,
-  Button,
-} from "@shopify/polaris";
-import { IndexTableData } from "./commonUI/IndexTable";
+import React, { useState } from "react";
+import { HorizontalStack, VerticalStack, Button } from "@shopify/polaris";
 import { Spinners } from "./Spinner";
 import { useUI } from "../contexts/ui.context";
 import { useArticlesQuery } from "../hooks/useBlogsQuery";
+import PaginationPage from "./commonUI/Pagination";
 
 export default function ArticlesPage() {
   const { setOpenModal, modal } = useUI();
+  const gid = modal?.data?.info?.id?.split("/");
   const { isError, isLoading, data } = useArticlesQuery({
-    url: `/api/blog/articles/${modal?.data?.info?.id}`,
+    url: `/api/blog/articles/${gid?.[4]}`,
   });
 
-  const rowMarkup =
-    (data &&
-      data?.map((info, index) => (
-        <IndexTable.Row id={info?.id} key={info?.id} position={index}>
-          <IndexTable.Cell>
-            <Text as="span">{info?.title}</Text>
-          </IndexTable.Cell>
-          <IndexTable.Cell>
-            <Text as="span">{info?.tags}</Text>
-          </IndexTable.Cell>
-          <IndexTable.Cell>
-            <Text as="span">{info?.author}</Text>
-          </IndexTable.Cell>
-          <IndexTable.Cell>
+  // Pagination state variables
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // Calculate the index range for the current page
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+
+  // Get the data for the current page
+  const currentPageData = data?.slice(startIndex, endIndex);
+
+  const rowMarkup = (
+    <>
+      <div className="app_product_bulk_update">
+        <div className="app_product_bulk_input bold_title">Name</div>
+        <div className="app_product_bulk_input bold_title">Tags</div>
+        <div className="app_product_bulk_input bold_title">Author</div>
+        <div className="app_product_bulk_input bold_title">Actions</div>
+      </div>
+      {currentPageData?.map((info, index) => (
+        <div position={index} className="app_product_bulk_update">
+          <div className="app_product_bulk_input">{info?.title}</div>
+          <div className="app_product_bulk_input">{info?.tags}</div>
+          <div className="app_product_bulk_input">{info?.author}</div>
+          <div className="app_product_bulk_input">
             <HorizontalStack gap="4" align="center">
               <Button
                 className="cursor_pointer"
@@ -50,22 +56,11 @@ export default function ArticlesPage() {
                 SEO
               </Button>
             </HorizontalStack>
-          </IndexTable.Cell>
-        </IndexTable.Row>
-      ))) ||
-    [];
-
-  const headings = [
-    { title: "Name" },
-    { title: "Tags" },
-    { title: "Author" },
-    { title: "Action", alignment: "center" },
-  ];
-
-  const resourceName = {
-    singular: "Product",
-    plural: "Products",
-  };
+          </div>
+        </div>
+      ))}
+    </>
+  );
 
   return (
     <>
@@ -73,12 +68,17 @@ export default function ArticlesPage() {
         <Spinners />
       ) : (
         <VerticalStack gap="2">
-          <IndexTableData
-            isLoading={isLoading}
-            rowMarkup={rowMarkup}
-            headings={headings}
-            resourceName={resourceName}
-          />
+          {rowMarkup}
+          {data?.length > itemsPerPage && (
+            <div className="center__align content__margin_top">
+              <PaginationPage
+                currentPage={currentPage}
+                setCurrentPage={setCurrentPage}
+                itemsPerPage={itemsPerPage}
+                itemList={data}
+              />
+            </div>
+          )}
         </VerticalStack>
       )}
     </>

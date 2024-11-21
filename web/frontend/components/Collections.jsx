@@ -1,25 +1,40 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   IndexTable,
   Text,
   HorizontalStack,
   VerticalStack,
   Button,
+  SkeletonBodyText,
 } from "@shopify/polaris";
 import { IndexTableData } from "./commonUI/IndexTable";
-import { Spinners } from "./Spinner";
 import { useUI } from "../contexts/ui.context";
 import { useCollectionsQuery } from "../hooks/useCollectionsQuery";
+import { useSearchParams } from "react-router-dom";
 
 export default function CollectionsPage() {
   const { setOpenModal } = useUI();
+  const [searchParams, setSearchParams] = useSearchParams();
+  // Extract `after` and `before` from URL
+  const afterCursor = searchParams.get("after");
+  const beforeCursor = searchParams.get("before");
+
   const { isError, isLoading, data } = useCollectionsQuery({
-    url: "/api/collection/list",
+    afterCursor,
+    beforeCursor,
+    limit: 10,
   });
+
+  useEffect(() => {
+    return () => {
+      // Clear URL search parameters on unmount
+      setSearchParams({});
+    };
+  }, []);
 
   const rowMarkup =
     (data &&
-      data?.map((info, index) => (
+      data?.collections?.map((info, index) => (
         <IndexTable.Row id={info?.id} key={info?.id} position={index}>
           <IndexTable.Cell>
             {info?.image?.url ? (
@@ -73,21 +88,23 @@ export default function CollectionsPage() {
 
   return (
     <>
-      {isLoading && !isError ? (
-        <Spinners />
-      ) : (
-        <VerticalStack gap="2">
-          <div className="seo_score_page_title_container">
-            <div className="seo_score_page_title">Collection SEO</div>
-          </div>
+      <VerticalStack gap="2">
+        <div className="seo_score_page_title_container">
+          <div className="seo_score_page_title">Collection SEO</div>
+        </div>
+        {isLoading && !isError ? (
+          <SkeletonBodyText lines={20} />
+        ) : (
           <IndexTableData
+            data={data}
             isLoading={isLoading}
             rowMarkup={rowMarkup}
             headings={headings}
             resourceName={resourceName}
+            setSearchParams={setSearchParams}
           />
-        </VerticalStack>
-      )}
+        )}
+      </VerticalStack>
     </>
   );
 }
