@@ -26,10 +26,6 @@ class AzureOpenAIService {
         presence_penalty: 0,
         frequency_penalty: 0,
       });
-      console.log(
-        "🚀 ~ AzureOpenAIService ~ getAIResults ~ response",
-        response
-      );
       return response;
     } catch (error) {
       console.log("🚀 ~ AzureOpenAIService ~ getAIResults ~ error:", error);
