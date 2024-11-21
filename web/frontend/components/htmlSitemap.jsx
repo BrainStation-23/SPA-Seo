@@ -1,22 +1,35 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Layout, Box, Text, AlphaCard, ChoiceList, Form, Button, VerticalStack } from "@shopify/polaris";
+import {
+  Layout,
+  Box,
+  Text,
+  AlphaCard,
+  ChoiceList,
+  Form,
+  Button,
+  VerticalStack,
+  SkeletonBodyText,
+} from "@shopify/polaris";
 import Switch from "./commonUI/Switch/Switch";
 import { InputField } from "./commonUI/InputField";
-import { useCreateHtmlSitemapSeo, useHtmlSitemapQuery } from "../hooks/useHtmlsitemap";
+import {
+  useCreateHtmlSitemapSeo,
+  useHtmlSitemapQuery,
+} from "../hooks/useHtmlsitemap";
 import { Spinners } from "./Spinner";
 import { useUI } from "../contexts/ui.context";
 
 export default function HTMLSitemap() {
   const { shop, setToggleToast } = useUI();
   const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     category: [],
     isActiveSitemap: false,
     limit: 20,
   });
 
-  const handleSelectChange = (value) => setFormData({ ...formData, category: value });
+  const handleSelectChange = (value) =>
+    setFormData({ ...formData, category: value });
 
   const handleIsChecked = () =>
     setFormData({
@@ -31,7 +44,11 @@ export default function HTMLSitemap() {
   const { data, isLoading } = useHtmlSitemapQuery({
     url: "/api/html-sitemap/info",
   });
-  const { mutate: createOrUpdateHtmlSitemap, isError } = useCreateHtmlSitemapSeo();
+  const {
+    mutate: createOrUpdateHtmlSitemap,
+    isError,
+    isLoading: isSubmitLoading,
+  } = useCreateHtmlSitemapSeo();
 
   const handleSubmit = (htmlSitemap) => {
     if (htmlSitemap?.category.length == 0) {
@@ -46,15 +63,7 @@ export default function HTMLSitemap() {
         message: `Limit can not be zero or negative`,
       });
     }
-    setLoading(true);
-    createOrUpdateHtmlSitemap(htmlSitemap, {
-      onSuccess: () => {
-        setLoading(false);
-      },
-      onError: () => {
-        setLoading(false);
-      },
-    });
+    createOrUpdateHtmlSitemap(htmlSitemap);
   };
 
   useEffect(() => {
@@ -65,19 +74,23 @@ export default function HTMLSitemap() {
 
   return (
     <>
-      {isLoading ? (
-        <Spinners />
-      ) : (
-        <Form onSubmit={() => handleSubmit(formData)}>
-          <div className="seo_score_page_title_container">
-            <div className="seo_score_page_title">HTML Sitemap</div>
-            <div className="">
-              <Button primary submit disabled={loading}>
-                {loading ? <Spinners /> : "Submit"}
-              </Button>
-            </div>
+      <Form onSubmit={() => handleSubmit(formData)}>
+        <div className="seo_score_page_title_container">
+          <div className="seo_score_page_title">HTML Sitemap</div>
+          <div className="">
+            <Button primary submit disabled={isSubmitLoading}>
+              {isSubmitLoading ? <Spinners /> : "Submit"}
+            </Button>
           </div>
-          <Box paddingInlineStart={"32"} paddingInlineEnd={"32"} paddingBlockStart={"4"}>
+        </div>
+        {isLoading ? (
+          <SkeletonBodyText lines={20} />
+        ) : (
+          <Box
+            paddingInlineStart={"32"}
+            paddingInlineEnd={"32"}
+            paddingBlockStart={"4"}
+          >
             <Box paddingBlockEnd={"5"}>
               <Layout>
                 <Layout.Section oneThird>
@@ -85,7 +98,9 @@ export default function HTMLSitemap() {
                     <Text variant="headingMd">Configuration</Text>
                   </Box>
                   <Box>
-                    <Text variant="bodyMd">Select category to build HTML sitemap</Text>
+                    <Text variant="bodyMd">
+                      Select category to build HTML sitemap
+                    </Text>
                   </Box>
                 </Layout.Section>
                 <Layout.Section oneHalf>
@@ -93,8 +108,13 @@ export default function HTMLSitemap() {
                     <AlphaCard>
                       <VerticalStack gap={"4"}>
                         <Box>
-                          <Switch checked={formData?.isActiveSitemap} handleClick={handleIsChecked} />
-                          <Text variant="bodyMd">Please active the sitemap</Text>
+                          <Switch
+                            checked={formData?.isActiveSitemap}
+                            handleClick={handleIsChecked}
+                          />
+                          <Text variant="bodyMd">
+                            Please active the sitemap
+                          </Text>
                         </Box>
                         <ChoiceList
                           allowMultiple
@@ -145,17 +165,24 @@ export default function HTMLSitemap() {
               <Layout>
                 <Layout.Section oneThird>
                   <Box paddingBlockEnd={"2"}>
-                    <Text variant="headingMd">HTML sitemap (For your customer)</Text>
+                    <Text variant="headingMd">
+                      HTML sitemap (For your customer)
+                    </Text>
                   </Box>
                   <Box>
-                    <Text variant="bodyMd">Make it easy for your customers to search for categories.</Text>
+                    <Text variant="bodyMd">
+                      Make it easy for your customers to search for categories.
+                    </Text>
                   </Box>
                 </Layout.Section>
                 <Layout.Section oneHalf>
                   <Box>
                     <AlphaCard>
                       <Text variant="headingMd">Generated by seofy </Text>
-                      <a target="_blank" href={`https://${shop?.domain}/pages/seofy-customer-sitemap`}>
+                      <a
+                        target="_blank"
+                        href={`https://${shop?.domain}/pages/seofy-customer-sitemap`}
+                      >
                         {`https://${shop?.domain}/pages/seofy-customer-sitemap`}
                       </a>
                     </AlphaCard>
@@ -170,14 +197,20 @@ export default function HTMLSitemap() {
                     <Text variant="headingMd">XML sitemap (For Google)</Text>
                   </Box>
                   <Box>
-                    <Text variant="bodyMd">Used to declare separate hypertext for Google search engines.</Text>
+                    <Text variant="bodyMd">
+                      Used to declare separate hypertext for Google search
+                      engines.
+                    </Text>
                   </Box>
                 </Layout.Section>
                 <Layout.Section oneHalf>
                   <Box>
                     <AlphaCard>
                       <Text variant="headingMd">Generated by Shopify</Text>
-                      <a target="_blank" href={`https://${shop?.domain}/sitemap.xml`}>
+                      <a
+                        target="_blank"
+                        href={`https://${shop?.domain}/sitemap.xml`}
+                      >
                         {`https://${shop?.domain}/sitemap.xml`}
                       </a>
                     </AlphaCard>
@@ -186,8 +219,8 @@ export default function HTMLSitemap() {
               </Layout>
             </Box>
           </Box>
-        </Form>
-      )}
+        )}
+      </Form>
     </>
   );
 }

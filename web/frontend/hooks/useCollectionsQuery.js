@@ -3,18 +3,25 @@ import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { useUI } from "../contexts/ui.context";
 
-export const useCollectionsQuery = ({ url, fetchInit = {}, reactQueryOptions }) => {
+export const useCollectionsQuery = ({
+  afterCursor,
+  beforeCursor,
+  limit,
+  fetchInit = {},
+}) => {
   const authenticatedFetch = useAuthenticatedFetch();
+  const url = `/api/collection/list?afterCursor=${
+    afterCursor || ""
+  }&beforeCursor=${beforeCursor || ""}&limit=${limit}`;
   const { modal } = useUI();
   const fetch = useMemo(() => {
     return async () => {
       const response = await authenticatedFetch(url, fetchInit);
       return response.json();
     };
-  }, [url, JSON.stringify(fetchInit)]);
+  }, [url]);
 
-  return useQuery("collectionList", fetch, {
-    ...reactQueryOptions,
+  return useQuery(["collectionList", afterCursor, beforeCursor], fetch, {
     onSuccess: (data) => {},
     refetchOnWindowFocus: false,
     enabled: !modal?.isOpen,

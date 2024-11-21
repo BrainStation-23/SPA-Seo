@@ -1,22 +1,7 @@
 import shopify from "../shopify.js";
 
-const fetchAllProducts = async (session, queryParams) => {
-  let allProducts = [];
-  let variables = {
-    count: 21,
-    cursor: null,
-  };
-
-  const query = generateProductQuery(queryParams?.action);
-  if (queryParams?.action == "prev") {
-    variables.cursor =
-      queryParams?.startCursor !== "undefined"
-        ? queryParams?.startCursor
-        : null;
-  } else if (queryParams?.action == "next") {
-    variables.cursor =
-      queryParams?.endCursor !== "undefined" ? queryParams?.endCursor : null;
-  }
+const fetchAllProducts = async (session, variables) => {
+  const query = generateProductQuery(variables);
 
   const client = new shopify.api.clients.Graphql({
     session: session,
@@ -28,14 +13,14 @@ const fetchAllProducts = async (session, queryParams) => {
       variables: variables,
     },
   });
-  const pageInfo = response.body.data.products.pageInfo;
-  const products = response.body.data.products.edges.map((edge) => edge.node);
-  allProducts = allProducts.concat(products);
 
-  return { allProducts, pageInfo };
+  const pageInfo = response.body.data.products.pageInfo;
+  const products = response.body.data.products.edges;
+
+  return { products, pageInfo };
 };
 
-const generateProductQuery = (action) => {
+const generateProductQuery = (variables) => {
   let query = `
     query ($count: Int!, $cursor: String) {
       products(first: $count, after: $cursor, reverse: true, sortKey: CREATED_AT) {
@@ -98,8 +83,7 @@ const generateProductQuery = (action) => {
       }
     }
   `;
-
-  if (action === "prev") {
+  if (variables?.before) {
     query = query.replace("first:", "last:");
     query = query.replace("after:", "before:");
   }
@@ -108,7 +92,17 @@ const generateProductQuery = (action) => {
 
 export const productsController = async (req, res, next) => {
   try {
-    const data = await fetchAllProducts(res.locals.shopify.session, req.query);
+    const afterCursor = req?.query?.afterCursor;
+    const beforeCursor = req?.query?.beforeCursor;
+    const limit = req?.query?.limit;
+    let variables = {
+      count: +limit,
+      cursor: afterCursor || beforeCursor || null,
+      after: afterCursor || null,
+      before: beforeCursor || null,
+    };
+
+    const data = await fetchAllProducts(res.locals.shopify.session, variables);
 
     return res.status(200).json(data);
   } catch (err) {

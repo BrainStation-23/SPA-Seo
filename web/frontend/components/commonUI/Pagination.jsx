@@ -1,5 +1,5 @@
-import { IndexTable, LegacyCard, Pagination } from "@shopify/polaris";
-import React, { useState } from "react";
+import { Pagination } from "@shopify/polaris";
+import React from "react";
 
 export default function PaginationPage({
   currentPage,
@@ -22,7 +22,7 @@ export default function PaginationPage({
 
   return (
     <>
-      {itemList?.length > 10 && (
+      {itemList?.length > itemsPerPage && (
         <div className="center__align content__margin_top">
           <Pagination
             hasPrevious={currentPage > 1}

@@ -1,8 +1,13 @@
-import { Grid, LegacyCard, IndexTable, Text } from "@shopify/polaris";
+import {
+  Grid,
+  LegacyCard,
+  IndexTable,
+  Text,
+  SkeletonBodyText,
+} from "@shopify/polaris";
 import React from "react";
 import { useErrorInsightsQuery } from "../hooks/useErrorInsightsQuery";
 import { formattedDate } from "../utils";
-import { Spinners } from "./Spinner";
 import { IndexTableData } from "./commonUI/IndexTable";
 
 export function ErrorList() {
@@ -10,7 +15,7 @@ export function ErrorList() {
     url: "/api/error/insights",
   });
 
-  if (isLoading) return <Spinners />;
+  if (isLoading) return <SkeletonBodyText lines={20} />;
 
   const rowMarkup =
     (data &&
@@ -20,7 +25,9 @@ export function ErrorList() {
             <Text as="span">{info?.url}</Text>
           </IndexTable.Cell>
           <IndexTable.Cell>
-            <Text as="span">{info?.timestamp && formattedDate(info?.timestamp)}</Text>
+            <Text as="span">
+              {info?.timestamp && formattedDate(info?.timestamp)}
+            </Text>
           </IndexTable.Cell>
         </IndexTable.Row>
       ))) ||
@@ -72,7 +79,9 @@ export function ErrorList() {
               </p>
               <p>
                 <b>Date: </b>
-                {isSuccess && data?.lastVisit?.timestamp && formattedDate(data?.lastVisit?.timestamp)}
+                {isSuccess &&
+                  data?.lastVisit?.timestamp &&
+                  formattedDate(data?.lastVisit?.timestamp)}
               </p>
             </LegacyCard>
           </Grid.Cell>
@@ -80,7 +89,12 @@ export function ErrorList() {
       </div>
       <div className="seo_error_list">
         <div className="seo_error_list_title">404 Error list</div>
-        <IndexTableData isLoading={isLoading} rowMarkup={rowMarkup} headings={headings} resourceName={resourceName} />
+        <IndexTableData
+          isLoading={isLoading}
+          rowMarkup={rowMarkup}
+          headings={headings}
+          resourceName={resourceName}
+        />
       </div>
     </div>
   );

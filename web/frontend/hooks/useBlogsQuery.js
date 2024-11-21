@@ -3,25 +3,36 @@ import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { useUI } from "../contexts/ui.context";
 
-export const useBlogsQuery = ({ url, fetchInit = {}, reactQueryOptions }) => {
+export const useBlogsQuery = ({
+  afterCursor,
+  beforeCursor,
+  limit,
+  fetchInit = {},
+}) => {
   const authenticatedFetch = useAuthenticatedFetch();
+  const url = `/api/blog/list?afterCursor=${afterCursor || ""}&beforeCursor=${
+    beforeCursor || ""
+  }&limit=${limit}`;
   const { modal } = useUI();
   const fetch = useMemo(() => {
     return async () => {
       const response = await authenticatedFetch(url, fetchInit);
       return response.json();
     };
-  }, [url, JSON.stringify(fetchInit)]);
+  }, [url]);
 
-  return useQuery("blogList", fetch, {
-    ...reactQueryOptions,
+  return useQuery(["blogList", afterCursor, beforeCursor, limit], fetch, {
     onSuccess: (data) => {},
     refetchOnWindowFocus: false,
     enabled: !modal?.isOpen,
   });
 };
 
-export const useArticlesQuery = ({ url, fetchInit = {}, reactQueryOptions }) => {
+export const useArticlesQuery = ({
+  url,
+  fetchInit = {},
+  reactQueryOptions,
+}) => {
   const authenticatedFetch = useAuthenticatedFetch();
   const fetch = useMemo(() => {
     return async () => {
@@ -42,7 +53,11 @@ export const useArticlesQuery = ({ url, fetchInit = {}, reactQueryOptions }) => 
   });
 };
 
-export const useSingleArticleQuery = ({ url, fetchInit = {}, reactQueryOptions }) => {
+export const useSingleArticleQuery = ({
+  url,
+  fetchInit = {},
+  reactQueryOptions,
+}) => {
   const authenticatedFetch = useAuthenticatedFetch();
   const fetch = useMemo(() => {
     return async () => {
@@ -61,7 +76,11 @@ export const useSingleArticleQuery = ({ url, fetchInit = {}, reactQueryOptions }
   });
 };
 
-export const useArticlesSeoQuery = ({ url, fetchInit = {}, reactQueryOptions }) => {
+export const useArticlesSeoQuery = ({
+  url,
+  fetchInit = {},
+  reactQueryOptions,
+}) => {
   const authenticatedFetch = useAuthenticatedFetch();
   const fetch = useMemo(() => {
     return async () => {

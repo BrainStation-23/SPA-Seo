@@ -1,12 +1,23 @@
 import React, { useEffect, useState } from "react";
-import { Layout, Box, Text, AlphaCard, VerticalStack, Form, Button, Spinner } from "@shopify/polaris";
+import {
+  Layout,
+  Box,
+  Text,
+  AlphaCard,
+  VerticalStack,
+  Form,
+  Button,
+  Spinner,
+  SkeletonBodyText,
+} from "@shopify/polaris";
 import TextareaField from "./commonUI/TextareaField";
 import { useCreateHomeSeo, useHomeSEOQuery } from "../hooks/useHomeSEOQuery";
 
 export default function HomeSeo() {
-  const [isLoading, setIsLoading] = useState(false);
-  const { data } = useHomeSEOQuery({ url: "/api/home/get-home-seo" });
-  const { mutate: createOrUpdateSeo, isError } = useCreateHomeSeo();
+  const { data, isLoading: isHomeLoading } = useHomeSEOQuery({
+    url: "/api/home/get-home-seo",
+  });
+  const { mutate: createOrUpdateSeo, isError, isLoading } = useCreateHomeSeo();
 
   const [formData, setFormData] = useState({
     seo_title: "",
@@ -44,19 +55,11 @@ export default function HomeSeo() {
         seo_description: `SEO description must be 160 characters or fewer. Currently, it is ${value?.seo_description?.length} characters.`,
       });
     }
-    setIsLoading(true);
 
     const obj = {
       homeSeo: value,
     };
-    createOrUpdateSeo(obj, {
-      onSuccess: () => {
-        setIsLoading(false);
-      },
-      onError: () => {
-        setIsLoading(false);
-      },
-    });
+    createOrUpdateSeo(obj);
   };
 
   useEffect(() => {
@@ -75,74 +78,84 @@ export default function HomeSeo() {
           </Button>
         </div>
       </div>
-      <Box paddingInlineStart={"32"} paddingInlineEnd={"32"} paddingBlockStart={"4"}>
-        <Box paddingBlockEnd={"5"}>
-          <Layout>
-            <Layout.Section oneThird>
-              <Box paddingBlockEnd={"4"}>
-                <Text variant="headingMd">Meta Title</Text>
-              </Box>
-              <Box>
-                <Text variant="bodyMd">
-                  The meta title helps with SEO by including keywords that improve ranking and serve as the clickable
-                  headline in search results
-                </Text>
-              </Box>
-            </Layout.Section>
-            <Layout.Section oneHalf>
-              <Box>
-                <AlphaCard>
-                  <VerticalStack gap={"6"}>
-                    <TextareaField
-                      value={formData?.seo_title}
-                      onChange={handleChange}
-                      type="text"
-                      name="seo_title"
-                      placeholder={"Enter Meta Title"}
-                      label={"Enter Meta Title"}
-                      error={errors?.seo_title}
-                      rows={2}
-                    />
-                  </VerticalStack>
-                </AlphaCard>
-              </Box>
-            </Layout.Section>
-          </Layout>
+      {isHomeLoading ? (
+        <SkeletonBodyText lines={20} />
+      ) : (
+        <Box
+          paddingInlineStart={"32"}
+          paddingInlineEnd={"32"}
+          paddingBlockStart={"4"}
+        >
+          <Box paddingBlockEnd={"5"}>
+            <Layout>
+              <Layout.Section oneThird>
+                <Box paddingBlockEnd={"4"}>
+                  <Text variant="headingMd">Meta Title</Text>
+                </Box>
+                <Box>
+                  <Text variant="bodyMd">
+                    The meta title helps with SEO by including keywords that
+                    improve ranking and serve as the clickable headline in
+                    search results
+                  </Text>
+                </Box>
+              </Layout.Section>
+              <Layout.Section oneHalf>
+                <Box>
+                  <AlphaCard>
+                    <VerticalStack gap={"6"}>
+                      <TextareaField
+                        value={formData?.seo_title}
+                        onChange={handleChange}
+                        type="text"
+                        name="seo_title"
+                        placeholder={"Enter Meta Title"}
+                        label={"Enter Meta Title"}
+                        error={errors?.seo_title}
+                        rows={2}
+                      />
+                    </VerticalStack>
+                  </AlphaCard>
+                </Box>
+              </Layout.Section>
+            </Layout>
+          </Box>
+          <Box paddingBlockEnd={"5"}>
+            <Layout>
+              <Layout.Section oneThird>
+                <Box paddingBlockEnd={"4"}>
+                  <Text variant="headingMd">Meta Description</Text>
+                </Box>
+                <Box>
+                  <Text variant="bodyMd">
+                    The meta description provides a brief summary that
+                    encourages users to click through to your site by explaining
+                    what your business offers
+                  </Text>
+                </Box>
+              </Layout.Section>
+              <Layout.Section oneHalf>
+                <Box>
+                  <AlphaCard>
+                    <VerticalStack gap={"6"}>
+                      <TextareaField
+                        value={formData?.seo_description}
+                        onChange={handleChange}
+                        label={"Enter Meta Description"}
+                        type="text"
+                        name="seo_description"
+                        placeholder="Enter Meta Description"
+                        error={errors?.seo_description}
+                        rows={"3"}
+                      />
+                    </VerticalStack>
+                  </AlphaCard>
+                </Box>
+              </Layout.Section>
+            </Layout>
+          </Box>
         </Box>
-        <Box paddingBlockEnd={"5"}>
-          <Layout>
-            <Layout.Section oneThird>
-              <Box paddingBlockEnd={"4"}>
-                <Text variant="headingMd">Meta Description</Text>
-              </Box>
-              <Box>
-                <Text variant="bodyMd">
-                  The meta description provides a brief summary that encourages users to click through to your site by
-                  explaining what your business offers
-                </Text>
-              </Box>
-            </Layout.Section>
-            <Layout.Section oneHalf>
-              <Box>
-                <AlphaCard>
-                  <VerticalStack gap={"6"}>
-                    <TextareaField
-                      value={formData?.seo_description}
-                      onChange={handleChange}
-                      label={"Enter Meta Description"}
-                      type="text"
-                      name="seo_description"
-                      placeholder="Enter Meta Description"
-                      error={errors?.seo_description}
-                      rows={"3"}
-                    />
-                  </VerticalStack>
-                </AlphaCard>
-              </Box>
-            </Layout.Section>
-          </Layout>
-        </Box>
-      </Box>
+      )}
     </Form>
   );
 }

@@ -1,45 +1,59 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import {
   IndexTable,
   Text,
   HorizontalStack,
   VerticalStack,
   Button,
+  SkeletonBodyText,
 } from "@shopify/polaris";
 import { useProductsQuery } from "../hooks/useProductsQuery";
 import { IndexTableData } from "./commonUI/IndexTable";
-import { Spinners } from "./Spinner";
+// import { Spinners } from "./Spinner";
 import { useUI } from "../contexts/ui.context";
+import { useSearchParams } from "react-router-dom";
 
 export default function Product() {
   const { setOpenModal, modal } = useUI();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  // Pagination state variables
-  const [action, setAction] = useState(null);
-  const [pageInfo, setPageInfo] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [prevCursor, setPrevCursor] = useState(null);
-  const { isError, isLoading, data, isFetching, isRefetching, refetch } =
-    useProductsQuery({
-      url: `/api/product/list?page=${currentPage}&startCursor=${pageInfo?.startCursor}&endCursor=${pageInfo?.endCursor}&prevCursor=${prevCursor}&action=${action}`,
-    });
+  // Extract `after` and `before` from URL
+  const afterCursor = searchParams.get("after");
+  const beforeCursor = searchParams.get("before");
+
+  const { isError, isLoading, data, isRefetching } = useProductsQuery({
+    afterCursor,
+    beforeCursor,
+    limit: 10,
+  });
+
+  useEffect(() => {
+    return () => {
+      // Clear URL search parameters on unmount
+      setSearchParams({});
+    };
+  }, []);
 
   const rowMarkup =
     (data &&
-      data?.allProducts?.map((info, index) => (
-        <IndexTable.Row id={info?.id} key={info?.id} position={index}>
+      data?.products?.map((info, index) => (
+        <IndexTable.Row
+          id={info?.node?.id}
+          key={info?.node?.id}
+          position={index}
+        >
           <IndexTable.Cell>
             <img
-              src={info?.featuredImage?.url}
-              alt={info?.featuredImage?.altText}
+              src={info?.node?.featuredImage?.url}
+              alt={info?.node?.featuredImage?.altText}
               className="app__feature_product_image"
             />
           </IndexTable.Cell>
           <IndexTable.Cell>
-            <Text as="span">{info?.title}</Text>
+            <Text as="span">{info?.node?.title}</Text>
           </IndexTable.Cell>
           <IndexTable.Cell>
-            <Text as="span">{info?.status}</Text>
+            <Text as="span">{info?.node?.status}</Text>
           </IndexTable.Cell>
           <IndexTable.Cell>
             <HorizontalStack gap="4" align="center">
@@ -52,8 +66,8 @@ export default function Product() {
                     view: "CREATE_PRODUCT_SEO",
                     isOpen: true,
                     data: {
-                      title: `Product SEO (${info?.title})`,
-                      info: info,
+                      title: `Product SEO (${info?.node?.title})`,
+                      info: info?.node,
                     },
                   });
                 }}
@@ -78,38 +92,25 @@ export default function Product() {
     plural: "Products",
   };
 
-  useEffect(() => {
-    if (data?.pageInfo) {
-      setPageInfo(data?.pageInfo);
-    }
-  }, [isFetching]);
-
-  useEffect(() => {
-    setPrevCursor(data?.pageInfo?.endCursor);
-    refetch();
-  }, [currentPage]);
-
   return (
     <>
-      {(isLoading || isRefetching) && !isError ? (
-        <Spinners />
-      ) : (
-        <VerticalStack gap="2">
-          <div className="seo_score_page_title_container">
-            <div className="seo_score_page_title">Product SEO</div>
-          </div>
+      <VerticalStack gap="2">
+        <div className="seo_score_page_title_container">
+          <div className="seo_score_page_title">Product SEO</div>
+        </div>
+        {isLoading && !isError ? (
+          <SkeletonBodyText lines={20} />
+        ) : (
           <IndexTableData
-            isLoading={isLoading}
+            data={data}
+            isRefetching={isRefetching || isLoading}
             rowMarkup={rowMarkup}
             headings={headings}
             resourceName={resourceName}
-            currentPage={currentPage}
-            setCurrentPage={setCurrentPage}
-            setAction={setAction}
-            pageInfo={data?.pageInfo}
+            setSearchParams={setSearchParams}
           />
-        </VerticalStack>
-      )}
+        )}
+      </VerticalStack>
     </>
   );
 }
