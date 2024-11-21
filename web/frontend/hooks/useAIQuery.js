@@ -169,7 +169,7 @@ export const useGenerateBlogContentAI = () => {
   const { setToggleToast } = useUI();
   const fetch = useAuthenticatedFetch();
   async function createStatus(status) {
-    const response = await fetch("/api/AI/blog-content-generation", {
+    const response = await fetch("/api/AI/blog-outline-generation", {
       method: "POST",
       body: JSON.stringify(status),
       headers: {
@@ -180,18 +180,7 @@ export const useGenerateBlogContentAI = () => {
   }
 
   return useMutation((status) => createStatus(status), {
-    onSuccess: async (data, obj) => {
-      if (data?.status !== 200) {
-        return setToggleToast({
-          active: true,
-          message: `Something went wrong`,
-        });
-      }
-      const response = await data.json();
-      console.log(response);
-      // setProductSeo(response?.aiContent?.result);
-      // setAIKeywords("");
-
+    onSuccess: async () => {
       setToggleToast({
         active: true,
         message: `Generated content Successfully`,

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import "../assets/lexical-styles.css";
 
 import ExampleTheme from "../Themes/ExampleTheme";
@@ -33,6 +33,8 @@ import {
   $getSelection,
 } from "lexical";
 import { $generateHtmlFromNodes } from "@lexical/html";
+
+import { TextField } from "@shopify/polaris";
 
 function Placeholder() {
   return <div className="editor-placeholder">Enter some rich text...</div>;
@@ -94,11 +96,42 @@ function InsertTextButton({ generatedText }) {
   );
 }
 
-export default function Editor() {
-  const [editorState, setEditorState] = useState(/* Initial editor state */);
-  const [htmlContent, setHtmlContent] = useState("");
+function Editor({ data }) {
+  return (
+    <LexicalComposer initialConfig={editorConfig}>
+      <div className="editor-container">
+        <ToolbarPlugin />
+        <div className="editor-inner">
+          <RichTextPlugin
+            contentEditable={<ContentEditable className="editor-input" />}
+            placeholder={<Placeholder />}
+            ErrorBoundary={LexicalErrorBoundary}
+          />
+          <HistoryPlugin />
+          <InsertTextButton generatedText={JSON.stringify(data?.aiResult)} />
+          <TreeViewPlugin />
+          <AutoFocusPlugin />
+          <CodeHighlightPlugin />
+          <ListPlugin />
+          <LinkPlugin />
+          <AutoLinkPlugin />
+          <ListMaxIndentLevelPlugin maxDepth={7} />
+          <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
+        </div>
+      </div>
+    </LexicalComposer>
+  );
+}
+
+export default function EditorWrapper() {
   const { data, mutate: generateContent } = useGenerateBlogContentAI();
   const [input, setInput] = useState("");
+  const [textFieldInput, setTextFieldInput] = useState("");
+
+  const handleTextFieldChange = useCallback(
+    (value) => setTextFieldInput(value),
+    []
+  );
 
   return (
     <div style={{ display: "flex", flexDirection: "row", gap: "1rem" }}>
@@ -112,37 +145,29 @@ export default function Editor() {
         />
         <button
           onClick={() => {
-            generateContent({ prompt: input });
+            generateContent(
+              { prompt: input },
+              {
+                onSuccess: () => {
+                  const textFieldInputValue = data?.aiResult?.suggestion
+                    ?.map((val, index) => `${index + 1}. ${val}`)
+                    .join("\n");
+                  setTextFieldInput(textFieldInputValue);
+                },
+              }
+            );
           }}
         >
-          hit
+          generate outline
         </button>
+        <TextField
+          multiline
+          value={textFieldInput}
+          onChange={handleTextFieldChange}
+        />
       </div>
       <div className="blog-editor">
-        <LexicalComposer initialConfig={editorConfig}>
-          <div className="editor-container">
-            <ToolbarPlugin />
-            <div className="editor-inner">
-              <RichTextPlugin
-                contentEditable={<ContentEditable className="editor-input" />}
-                placeholder={<Placeholder />}
-                ErrorBoundary={LexicalErrorBoundary}
-              />
-              <HistoryPlugin />
-              <InsertTextButton
-                generatedText={JSON.stringify(data?.aiResult)}
-              />
-              <TreeViewPlugin />
-              <AutoFocusPlugin />
-              <CodeHighlightPlugin />
-              <ListPlugin />
-              <LinkPlugin />
-              <AutoLinkPlugin />
-              <ListMaxIndentLevelPlugin maxDepth={7} />
-              <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
-            </div>
-          </div>
-        </LexicalComposer>
+        <Editor data={data} />
       </div>
     </div>
   );
