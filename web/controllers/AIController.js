@@ -93,3 +93,54 @@ export const aiSeoSingleContent = async (req, res) => {
     console.log("🚀 ~ aiSeoSingleContent ~ error:", error);
   }
 };
+
+/**
+ *
+ * @param {Express.Request} req
+ * @param {Express.Response} res
+ * @returns {Promise<Express.Response>}
+ * @description AI controller for generating
+ * @requires Express.Request req body format
+ * {
+ *    prompt: string,
+ *    productId: string
+ * }
+ */
+export async function aiBlogContentController(req, res) {
+  try {
+    const body = req.body;
+    // const productInfo = await getProductByID(
+    //   res.locals.shopify.session,
+    //   body?.productId
+    // );
+    const messages = [
+      {
+        role: "system",
+        content: "you are a blog writer for a Shopify store",
+      },
+      {
+        role: "user",
+        content: `Write an outline for a blog article based on this prompt: ${body.prompt}.
+
+      Wirte 5 - 8 section titles for the blog article. You dont have to write the content for each section, just the titles.
+      For the suggestion please follow the seo guidelines.
+      Response must be in JSON format like response: { result: {
+        suggestion: "example"
+      }}
+      `,
+      },
+    ];
+
+    const response = await generateWithAI(messages);
+    const newResult = {
+      ...req.body,
+      suggestion: response?.result?.suggestion,
+    };
+    return res.status(200).json({
+      status: "Success",
+      aiResult: newResult,
+    });
+  } catch (error) {
+    console.log("🚀 ~ aiSeoSingleContent ~ error:", error);
+  }
+}

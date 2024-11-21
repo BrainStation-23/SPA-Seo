@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import "../assets/lexical-styles.css";
 
 import ExampleTheme from "../Themes/ExampleTheme";
@@ -22,6 +23,16 @@ import { TRANSFORMERS } from "@lexical/markdown";
 import ListMaxIndentLevelPlugin from "../plugins/ListMaxIndentLevelPlugin";
 import CodeHighlightPlugin from "../plugins/CodeHighlightPlugin";
 import AutoLinkPlugin from "../plugins/AutoLinkPlugin";
+
+import { useGenerateBlogContentAI } from "../hooks/useAIQuery";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import {
+  $getRoot,
+  $createParagraphNode,
+  $createTextNode,
+  $getSelection,
+} from "lexical";
+import { $generateHtmlFromNodes } from "@lexical/html";
 
 function Placeholder() {
   return <div className="editor-placeholder">Enter some rich text...</div>;
@@ -50,30 +61,89 @@ const editorConfig = {
   ],
 };
 
-export default function Editor() {
+function InsertTextButton({ generatedText }) {
+  const [editor] = useLexicalComposerContext();
+
+  const getHTMLContent = () => {
+    let htmlExport = "";
+    editor.read(() => {
+      htmlExport = $generateHtmlFromNodes(editor);
+    });
+    return htmlExport;
+  };
+
+  const insertText = () => {
+    editor.update(() => {
+      const root = $getRoot(); // Get the root node of the editor
+
+      // Create a new paragraph node with the generated text
+      const paragraphNode = $createParagraphNode();
+      const textNode = $createTextNode(generatedText);
+      paragraphNode.append(textNode);
+
+      // Append the paragraph node to the root node
+      root.append(paragraphNode);
+    });
+  };
+
   return (
-    <div className="blog-editor">
-      <LexicalComposer initialConfig={editorConfig}>
-        <div className="editor-container">
-          <ToolbarPlugin />
-          <div className="editor-inner">
-            <RichTextPlugin
-              contentEditable={<ContentEditable className="editor-input" />}
-              placeholder={<Placeholder />}
-              ErrorBoundary={LexicalErrorBoundary}
-            />
-            <HistoryPlugin />
-            <TreeViewPlugin />
-            <AutoFocusPlugin />
-            <CodeHighlightPlugin />
-            <ListPlugin />
-            <LinkPlugin />
-            <AutoLinkPlugin />
-            <ListMaxIndentLevelPlugin maxDepth={7} />
-            <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
+    <>
+      <button onClick={insertText}>Insert Generated Text</button>
+      <button onClick={() => console.log(getHTMLContent())}>Get HTML</button>
+    </>
+  );
+}
+
+export default function Editor() {
+  const [editorState, setEditorState] = useState(/* Initial editor state */);
+  const [htmlContent, setHtmlContent] = useState("");
+  const { data, mutate: generateContent } = useGenerateBlogContentAI();
+  const [input, setInput] = useState("");
+
+  return (
+    <div style={{ display: "flex", flexDirection: "row", gap: "1rem" }}>
+      <div>
+        <input
+          value={input}
+          onChange={(e) => {
+            setInput(e.target.value);
+          }}
+          type="text"
+        />
+        <button
+          onClick={() => {
+            generateContent({ prompt: input });
+          }}
+        >
+          hit
+        </button>
+      </div>
+      <div className="blog-editor">
+        <LexicalComposer initialConfig={editorConfig}>
+          <div className="editor-container">
+            <ToolbarPlugin />
+            <div className="editor-inner">
+              <RichTextPlugin
+                contentEditable={<ContentEditable className="editor-input" />}
+                placeholder={<Placeholder />}
+                ErrorBoundary={LexicalErrorBoundary}
+              />
+              <HistoryPlugin />
+              <InsertTextButton
+                generatedText={JSON.stringify(data?.aiResult)}
+              />
+              <TreeViewPlugin />
+              <AutoFocusPlugin />
+              <CodeHighlightPlugin />
+              <ListPlugin />
+              <LinkPlugin />
+              <AutoLinkPlugin />
+              <ListMaxIndentLevelPlugin maxDepth={7} />
+              <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
+            </div>
           </div>
-        </div>
-      </LexicalComposer>
+        </LexicalComposer>
+      </div>
     </div>
   );
 }

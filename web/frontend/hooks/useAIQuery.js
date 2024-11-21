@@ -164,3 +164,45 @@ export const useUpdateProductSeoImgAlt = () => {
     refetchOnWindowFocus: false,
   });
 };
+
+export const useGenerateBlogContentAI = () => {
+  const { setToggleToast } = useUI();
+  const fetch = useAuthenticatedFetch();
+  async function createStatus(status) {
+    const response = await fetch("/api/AI/blog-content-generation", {
+      method: "POST",
+      body: JSON.stringify(status),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    return await response.json();
+  }
+
+  return useMutation((status) => createStatus(status), {
+    onSuccess: async (data, obj) => {
+      if (data?.status !== 200) {
+        return setToggleToast({
+          active: true,
+          message: `Something went wrong`,
+        });
+      }
+      const response = await data.json();
+      console.log(response);
+      // setProductSeo(response?.aiContent?.result);
+      // setAIKeywords("");
+
+      setToggleToast({
+        active: true,
+        message: `Generated content Successfully`,
+      });
+    },
+    onError: async () => {
+      setToggleToast({
+        active: true,
+        message: `Something went wrong`,
+      });
+    },
+    refetchOnWindowFocus: false,
+  });
+};
