@@ -114,12 +114,11 @@ export const useCreateSingleAIBasedSeo = () => {
   });
 };
 
-export const useUpdateProductSeoImgAlt = () => {
+export const useCreateBulkProductAISeo = () => {
   const fetch = useAuthenticatedFetch();
-  const { setCloseModal, setToggleToast, setOpenModal } = useUI();
-  const queryClient = useQueryClient();
+  const { setToggleToast } = useUI();
   async function createStatus(status) {
-    return await fetch(`/api/product/update-image-alt`, {
+    return await fetch(`/api/AI/product-bulk-seo`, {
       method: "POST",
       body: JSON.stringify(status),
       headers: {
@@ -138,22 +137,6 @@ export const useUpdateProductSeoImgAlt = () => {
       }
 
       const updatedData = await data.json();
-      const updatedInfo = updatedData?.productByID;
-      console.log("updatedInfo", updatedInfo);
-
-      setOpenModal({
-        view: "CREATE_PRODUCT_SEO",
-        isOpen: true,
-        data: {
-          title: `Product SEO (${updatedInfo?.title})`,
-          info: updatedInfo,
-        },
-      });
-
-      setToggleToast({
-        active: true,
-        message: `Submit Successfully`,
-      });
     },
     onError: async () => {
       setToggleToast({

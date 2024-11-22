@@ -224,19 +224,33 @@
   gap: 32px;
 }
 
+.product_bulk_AI_selection {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .app_product_bulk_image {
-  flex: 3;
+  flex: 4;
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
 .app_product_bulk_input {
-  flex: 4;
+  flex: 3;
 }
 
 .product_bulk_update_description {
-  flex: 5;
+  flex: 4;
+}
+
+.product_bulk_AI_button {
+  flex: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .app_product_bulk_update_button {
