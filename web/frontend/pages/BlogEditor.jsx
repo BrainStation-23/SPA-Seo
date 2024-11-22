@@ -34,7 +34,16 @@ import {
 } from "lexical";
 import { $generateHtmlFromNodes } from "@lexical/html";
 
-import { TextField } from "@shopify/polaris";
+import {
+  TextField,
+  Button,
+  VerticalStack,
+  Badge,
+  Label,
+  HorizontalStack,
+  Text,
+} from "@shopify/polaris";
+import { PlusIcon, XIcon } from "@shopify/polaris-icons";
 
 function Placeholder() {
   return <div className="editor-placeholder">Enter some rich text...</div>;
@@ -108,7 +117,9 @@ function Editor({ data }) {
             ErrorBoundary={LexicalErrorBoundary}
           />
           <HistoryPlugin />
-          <InsertTextButton generatedText={JSON.stringify(data?.aiResult)} />
+          <InsertTextButton
+            generatedText={data?.aiResult?.suggestion?.join("\n")}
+          />
           <TreeViewPlugin />
           <AutoFocusPlugin />
           <CodeHighlightPlugin />
@@ -124,47 +135,116 @@ function Editor({ data }) {
 }
 
 export default function EditorWrapper() {
-  const { data, mutate: generateContent } = useGenerateBlogContentAI();
-  const [input, setInput] = useState("");
-  const [textFieldInput, setTextFieldInput] = useState("");
+  const {
+    data,
+    mutate: generateContent,
+    isLoading,
+    isSuccess,
+  } = useGenerateBlogContentAI();
+  const [topic, setTopic] = useState("");
+  const [prompt, setPrompt] = useState("");
+  const [audience, setAudience] = useState("");
+  const [keywords, setKeywords] = useState([]);
+  const [keywordsInput, setKeywordsInput] = useState("");
+  const [textFieldOutput, setTextFieldOutput] = useState("");
 
+  const handleTopicChange = useCallback((value) => setTopic(value), []);
+  const handlePromptChange = useCallback((value) => setPrompt(value), []);
+  const handleAudienceChange = useCallback((value) => setAudience(value), []);
   const handleTextFieldChange = useCallback(
-    (value) => setTextFieldInput(value),
+    (value) => setTextFieldOutput(value),
+    []
+  );
+  const handleKeywordInputChange = useCallback(
+    (value) => setKeywordsInput(value),
     []
   );
 
   return (
     <div style={{ display: "flex", flexDirection: "row", gap: "1rem" }}>
-      <div>
-        <input
-          value={input}
-          onChange={(e) => {
-            setInput(e.target.value);
-          }}
-          type="text"
-        />
-        <button
-          onClick={() => {
-            generateContent(
-              { prompt: input },
-              {
-                onSuccess: () => {
-                  const textFieldInputValue = data?.aiResult?.suggestion
-                    ?.map((val, index) => `${index + 1}. ${val}`)
-                    .join("\n");
-                  setTextFieldInput(textFieldInputValue);
-                },
-              }
-            );
-          }}
-        >
-          generate outline
-        </button>
+      <div style={{ width: "20%" }}>
+        <VerticalStack gap={"1"}>
+          <TextField label="Topic" value={topic} onChange={handleTopicChange} />
+          <TextField
+            label="Prompt"
+            value={prompt}
+            onChange={handlePromptChange}
+          />
+          <TextField
+            label="Keywords"
+            helpText={
+              <HorizontalStack gap={"1"}>
+                {keywords.map((keyword, index) => (
+                  <Badge status="new" key={index}>
+                    <HorizontalStack
+                      blockAlign="center"
+                      align="center"
+                      gap={"1"}
+                    >
+                      <Text variant="bodySm">{keyword}</Text>
+                      <Button
+                        size="slim"
+                        plain
+                        icon={XIcon}
+                        onClick={() => {
+                          const newKeywords = Array.from(keywords);
+                          newKeywords.splice(index, 1);
+                          setKeywords(newKeywords);
+                        }}
+                      />
+                    </HorizontalStack>
+                  </Badge>
+                ))}
+              </HorizontalStack>
+            }
+            value={keywordsInput}
+            onChange={handleKeywordInputChange}
+            connectedRight={
+              <Button
+                primary
+                icon={PlusIcon}
+                onClick={() => {
+                  if (keywordsInput.length > 0) {
+                    setKeywords([...keywords, keywordsInput]);
+                    setKeywordsInput("");
+                  }
+                }}
+              ></Button>
+            }
+          />
+          <TextField
+            label="Audience type"
+            value={audience}
+            onChange={handleAudienceChange}
+          />
+          <Button
+            primary
+            onClick={() => {
+              if (input.length === 0) return;
+              generateContent(
+                { prompt: input },
+                {
+                  onSuccess: (data) => {
+                    const textFieldInputValue = data?.aiResult?.suggestion
+                      ?.map((val, index) => `${index + 1}. ${val}`)
+                      .join("\n");
+                    setTextFieldOutput(textFieldInputValue);
+                  },
+                }
+              );
+            }}
+          >
+            Generate outline
+          </Button>
+        </VerticalStack>
+
         <TextField
+          label="Output"
           multiline
-          value={textFieldInput}
+          value={textFieldOutput}
           onChange={handleTextFieldChange}
         />
+        <Button primary>Generate next</Button>
       </div>
       <div className="blog-editor">
         <Editor data={data} />

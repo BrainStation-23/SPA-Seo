@@ -169,7 +169,7 @@ export const useGenerateBlogContentAI = () => {
   const { setToggleToast } = useUI();
   const fetch = useAuthenticatedFetch();
   async function createStatus(status) {
-    const response = await fetch("/api/AI/blog-outline-generation", {
+    const response = await fetch("/api/AI/blog-generation", {
       method: "POST",
       body: JSON.stringify(status),
       headers: {
