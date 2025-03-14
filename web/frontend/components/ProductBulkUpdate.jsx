@@ -39,10 +39,13 @@ export default function ProductBulkUpdate() {
     isLoading: isBulkLoading,
   } = useProductUpdateBulkSeo();
 
-  const { mutate: createBulkAISeo } = useCreateBulkProductAISeo();
-
   const [formData, setFormData] = useState([]);
   const [formUpdatedData, setFormUpdatedData] = useState([]);
+  const [aiGenerateIndex, setAIGenerateIndex] = useState([]);
+  console.log("🚀 ~ ProductBulkUpdate ~ formUpdatedData:", formUpdatedData);
+
+  const { mutate: createBulkAISeo, isLoading: isAIBulkLoading } =
+    useCreateBulkProductAISeo(formData, setFormData, setFormUpdatedData);
 
   const handleSubmit = (seoContentList) => {
     if (seoContentList?.length === 0)
@@ -75,6 +78,7 @@ export default function ProductBulkUpdate() {
     };
     updateBulkSeo(newObj);
     setFormUpdatedData([]);
+    setSelectedRows([]);
   };
 
   const handleChange = (value, name, id) => {
@@ -152,13 +156,24 @@ export default function ProductBulkUpdate() {
     }
   }, [formData, selectedRows]);
 
-  const bulkGenerateWithAI = useCallback((term, value) => {
-    if (term == "all") {
-      createBulkAISeo(selectedRows);
-    } else {
-      createBulkAISeo([value]);
-    }
-  }, []);
+  const bulkGenerateWithAI = useCallback(
+    (term, value, index) => {
+      if (term == "all") {
+        if (selectedRows.length === 0) {
+          return setToggleToast({
+            active: true,
+            message: `Please select products to generate AI`,
+          });
+        }
+        setAIGenerateIndex(index);
+        createBulkAISeo({ term: term, product: selectedRows });
+      } else {
+        setAIGenerateIndex(index);
+        createBulkAISeo({ term: term, product: [value] });
+      }
+    },
+    [selectedRows]
+  );
 
   return (
     <>
@@ -195,8 +210,11 @@ export default function ProductBulkUpdate() {
                 </div>
                 <div className="product_bulk_AI_button bold_title">
                   <GenerateAIButton
-                    title="AI Generate (All)"
-                    onClick={() => bulkGenerateWithAI("all")}
+                    title="AI Generate"
+                    onClick={() => bulkGenerateWithAI("all", "", "all")}
+                    isLoading={isAIBulkLoading}
+                    index={"all"}
+                    aiGenerateIndex={aiGenerateIndex}
                   />
                 </div>
               </div>
@@ -255,7 +273,12 @@ export default function ProductBulkUpdate() {
                   <div className="product_bulk_AI_button">
                     <GenerateAIButton
                       title="AI Generate"
-                      onClick={() => bulkGenerateWithAI("single", info?.id)}
+                      onClick={() =>
+                        bulkGenerateWithAI("single", info?.id, index)
+                      }
+                      isLoading={isAIBulkLoading}
+                      index={index}
+                      aiGenerateIndex={aiGenerateIndex}
                     />
                   </div>
                 </div>

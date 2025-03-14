@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { useUI } from "../contexts/ui.context";
 import { useAI } from "../contexts/AI.context";
+import { mergeArrays } from "../utils/mergeArray";
 
 export const useAIQuery = ({ url, fetchInit = {}, reactQueryOptions }) => {
   const authenticatedFetch = useAuthenticatedFetch();
@@ -114,7 +115,11 @@ export const useCreateSingleAIBasedSeo = () => {
   });
 };
 
-export const useCreateBulkProductAISeo = () => {
+export const useCreateBulkProductAISeo = (
+  formData,
+  setFormData,
+  setFormUpdatedData
+) => {
   const fetch = useAuthenticatedFetch();
   const { setToggleToast } = useUI();
   async function createStatus(status) {
@@ -137,6 +142,21 @@ export const useCreateBulkProductAISeo = () => {
       }
 
       const updatedData = await data.json();
+      const aiResult = await mergeArrays(
+        formData,
+        updatedData?.aiResult?.suggestions
+      );
+      setFormData(aiResult);
+      const updatedFormData = updatedData?.aiResult?.suggestions.map((item) => {
+        return {
+          id: item.productId,
+          title: item.productTitle,
+          seo_title: item.metaTitle,
+          seo_description: item.metaDescription,
+        };
+      });
+      setFormUpdatedData(updatedFormData);
+      // console.log("🚀 ~ onSuccess: ~ updatedData:", aiResult, updatedData);
     },
     onError: async () => {
       setToggleToast({
