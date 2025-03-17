@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Button,
   Form,
   Spinner,
   Pagination,
   SkeletonBodyText,
+  Checkbox,
 } from "@shopify/polaris";
 import {
   useProductsQuery,
@@ -14,10 +15,12 @@ import { useUI } from "../contexts/ui.context";
 import TextareaField from "./commonUI/TextareaField";
 import { useSearchParams } from "react-router-dom";
 import { handleNext, handlePrevious } from "../utils/paginationUtils";
+import GenerateAIButton from "./commonUI/GenerateAIButton";
+import { useCreateBulkProductAISeo } from "../hooks/useAIQuery";
 
 export default function ProductBulkUpdate() {
   const { setToggleToast } = useUI();
-  const [loading, setLoading] = useState(false);
+  const [selectedRows, setSelectedRows] = useState([]);
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Extract `after` and `before` from URL
@@ -30,11 +33,19 @@ export default function ProductBulkUpdate() {
     limit: 10,
   });
 
-  const { mutate: updateBulkSeo, isError: isErrorForBulk } =
-    useProductUpdateBulkSeo();
+  const {
+    mutate: updateBulkSeo,
+    isError: isErrorForBulk,
+    isLoading: isBulkLoading,
+  } = useProductUpdateBulkSeo();
 
   const [formData, setFormData] = useState([]);
   const [formUpdatedData, setFormUpdatedData] = useState([]);
+  const [aiGenerateIndex, setAIGenerateIndex] = useState([]);
+  console.log("🚀 ~ ProductBulkUpdate ~ formUpdatedData:", formUpdatedData);
+
+  const { mutate: createBulkAISeo, isLoading: isAIBulkLoading } =
+    useCreateBulkProductAISeo(formData, setFormData, setFormUpdatedData);
 
   const handleSubmit = (seoContentList) => {
     if (seoContentList?.length === 0)
@@ -62,19 +73,12 @@ export default function ProductBulkUpdate() {
         } characters.`,
       });
     }
-    setLoading(true);
     const newObj = {
       products: seoContentList,
     };
-    updateBulkSeo(newObj, {
-      onSuccess: () => {
-        setLoading(false);
-      },
-      onError: () => {
-        setLoading(false);
-      },
-    });
+    updateBulkSeo(newObj);
     setFormUpdatedData([]);
+    setSelectedRows([]);
   };
 
   const handleChange = (value, name, id) => {
@@ -133,6 +137,44 @@ export default function ProductBulkUpdate() {
     setFormData(list);
   }, [data]);
 
+  // Handle single row selection
+  const handleRowSelect = useCallback((id) => {
+    setSelectedRows(
+      (prev) =>
+        prev.includes(id)
+          ? prev.filter((rowId) => rowId !== id) // Deselect
+          : [...prev, id] // Select
+    );
+  }, []);
+
+  // Handle select all
+  const handleSelectAll = useCallback(() => {
+    if (selectedRows.length === formData.length) {
+      setSelectedRows([]); // Deselect all
+    } else {
+      setSelectedRows(formData.map((row) => row.id)); // Select all
+    }
+  }, [formData, selectedRows]);
+
+  const bulkGenerateWithAI = useCallback(
+    (term, value, index) => {
+      if (term == "all") {
+        if (selectedRows.length === 0) {
+          return setToggleToast({
+            active: true,
+            message: `Please select products to generate AI`,
+          });
+        }
+        setAIGenerateIndex(index);
+        createBulkAISeo({ term: term, product: selectedRows });
+      } else {
+        setAIGenerateIndex(index);
+        createBulkAISeo({ term: term, product: [value] });
+      }
+    },
+    [selectedRows]
+  );
+
   return (
     <>
       <div className="app_product_bulk_update_container">
@@ -140,8 +182,8 @@ export default function ProductBulkUpdate() {
           <div className="seo_score_page_title_container">
             <div className="seo_score_page_title">Bulk Product SEO</div>
             <div className="">
-              <Button primary submit disabled={loading}>
-                {loading ? <Spinner size="small" /> : "Submit"}
+              <Button primary submit disabled={isBulkLoading}>
+                {isBulkLoading ? <Spinner size="small" /> : "Submit"}
               </Button>
             </div>
           </div>
@@ -150,6 +192,12 @@ export default function ProductBulkUpdate() {
           ) : (
             <>
               <div className="app_product_bulk_update">
+                <div className="product_bulk_AI_selection">
+                  <Checkbox
+                    checked={selectedRows?.length === formData?.length}
+                    onChange={handleSelectAll}
+                  />
+                </div>
                 <div className="app_product_bulk_image">
                   <div className="bold_title">Image</div>
                   <div className="app_product_bulk_title bold_title">Name</div>
@@ -160,9 +208,24 @@ export default function ProductBulkUpdate() {
                 <div className="product_bulk_update_description bold_title">
                   Meta Description
                 </div>
+                <div className="product_bulk_AI_button bold_title">
+                  <GenerateAIButton
+                    title="AI Generate"
+                    onClick={() => bulkGenerateWithAI("all", "", "all")}
+                    isLoading={isAIBulkLoading}
+                    index={"all"}
+                    aiGenerateIndex={aiGenerateIndex}
+                  />
+                </div>
               </div>
               {formData?.map((info, index) => (
                 <div position={index} className="app_product_bulk_update">
+                  <div className="product_bulk_AI_selection">
+                    <Checkbox
+                      checked={selectedRows.includes(info.id)}
+                      onChange={() => handleRowSelect(info.id)}
+                    />
+                  </div>
                   <div className="app_product_bulk_image">
                     <img
                       src={info?.featuredImage?.url}
@@ -206,6 +269,17 @@ export default function ProductBulkUpdate() {
                         characters.
                       </p>
                     )}
+                  </div>
+                  <div className="product_bulk_AI_button">
+                    <GenerateAIButton
+                      title="AI Generate"
+                      onClick={() =>
+                        bulkGenerateWithAI("single", info?.id, index)
+                      }
+                      isLoading={isAIBulkLoading}
+                      index={index}
+                      aiGenerateIndex={aiGenerateIndex}
+                    />
                   </div>
                 </div>
               ))}

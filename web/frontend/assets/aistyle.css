@@ -27,6 +27,27 @@
   border-radius: 8px;
 }
 
+.ai-button-with-text {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgba(221, 224, 228, 1);
+  padding: 8px 12px;
+  cursor: pointer;
+  background-color: #459a4e;
+  color: #ffffff;
+  border-radius: 8px;
+  width: 100%;
+}
+
+.ai-button-generate-text {
+  font-size: 14px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+}
+
 .ai-content-generation {
   display: flex;
   flex-direction: column;

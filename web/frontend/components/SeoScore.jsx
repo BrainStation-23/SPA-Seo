@@ -1,26 +1,26 @@
 import React from "react";
-import { Spinners } from "./Spinner";
 import { useSeoInsightsQuery } from "../hooks/useShopQuery";
+import { SkeletonBodyText } from "@shopify/polaris";
 
 export function PageSpeedInsights() {
   const { data, isLoading } = useSeoInsightsQuery({ url: "api/seo/insights" });
 
   return (
     <div className="app__seo_score_container">
-      {isLoading ? (
-        <Spinners />
-      ) : (
-        <>
-          <div className="seo_score_page_title_container">
-            <div>
-              <div className="seo_score_page_title">SEO Insights</div>
-              <p className="seo_score_page_description">
-                SEO Insights is a powerful tool designed to optimize website
-                performance, providing a detailed assessment of your site based
-                on Google's key evaluation criteria
-              </p>
-            </div>
+      <>
+        <div className="seo_score_page_title_container">
+          <div>
+            <div className="seo_score_page_title">SEO Insights</div>
+            <p className="seo_score_page_description">
+              SEO Insights is a powerful tool designed to optimize website
+              performance, providing a detailed assessment of your site based on
+              Google's key evaluation criteria
+            </p>
           </div>
+        </div>
+        {isLoading ? (
+          <SkeletonBodyText lines={20} />
+        ) : (
           <div className="seo_score_container_grid">
             {data?.map((seoInfo, index) => (
               <div className="seo_score_container" key={index}>
@@ -53,8 +53,8 @@ export function PageSpeedInsights() {
               </div>
             ))}
           </div>
-        </>
-      )}
+        )}
+      </>
     </div>
   );
 }

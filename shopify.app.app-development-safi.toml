@@ -3,7 +3,7 @@
 client_id = "fddd9dc89a2aed1a91a8455b44b41c49"
 name = "app-development-safi"
 handle = "app-development-6"
-application_url = "https://something-integrating-ss-tampa.trycloudflare.com"
+application_url = "https://reception-location-suggested-er.trycloudflare.com"
 embedded = true
 
 [build]
@@ -16,9 +16,9 @@ scopes = "read_content,read_customers,read_products,write_content,write_products
 
 [auth]
 redirect_urls = [
-  "https://something-integrating-ss-tampa.trycloudflare.com/auth/callback",
-  "https://something-integrating-ss-tampa.trycloudflare.com/auth/shopify/callback",
-  "https://something-integrating-ss-tampa.trycloudflare.com/api/auth/callback"
+  "https://reception-location-suggested-er.trycloudflare.com/auth/callback",
+  "https://reception-location-suggested-er.trycloudflare.com/auth/shopify/callback",
+  "https://reception-location-suggested-er.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]

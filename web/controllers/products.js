@@ -1,3 +1,4 @@
+import { fetchAllProductsQuery } from "../graphql/product.js";
 import shopify from "../shopify.js";
 
 const fetchAllProducts = async (session, variables) => {
@@ -255,6 +256,27 @@ export const updateProductSEO = async (req, res, next) => {
       "Failed to update product SEO:",
       error.response?.errors || error.message
     );
+  }
+};
+
+export const getProducts = async (session, productsIds) => {
+  try {
+    const pIds = productsIds.map((gid) => `id:${gid}`).join(" OR ");
+    const queryString = await fetchAllProductsQuery();
+    const client = new shopify.api.clients.Graphql({ session });
+
+    const productsInfo = await client.query({
+      data: {
+        query: queryString,
+        variables: {
+          productIds: pIds,
+        },
+      },
+    });
+    return productsInfo?.body?.data;
+  } catch (error) {
+    console.log("🚀 ~ getProducts ~ error:", error);
+    throw error;
   }
 };
 

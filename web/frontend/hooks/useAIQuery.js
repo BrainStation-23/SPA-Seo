@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { useUI } from "../contexts/ui.context";
 import { useAI } from "../contexts/AI.context";
+import { mergeArrays } from "../utils/mergeArray";
 
 export const useAIQuery = ({ url, fetchInit = {}, reactQueryOptions }) => {
   const authenticatedFetch = useAuthenticatedFetch();
@@ -114,12 +115,15 @@ export const useCreateSingleAIBasedSeo = () => {
   });
 };
 
-export const useUpdateProductSeoImgAlt = () => {
+export const useCreateBulkProductAISeo = (
+  formData,
+  setFormData,
+  setFormUpdatedData
+) => {
   const fetch = useAuthenticatedFetch();
-  const { setCloseModal, setToggleToast, setOpenModal } = useUI();
-  const queryClient = useQueryClient();
+  const { setToggleToast } = useUI();
   async function createStatus(status) {
-    return await fetch(`/api/product/update-image-alt`, {
+    return await fetch(`/api/AI/product-bulk-seo`, {
       method: "POST",
       body: JSON.stringify(status),
       headers: {
@@ -138,22 +142,21 @@ export const useUpdateProductSeoImgAlt = () => {
       }
 
       const updatedData = await data.json();
-      const updatedInfo = updatedData?.productByID;
-      console.log("updatedInfo", updatedInfo);
-
-      setOpenModal({
-        view: "CREATE_PRODUCT_SEO",
-        isOpen: true,
-        data: {
-          title: `Product SEO (${updatedInfo?.title})`,
-          info: updatedInfo,
-        },
+      const aiResult = await mergeArrays(
+        formData,
+        updatedData?.aiResult?.suggestions
+      );
+      setFormData(aiResult);
+      const updatedFormData = updatedData?.aiResult?.suggestions.map((item) => {
+        return {
+          id: item.productId,
+          title: item.productTitle,
+          seo_title: item.metaTitle,
+          seo_description: item.metaDescription,
+        };
       });
-
-      setToggleToast({
-        active: true,
-        message: `Submit Successfully`,
-      });
+      setFormUpdatedData(updatedFormData);
+      // console.log("🚀 ~ onSuccess: ~ updatedData:", aiResult, updatedData);
     },
     onError: async () => {
       setToggleToast({
