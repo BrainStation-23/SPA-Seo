@@ -3,6 +3,7 @@ import shopify from "../shopify.js";
 
 const fetchAllProducts = async (session, variables) => {
   const query = generateProductQuery(variables);
+  console.log("🚀 ~ fetchAllProducts ~ query:", query);
 
   const client = new shopify.api.clients.Graphql({
     session: session,
@@ -23,8 +24,12 @@ const fetchAllProducts = async (session, variables) => {
 
 const generateProductQuery = (variables) => {
   let query = `
-    query ($count: Int!, $cursor: String) {
-      products(first: $count, after: $cursor, reverse: true, sortKey: CREATED_AT) {
+    query ($count: Int!, $cursor: String${
+      variables?.searchTerm ? ", $searchTerm: String" : ""
+    }) {
+      products(first: $count, after: $cursor, ${
+        variables?.searchTerm ? "query: $searchTerm," : ""
+      } reverse: true, sortKey: CREATED_AT) {
         edges {
           node {
             id
@@ -96,11 +101,17 @@ export const productsController = async (req, res, next) => {
     const afterCursor = req?.query?.afterCursor;
     const beforeCursor = req?.query?.beforeCursor;
     const limit = req?.query?.limit;
+    const searchTerm = req?.query?.searchTerm;
     let variables = {
       count: +limit,
       cursor: afterCursor || beforeCursor || null,
       after: afterCursor || null,
       before: beforeCursor || null,
+      searchTerm: searchTerm
+        ? /^\d+$/.test(searchTerm)
+          ? `id:${searchTerm}`
+          : `title:*${searchTerm}*`
+        : null,
     };
 
     const data = await fetchAllProducts(res.locals.shopify.session, variables);

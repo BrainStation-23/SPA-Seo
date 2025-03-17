@@ -17,10 +17,12 @@ import { useSearchParams } from "react-router-dom";
 import { handleNext, handlePrevious } from "../utils/paginationUtils";
 import GenerateAIButton from "./commonUI/GenerateAIButton";
 import { useCreateBulkProductAISeo } from "../hooks/useAIQuery";
+import Search from "./commonUI/Search";
 
 export default function ProductBulkUpdate() {
   const { setToggleToast } = useUI();
   const [selectedRows, setSelectedRows] = useState([]);
+  const [searchTerm, setSearchTerm] = useState(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Extract `after` and `before` from URL
@@ -31,6 +33,7 @@ export default function ProductBulkUpdate() {
     afterCursor,
     beforeCursor,
     limit: 10,
+    searchTerm: searchTerm,
   });
 
   const {
@@ -181,6 +184,7 @@ export default function ProductBulkUpdate() {
         <Form onSubmit={() => handleSubmit(formUpdatedData)}>
           <div className="seo_score_page_title_container">
             <div className="seo_score_page_title">Bulk Product SEO</div>
+            <Search setSearchTerm={setSearchTerm} />
             <div className="">
               <Button primary submit disabled={isBulkLoading}>
                 {isBulkLoading ? <Spinner size="small" /> : "Submit"}
