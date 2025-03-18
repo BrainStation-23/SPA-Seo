@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   IndexTable,
   Text,
@@ -12,9 +12,11 @@ import { IndexTableData } from "./commonUI/IndexTable";
 // import { Spinners } from "./Spinner";
 import { useUI } from "../contexts/ui.context";
 import { useSearchParams } from "react-router-dom";
+import Search from "./commonUI/Search";
 
 export default function Product() {
   const { setOpenModal, modal } = useUI();
+  const [searchTerm, setSearchTerm] = useState(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Extract `after` and `before` from URL
@@ -25,6 +27,7 @@ export default function Product() {
     afterCursor,
     beforeCursor,
     limit: 10,
+    searchTerm: searchTerm,
   });
 
   useEffect(() => {
@@ -97,6 +100,7 @@ export default function Product() {
       <VerticalStack gap="2">
         <div className="seo_score_page_title_container">
           <div className="seo_score_page_title">Product SEO</div>
+          <Search setSearchTerm={setSearchTerm} />
         </div>
         {isLoading && !isError ? (
           <SkeletonBodyText lines={20} />

@@ -452,6 +452,11 @@
   width: 36px;
 }
 
+.product__search_container {
+  display: flex;
+  gap: 12px;
+}
+
 @media (max-width: 850px) {
   .app__container {
     gap: 2px;

@@ -7,25 +7,32 @@ export const useProductsQuery = ({
   afterCursor,
   beforeCursor,
   limit,
+  searchTerm,
   fetchInit = {},
 }) => {
   const authenticatedFetch = useAuthenticatedFetch();
   const url = `/api/product/list?afterCursor=${
     afterCursor || ""
-  }&beforeCursor=${beforeCursor || ""}&limit=${limit}`;
+  }&beforeCursor=${beforeCursor || ""}&limit=${limit}&searchTerm=${
+    searchTerm || ""
+  }`;
   const { modal } = useUI();
   const fetch = useMemo(() => {
     return async () => {
       const response = await authenticatedFetch(url, fetchInit);
       return response.json();
     };
-  }, [url, afterCursor, beforeCursor]);
+  }, [url, afterCursor, beforeCursor, searchTerm]);
 
-  return useQuery(["productList", afterCursor, beforeCursor], fetch, {
-    onSuccess: (data) => {},
-    refetchOnWindowFocus: false,
-    enabled: !modal?.isOpen,
-  });
+  return useQuery(
+    ["productList", afterCursor, beforeCursor, searchTerm],
+    fetch,
+    {
+      onSuccess: (data) => {},
+      refetchOnWindowFocus: false,
+      enabled: !modal?.isOpen,
+    }
+  );
 };
 
 export const useProductsQueryByID = ({ url, id }) => {
