@@ -47,8 +47,7 @@ export const useProductsQueryByID = ({ url, id }) => {
 
 export const useCreateCollectionSeo = () => {
   const fetch = useAuthenticatedFetch();
-  const { setCloseModal, setToggleToast, setOpenModal } = useUI();
-  const queryClient = useQueryClient();
+  const { setToggleToast, setOpenModal, setToggleAIButton } = useUI();
   async function createStatus(status) {
     return await fetch("/api/collection/update-collection-seo", {
       method: "POST",
@@ -82,6 +81,7 @@ export const useCreateCollectionSeo = () => {
         active: true,
         message: `Submit Successfully`,
       });
+      setTimeout(() => setToggleAIButton({ active: false, data: null }), 500);
     },
     onError: async () => {
       setToggleToast({

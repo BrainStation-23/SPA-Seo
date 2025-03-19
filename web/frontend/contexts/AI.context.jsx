@@ -2,6 +2,7 @@ import React from "react";
 
 const initialState = {
   productSeo: {},
+  collectionSeo: {},
 };
 
 export const AIContext = React.createContext(initialState);
@@ -18,6 +19,14 @@ function uiReducer(state, action) {
         },
       };
     }
+    case "SET_COLLECTION_SEO": {
+      return {
+        ...state,
+        collectionSeo: {
+          ...action.payload,
+        },
+      };
+    }
   }
 }
 
@@ -27,10 +36,14 @@ export const AIProvider = (props) => {
   const setProductSeo = (payload) =>
     dispatch({ type: "SET_PRODUCT_SEO", payload });
 
+  const setCollectionSeo = (payload) =>
+    dispatch({ type: "SET_COLLECTION_SEO", payload });
+
   const value = React.useMemo(
     () => ({
       ...state,
       setProductSeo,
+      setCollectionSeo,
     }),
     [state]
   );
