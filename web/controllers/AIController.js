@@ -3,6 +3,7 @@ import {
   formatJSONResultForList,
 } from "../utils/formatJSONResult.js";
 import AzureOpenAIService from "../utils/getAIContext.js";
+import { getCollectionByID } from "./collections.js";
 import { getProductByID, getProducts } from "./products.js";
 
 const seoAI = new AzureOpenAIService();
@@ -10,17 +11,30 @@ const seoAI = new AzureOpenAIService();
 export const aiSeoContentController = async (req, res, next) => {
   try {
     const requestInfo = req?.body;
-    const productInfo = await getProductByID(
-      res.locals.shopify.session,
-      requestInfo?.productId
+    let responseInfo = {};
+    if (requestInfo?.item === "collection") {
+      responseInfo = await getCollectionByID(
+        res.locals.shopify.session,
+        requestInfo?.productId
+      );
+    } else {
+      responseInfo = await getProductByID(
+        res.locals.shopify.session,
+        requestInfo?.productId
+      );
+    }
+    console.log(
+      "🚀 ~ aiSeoContentController ~ responseInfo:",
+      requestInfo,
+      responseInfo
     );
 
     const messages = [
       {
         role: "user",
         content: `Give me five suggestions for meta title and description for better seo. Product information like ${JSON.stringify(
-          productInfo
-        )}. Check the product information and ${
+          responseInfo
+        )}. Check the information and ${
           requestInfo?.suggestionKeywords
             ? `please consider these keywords: ${requestInfo?.suggestionKeywords}, for generating content`
             : "response must be new suggestions every time"

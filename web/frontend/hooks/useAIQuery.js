@@ -26,7 +26,7 @@ export const useAIQuery = ({ url, fetchInit = {}, reactQueryOptions }) => {
 export const useCreateAIBasedSeo = (setAIKeywords) => {
   const fetch = useAuthenticatedFetch();
   const { setToggleToast } = useUI();
-  const { setProductSeo } = useAI();
+  const { setProductSeo, setCollectionSeo } = useAI();
   async function createStatus(status) {
     return await fetch("/api/AI/seo-generation", {
       method: "POST",
@@ -46,7 +46,11 @@ export const useCreateAIBasedSeo = (setAIKeywords) => {
         });
       }
       const response = await data.json();
-      setProductSeo(response?.aiContent?.result);
+      if (obj?.item === "collection") {
+        setCollectionSeo(response?.aiContent?.result);
+      } else {
+        setProductSeo(response?.aiContent?.result);
+      }
       setAIKeywords("");
 
       setToggleToast({
@@ -67,7 +71,8 @@ export const useCreateAIBasedSeo = (setAIKeywords) => {
 export const useCreateSingleAIBasedSeo = () => {
   const fetch = useAuthenticatedFetch();
   const { setToggleToast } = useUI();
-  const { setProductSeo, productSeo } = useAI();
+  const { setProductSeo, productSeo, collectionSeo, setCollectionSeo } =
+    useAI();
   async function createStatus(status) {
     return await fetch("/api/AI/single-seo", {
       method: "POST",
@@ -88,16 +93,30 @@ export const useCreateSingleAIBasedSeo = () => {
       }
       const response = await data.json();
 
-      if (response?.aiResult?.name === "ai_metaTitle_title") {
-        let arr = [...productSeo?.metaTitle];
-        arr[response?.aiResult?.index] = response?.aiResult?.suggestion;
-        let metaSeo = { ...productSeo, metaTitle: arr };
-        setProductSeo(metaSeo);
+      if (obj?.item === "collection") {
+        if (response?.aiResult?.name === "ai_metaTitle_title") {
+          let arr = [...collectionSeo?.metaTitle];
+          arr[response?.aiResult?.index] = response?.aiResult?.suggestion;
+          let metaSeo = { ...collectionSeo, metaTitle: arr };
+          setCollectionSeo(metaSeo);
+        } else {
+          let arr = [...collectionSeo?.metaDescription];
+          arr[response?.aiResult?.index] = response?.aiResult?.suggestion;
+          let descSeo = { ...collectionSeo, metaDescription: arr };
+          setCollectionSeo(descSeo);
+        }
       } else {
-        let arr = [...productSeo?.metaDescription];
-        arr[response?.aiResult?.index] = response?.aiResult?.suggestion;
-        let descSeo = { ...productSeo, metaDescription: arr };
-        setProductSeo(descSeo);
+        if (response?.aiResult?.name === "ai_metaTitle_title") {
+          let arr = [...productSeo?.metaTitle];
+          arr[response?.aiResult?.index] = response?.aiResult?.suggestion;
+          let metaSeo = { ...productSeo, metaTitle: arr };
+          setProductSeo(metaSeo);
+        } else {
+          let arr = [...productSeo?.metaDescription];
+          arr[response?.aiResult?.index] = response?.aiResult?.suggestion;
+          let descSeo = { ...productSeo, metaDescription: arr };
+          setProductSeo(descSeo);
+        }
       }
 
       setToggleToast({
