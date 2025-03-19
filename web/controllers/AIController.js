@@ -3,7 +3,7 @@ import {
   formatJSONResultForList,
 } from "../utils/formatJSONResult.js";
 import AzureOpenAIService from "../utils/getAIContext.js";
-import { getCollectionByID } from "./collections.js";
+import { getCollectionByID, getCollections } from "./collections.js";
 import { getProductByID, getProducts } from "./products.js";
 
 const seoAI = new AzureOpenAIService();
@@ -117,19 +117,28 @@ export const aiSeoBulkContent = async (req, res) => {
   try {
     const requestInfo = req.body;
     const productIds = requestInfo?.product?.map((p) => p.split("/").pop());
-    const productsInfo = await getProducts(
-      res.locals.shopify.session,
-      productIds
-    );
+    let responseBody = [];
+    if (requestInfo?.item === "collection") {
+      const collectionList = await getCollections(
+        res.locals.shopify.session,
+        productIds
+      );
+      responseBody = collectionList?.collections?.edges;
+    } else {
+      const productsInfo = await getProducts(
+        res.locals.shopify.session,
+        productIds
+      );
 
-    const productList = productsInfo?.products?.edges;
+      responseBody = productsInfo?.products?.edges;
+    }
 
     const messages = [
       {
         role: "user",
         content: `Give best suggestions for meta title and description for better seo. Product information like ${JSON.stringify(
-          productList
-        )}. Check the products information. give the list of products meta information. Response must be new suggestions every time"
+          responseBody
+        )}. Check the products/collections information. give the list of products/collections meta information. Response must be new suggestions every time"
           }. suggestion should include:
           1. Meta Title
           2. Meta Description

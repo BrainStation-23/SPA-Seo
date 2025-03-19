@@ -1,6 +1,6 @@
 import { useAuthenticatedFetch } from "./useAuthenticatedFetch";
 import { useMemo } from "react";
-import { useMutation, useQuery, useQueryClient } from "react-query";
+import { useMutation, useQuery } from "react-query";
 import { useUI } from "../contexts/ui.context";
 import { useAI } from "../contexts/AI.context";
 import { mergeArrays } from "../utils/mergeArray";
@@ -174,8 +174,28 @@ export const useCreateBulkProductAISeo = (
           seo_description: item.metaDescription,
         };
       });
-      setFormUpdatedData(updatedFormData);
-      // console.log("🚀 ~ onSuccess: ~ updatedData:", aiResult, updatedData);
+
+      setFormUpdatedData((prevData) => {
+        const mergedData = [...prevData];
+
+        updatedFormData.forEach((newItem) => {
+          const existingIndex = mergedData.findIndex(
+            (item) => item.id === newItem.id
+          );
+          if (existingIndex !== -1) {
+            // Update existing item
+            mergedData[existingIndex] = {
+              ...mergedData[existingIndex],
+              ...newItem,
+            };
+          } else {
+            // Add new item
+            mergedData.push(newItem);
+          }
+        });
+
+        return mergedData;
+      });
     },
     onError: async () => {
       setToggleToast({

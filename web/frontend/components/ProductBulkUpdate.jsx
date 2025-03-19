@@ -45,7 +45,6 @@ export default function ProductBulkUpdate() {
   const [formData, setFormData] = useState([]);
   const [formUpdatedData, setFormUpdatedData] = useState([]);
   const [aiGenerateIndex, setAIGenerateIndex] = useState([]);
-  console.log("🚀 ~ ProductBulkUpdate ~ formUpdatedData:", formUpdatedData);
 
   const { mutate: createBulkAISeo, isLoading: isAIBulkLoading } =
     useCreateBulkProductAISeo(formData, setFormData, setFormUpdatedData);
