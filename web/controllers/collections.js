@@ -1,3 +1,4 @@
+import { fetchAllCollectionQuery } from "../graphql/collection.js";
 import shopify from "../shopify.js";
 
 const collectionQuery = (variables) => {
@@ -375,5 +376,26 @@ export const updateImageSeoAltController = async (req, res, next) => {
       err
     );
     res.status(400).json({ err });
+  }
+};
+
+export const getCollections = async (session, collectionsIds) => {
+  try {
+    const pIds = collectionsIds.map((gid) => `id:${gid}`).join(" OR ");
+    const queryString = await fetchAllCollectionQuery();
+    const client = new shopify.api.clients.Graphql({ session });
+
+    const collectionInfo = await client.query({
+      data: {
+        query: queryString,
+        variables: {
+          collectionIds: pIds,
+        },
+      },
+    });
+    return collectionInfo?.body?.data;
+  } catch (error) {
+    console.log("🚀 ~ getProducts ~ error:", error);
+    throw error;
   }
 };
