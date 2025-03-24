@@ -167,3 +167,18 @@ export const aiSeoBulkContent = async (req, res) => {
     console.log("🚀 ~ aiSeoSingleContent ~ error:", error);
   }
 };
+
+export const blogGenerateAIContent = async (req, res) => {
+  try {
+    const requestInfo = req.body;
+    return res.status(200).json({
+      status: "Success",
+      aiResult: requestInfo,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      status: "failed",
+      error: error,
+    });
+  }
+};

@@ -206,3 +206,48 @@ export const useCreateBulkProductAISeo = (
     refetchOnWindowFocus: false,
   });
 };
+
+export const useCreateAIBasedBlogSeo = () => {
+  const fetch = useAuthenticatedFetch();
+  const { setToggleToast } = useUI();
+  const { setProductSeo, setCollectionSeo } = useAI();
+  async function createStatus(status) {
+    return await fetch("/api/AI/seo-generation", {
+      method: "POST",
+      body: JSON.stringify(status),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  }
+
+  return useMutation((status) => createStatus(status), {
+    onSuccess: async (data, obj) => {
+      if (data?.status === 400) {
+        return setToggleToast({
+          active: true,
+          message: `Something went wrong`,
+        });
+      }
+      const response = await data.json();
+      // if (obj?.item === "collection") {
+      //   setCollectionSeo(response?.aiContent?.result);
+      // } else {
+      //   setProductSeo(response?.aiContent?.result);
+      // }
+      // setAIKeywords("");
+
+      setToggleToast({
+        active: true,
+        message: `Submit Successfully`,
+      });
+    },
+    onError: async () => {
+      setToggleToast({
+        active: true,
+        message: `Something went wrong`,
+      });
+    },
+    refetchOnWindowFocus: false,
+  });
+};
