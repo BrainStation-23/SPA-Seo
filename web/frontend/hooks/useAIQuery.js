@@ -207,12 +207,11 @@ export const useCreateBulkProductAISeo = (
   });
 };
 
-export const useCreateAIBasedBlogSeo = () => {
+export const useCreateAIBasedBlogSeo = (setContent, setBlogTitle) => {
   const fetch = useAuthenticatedFetch();
   const { setToggleToast } = useUI();
-  const { setProductSeo, setCollectionSeo } = useAI();
   async function createStatus(status) {
-    return await fetch("/api/AI/seo-generation", {
+    return await fetch("/api/AI/blog-generation", {
       method: "POST",
       body: JSON.stringify(status),
       headers: {
@@ -230,17 +229,47 @@ export const useCreateAIBasedBlogSeo = () => {
         });
       }
       const response = await data.json();
-      // if (obj?.item === "collection") {
-      //   setCollectionSeo(response?.aiContent?.result);
-      // } else {
-      //   setProductSeo(response?.aiContent?.result);
-      // }
-      // setAIKeywords("");
+      setContent(response?.aiResult?.content);
+      setBlogTitle(response?.aiResult?.title);
 
       setToggleToast({
         active: true,
-        message: `Submit Successfully`,
+        message: `Blog Generated Successfully`,
       });
+    },
+    onError: async () => {
+      setToggleToast({
+        active: true,
+        message: `Something went wrong`,
+      });
+    },
+    refetchOnWindowFocus: false,
+  });
+};
+
+export const useReGenerateBlogTitleSeo = (setBlogTitle) => {
+  const fetch = useAuthenticatedFetch();
+  const { setToggleToast } = useUI();
+  async function createStatus(status) {
+    return await fetch("/api/AI/blog-title-regeneration", {
+      method: "POST",
+      body: JSON.stringify(status),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  }
+
+  return useMutation((status) => createStatus(status), {
+    onSuccess: async (data, obj) => {
+      if (data?.status === 400) {
+        return setToggleToast({
+          active: true,
+          message: `Something went wrong`,
+        });
+      }
+      const response = await data.json();
+      setBlogTitle(response?.aiResult?.title);
     },
     onError: async () => {
       setToggleToast({

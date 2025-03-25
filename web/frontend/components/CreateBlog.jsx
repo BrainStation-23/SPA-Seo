@@ -2,21 +2,25 @@ import { Grid, Button, EmptyState, Spinner } from "@shopify/polaris";
 import { SingleChoiceList } from "./commonUI/ChoiceList";
 import { Selection } from "./commonUI/Selection";
 import { InputField } from "./commonUI/InputField";
-import TrixEditor from "./TrixEditor";
 import { useCallback, useEffect, useState } from "react";
 import { useUI } from "../contexts/ui.context";
-import { useCreateAIBasedBlogSeo } from "../hooks/useAIQuery";
+import {
+  useCreateAIBasedBlogSeo,
+  useReGenerateBlogTitleSeo,
+} from "../hooks/useAIQuery";
+import QuillEditor from "./TrixEditor";
 
 export default function CreateBlog() {
-  const [content, setContent] = useState(
-    "<p>Hello man this the best thing writing here...</p>"
-  );
+  const [content, setContent] = useState("<p>Write here...</p>");
+  const [blogTitle, setBlogTitle] = useState("");
   const {
     mutate: createAIBlog,
     isError,
     isLoading,
     data,
-  } = useCreateAIBasedBlogSeo();
+  } = useCreateAIBasedBlogSeo(setContent, setBlogTitle);
+  const { mutate: reGenerateBlogTitle, isLoading: isReGenerateLoading } =
+    useReGenerateBlogTitleSeo(setBlogTitle);
 
   const { modal } = useUI();
   const [formData, setFormData] = useState({
@@ -38,10 +42,13 @@ export default function CreateBlog() {
     blog_ID: "",
   });
 
-  const handleChange = useCallback((value, name) => {
-    setFormData({ ...formData, [name]: value });
-    setErrors({ ...errors, [name]: "" });
-  }, []);
+  const handleChange = useCallback(
+    (value, name) => {
+      setFormData({ ...formData, [name]: value });
+      setErrors({ ...errors, [name]: "" });
+    },
+    [formData]
+  );
 
   const modalList = modal?.data?.blogList?.map((item) => {
     return {
@@ -60,6 +67,16 @@ export default function CreateBlog() {
     createAIBlog(obj);
   }, []);
 
+  const onTitleReGenerate = useCallback((blogTitle, obj) => {
+    if (!blogTitle) {
+      return setToggleToast({
+        active: true,
+        message: `Please enter Blog title`,
+      });
+    }
+    reGenerateBlogTitle({ previousTitle: blogTitle, ...obj });
+  }, []);
+
   useEffect(() => {
     if (modal?.data?.blogList?.length) {
       setFormData({ ...formData, blog_ID: modal?.data?.blogList?.[0].id });
@@ -68,7 +85,7 @@ export default function CreateBlog() {
 
   return (
     <Grid>
-      <Grid.Cell columnSpan={{ xs: 6, sm: 3, md: 3, lg: 6, xl: 4 }}>
+      <Grid.Cell columnSpan={{ xs: 6, sm: 3, md: 3, lg: 3, xl: 4 }}>
         <div className="card_container">
           <div className="card_content_container">
             <SingleChoiceList
@@ -150,7 +167,7 @@ export default function CreateBlog() {
           </div>
         </div>
       </Grid.Cell>
-      <Grid.Cell columnSpan={{ xs: 6, sm: 3, md: 3, lg: 6, xl: 8 }}>
+      <Grid.Cell columnSpan={{ xs: 6, sm: 3, md: 3, lg: 9, xl: 8 }}>
         <div className="card_content_container blog_generate_container">
           {isLoading ? (
             <Spinner size="large" />
@@ -168,13 +185,25 @@ export default function CreateBlog() {
                       Update Blog Post
                     </Button>
                   </div>
-                  <InputField label={"Title"} placeholder={"Title"} />
+                  <InputField
+                    label={"Title"}
+                    placeholder={"Title"}
+                    value={blogTitle}
+                    onChange={(value) => setBlogTitle(value)}
+                  />
                   <div className="blog_generate_AI_update_button">
-                    <Button plain onClick={() => onSubmit(formData)}>
-                      Re-generate title
+                    <Button
+                      plain
+                      onClick={() => onTitleReGenerate(blogTitle, formData)}
+                    >
+                      {isReGenerateLoading ? (
+                        <Spinner size="small" />
+                      ) : (
+                        "Re-generate title"
+                      )}
                     </Button>
                   </div>
-                  <TrixEditor value={content} onChange={setContent} />
+                  <QuillEditor value={content} onChange={setContent} />
                 </div>
               )}
             </>

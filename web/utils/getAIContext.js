@@ -20,7 +20,7 @@ class AzureOpenAIService {
       const response = await this.openAiApi.createChatCompletion({
         model: deploymentName,
         messages: messages, //[{ role: "user", content: "hi and hello" }],
-        max_tokens: 500, // Corrected parameter
+        max_tokens: 5000, // Corrected parameter
         temperature: 0.9,
         top_p: 1, // Corrected to `top_p` as well
         presence_penalty: 0,

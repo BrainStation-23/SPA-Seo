@@ -1,40 +1,35 @@
-import React from "react";
+import React, { useState } from "react";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 
-import { useEffect, useRef } from "react";
-import "trix/dist/trix.css";
-import "trix";
+const modules = {
+  toolbar: [
+    [{ header: [1, 2, false] }],
+    ["bold", "italic", "underline", "strike"],
+    [{ list: "ordered" }, { list: "bullet" }],
+    ["link", "image"], // Add image support
+  ],
+};
 
-export default function TrixEditor({ value, onChange }) {
-  const inputRef = useRef(null);
-
-  useEffect(() => {
-    const handleChange = (event) => {
-      onChange(event.target.value);
-    };
-
-    const inputElement = inputRef.current;
-    if (inputElement) {
-      inputElement.addEventListener("trix-change", handleChange);
-    }
-
-    // Cleanup
-    return () => {
-      if (inputElement) {
-        inputElement.removeEventListener("trix-change", handleChange);
-      }
-    };
-  }, [onChange]);
-
+export default function QuillEditor({ value, onChange }) {
   return (
-    <div className="trix-editor-container">
-      <input
-        type="hidden"
-        ref={inputRef}
-        id="trix-input"
+    <div>
+      <ReactQuill
         value={value}
-        onChange={() => {}}
+        onChange={onChange}
+        modules={modules}
+        formats={[
+          "header",
+          "bold",
+          "italic",
+          "underline",
+          "strike",
+          "list",
+          "bullet",
+          "link",
+          "image",
+        ]}
       />
-      <trix-editor input="trix-input" />
     </div>
   );
 }
