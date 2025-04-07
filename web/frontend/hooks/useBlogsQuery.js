@@ -196,3 +196,40 @@ export const useUpdateArticleSeoImgAlt = () => {
     refetchOnWindowFocus: false,
   });
 };
+
+export const useUploadBlogFileSeo = () => {
+  const fetch = useAuthenticatedFetch();
+  const { setToggleToast, setOpenModal } = useUI();
+  async function createStatus(status) {
+    return await fetch("/api/blog/upload-blog-file", {
+      method: "POST",
+      body: status,
+      // headers: {
+      //   "Content-Type": "multipart/form-data",
+      // },
+    });
+  }
+
+  return useMutation((status) => createStatus(status), {
+    onSuccess: async (data, obj) => {
+      if (data?.status === 400) {
+        return setToggleToast({
+          active: true,
+          message: `Something went wrong`,
+        });
+      }
+
+      setToggleToast({
+        active: true,
+        message: `Submit Successfully`,
+      });
+    },
+    onError: async () => {
+      setToggleToast({
+        active: true,
+        message: `Something went wrong`,
+      });
+    },
+    refetchOnWindowFocus: false,
+  });
+};

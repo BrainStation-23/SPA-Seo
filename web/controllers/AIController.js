@@ -220,6 +220,8 @@ export const blogGenerateAIContent = async (req, res) => {
     const aiContent = response?.result?.content || "";
     const htmlContent = aiContent; // Assuming the AI already returns HTML content
 
+    //Create blog post
+
     // Return the generated content
     return res.status(200).json({
       status: "Success",

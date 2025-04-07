@@ -1,4 +1,8 @@
+import { fileCreateQuery, uploadFileQuery } from "../graphql/article.js";
 import shopify from "../shopify.js";
+import axios from "axios";
+import FormData from "form-data";
+import streamifier from "streamifier";
 
 const blogQuery = (variables) => {
   let query = `query ($count: Int!, $cursor: String) {
@@ -242,3 +246,97 @@ export const updateImageSeoAltController = async (req, res, next) => {
     res.status(400).json({ err });
   }
 };
+
+export async function uploadFile(req, res) {
+  try {
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    const fileName = generateUniqueFileName(file.originalname);
+    const fileMime = file.mimetype || "application/octet-stream";
+
+    const client = new shopify.api.clients.Graphql({
+      session: res.locals.shopify.session,
+      apiVersion: "2024-07",
+    });
+
+    // Step 1: Request to Shopify GraphQL to get the staging URL
+    const variables = {
+      input: [
+        {
+          resource: "FILE",
+          filename: fileName,
+          httpMethod: "POST",
+          mimeType: fileMime,
+        },
+      ],
+    };
+
+    const response = await client.query({
+      data: {
+        query: uploadFileQuery(), // Query to request the staging URL
+        variables: variables,
+      },
+    });
+
+    const stagedUpload =
+      response?.body?.data?.stagedUploadsCreate?.stagedTargets?.[0];
+
+    if (!stagedUpload) {
+      throw new Error("No staging URL returned by Shopify");
+    }
+    if (!file.buffer || !Buffer.isBuffer(file.buffer)) {
+      throw new Error("Invalid file buffer");
+    }
+    const form = new FormData();
+
+    // Add staged upload parameters from Shopify
+    stagedUpload.parameters.forEach((p) => form.append(p.name, p.value));
+
+    // Append the actual file buffer
+    form.append("file", file.buffer, {
+      filename: fileName,
+      contentType: fileMime,
+    });
+
+    // Use axios to send the POST request
+    const fetchResponse = await axios.post(stagedUpload.url, form, {
+      headers: {
+        ...form.getHeaders(), // Important to include the multipart boundary
+      },
+      maxBodyLength: Infinity, // Important for large files
+      maxContentLength: Infinity,
+    });
+
+    // Step 4: Once uploaded, create the file entry in Shopify
+    const fileCreateVariables = {
+      files: {
+        alt: "Seo Image", // You can modify alt text or make it dynamic
+        contentType: "IMAGE",
+        originalSource: stagedUpload?.resourceUrl,
+      },
+    };
+
+    const fileCreate = await client.query({
+      data: {
+        query: fileCreateQuery(), // Query to create a file entry in Shopify
+        variables: fileCreateVariables,
+      },
+    });
+
+    // Return the file info as a response
+    res.status(200).json({ imageUrl: stagedUpload.resourceUrl });
+  } catch (error) {
+    console.error("Error uploading file:", error);
+    res.status(500).json({ error: "File upload failed" });
+  }
+}
+
+function generateUniqueFileName(originalName) {
+  const timestamp = Date.now();
+  const randomStr = Math.random().toString(36).substring(2, 8);
+  const ext = originalName.split(".").pop();
+  return `${timestamp}-${randomStr}.${ext}`;
+}

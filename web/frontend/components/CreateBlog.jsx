@@ -1,4 +1,11 @@
-import { Grid, Button, EmptyState, Spinner } from "@shopify/polaris";
+import {
+  Grid,
+  Button,
+  EmptyState,
+  Spinner,
+  Text,
+  HorizontalStack,
+} from "@shopify/polaris";
 import { SingleChoiceList } from "./commonUI/ChoiceList";
 import { Selection } from "./commonUI/Selection";
 import { InputField } from "./commonUI/InputField";
@@ -9,10 +16,13 @@ import {
   useReGenerateBlogTitleSeo,
 } from "../hooks/useAIQuery";
 import QuillEditor from "./TrixEditor";
+import { FileUpload } from "./commonUI/FileUpload";
+import { useUploadBlogFileSeo } from "../hooks/useBlogsQuery";
 
 export default function CreateBlog() {
   const [content, setContent] = useState("<p>Write here...</p>");
   const [blogTitle, setBlogTitle] = useState("");
+  const [file, setFile] = useState("");
   const {
     mutate: createAIBlog,
     isError,
@@ -21,6 +31,8 @@ export default function CreateBlog() {
   } = useCreateAIBasedBlogSeo(setContent, setBlogTitle);
   const { mutate: reGenerateBlogTitle, isLoading: isReGenerateLoading } =
     useReGenerateBlogTitleSeo(setBlogTitle);
+  const { mutate: uploadBlogFile, isLoading: isBlogLoading } =
+    useUploadBlogFileSeo();
 
   const { modal } = useUI();
   const [formData, setFormData] = useState({
@@ -66,6 +78,15 @@ export default function CreateBlog() {
     }
     createAIBlog(obj);
   }, []);
+
+  const handleUpload = async (fileInfo) => {
+    if (!fileInfo) return alert("Please select file");
+
+    const formData = new FormData();
+    formData.append("file", fileInfo);
+
+    uploadBlogFile(formData);
+  };
 
   const onTitleReGenerate = useCallback((blogTitle, obj) => {
     if (!blogTitle) {
@@ -168,47 +189,61 @@ export default function CreateBlog() {
         </div>
       </Grid.Cell>
       <Grid.Cell columnSpan={{ xs: 6, sm: 3, md: 3, lg: 9, xl: 8 }}>
-        <div className="card_content_container blog_generate_container">
-          {isLoading ? (
-            <Spinner size="large" />
-          ) : (
-            <>
-              {!data ? (
-                <EmptyState
-                  heading="Generate Blog Post"
-                  image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
-                ></EmptyState>
-              ) : (
-                <div className="card_container">
-                  <div className="blog_generate_AI_update_button">
-                    <Button destructive onClick={() => onSubmit(formData)}>
-                      Update Blog Post
-                    </Button>
-                  </div>
-                  <InputField
-                    label={"Title"}
-                    placeholder={"Title"}
-                    value={blogTitle}
-                    onChange={(value) => setBlogTitle(value)}
-                  />
-                  <div className="blog_generate_AI_update_button">
-                    <Button
-                      plain
-                      onClick={() => onTitleReGenerate(blogTitle, formData)}
-                    >
-                      {isReGenerateLoading ? (
-                        <Spinner size="small" />
-                      ) : (
-                        "Re-generate title"
-                      )}
-                    </Button>
-                  </div>
-                  <QuillEditor value={content} onChange={setContent} />
-                </div>
-              )}
-            </>
-          )}
-        </div>
+        <HorizontalStack gap="4">
+          <div className="card_content_container blog_generate_container">
+            {isLoading ? (
+              <Spinner size="large" />
+            ) : (
+              <>
+                {!data ? (
+                  <EmptyState
+                    heading="Generate Blog Post"
+                    image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
+                  ></EmptyState>
+                ) : (
+                  <>
+                    <div className="card_container">
+                      <div className="blog_generate_AI_update_button">
+                        <Button destructive onClick={() => onSubmit(formData)}>
+                          Update Blog Post
+                        </Button>
+                      </div>
+                      <InputField
+                        label={"Title"}
+                        placeholder={"Title"}
+                        value={blogTitle}
+                        onChange={(value) => setBlogTitle(value)}
+                      />
+                      <div className="blog_generate_AI_update_button">
+                        <Button
+                          plain
+                          onClick={() => onTitleReGenerate(blogTitle, formData)}
+                        >
+                          {isReGenerateLoading ? (
+                            <Spinner size="small" />
+                          ) : (
+                            "Re-generate title"
+                          )}
+                        </Button>
+                      </div>
+                      <QuillEditor value={content} onChange={setContent} />
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+          </div>
+          <div className="card_content_container">
+            <div className="card_container">
+              <Text>Feature Image</Text>
+              <FileUpload
+                file={file}
+                setFile={setFile}
+                handleUpload={handleUpload}
+              />
+            </div>
+          </div>
+        </HorizontalStack>
       </Grid.Cell>
     </Grid>
   );
