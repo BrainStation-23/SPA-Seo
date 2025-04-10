@@ -17,7 +17,8 @@ import {
 } from "../hooks/useAIQuery";
 import QuillEditor from "./TrixEditor";
 import { FileUpload } from "./commonUI/FileUpload";
-import { useUploadBlogFileSeo } from "../hooks/useBlogsQuery";
+import { useCreateArticle, useUploadBlogFileSeo } from "../hooks/useBlogsQuery";
+import { DeleteIcon } from "@shopify/polaris-icons";
 
 export default function CreateBlog() {
   const [content, setContent] = useState("<p>Write here...</p>");
@@ -31,8 +32,14 @@ export default function CreateBlog() {
   } = useCreateAIBasedBlogSeo(setContent, setBlogTitle);
   const { mutate: reGenerateBlogTitle, isLoading: isReGenerateLoading } =
     useReGenerateBlogTitleSeo(setBlogTitle);
-  const { mutate: uploadBlogFile, isLoading: isBlogLoading } =
-    useUploadBlogFileSeo();
+  const {
+    mutate: uploadBlogFile,
+    isLoading: isBlogLoading,
+    data: uploadFileData,
+  } = useUploadBlogFileSeo();
+  const { mutate: createArticle, isLoading: isArticleLoading } =
+    useCreateArticle();
+  console.log("🚀 ~ CreateBlog ~ uploadFileData:", uploadFileData);
 
   const { modal } = useUI();
   const [formData, setFormData] = useState({
@@ -44,6 +51,7 @@ export default function CreateBlog() {
     post_length: "short",
     blog_ID: "",
   });
+  console.log("🚀 ~ CreateBlog ~ formData:", formData);
   const [errors, setErrors] = useState({
     blog_topic: "",
     keywords: "",
@@ -78,6 +86,32 @@ export default function CreateBlog() {
     }
     createAIBlog(obj);
   }, []);
+
+  const onSubmitArticle = (obj) => {
+    if (!blogTitle) {
+      return setToggleToast({
+        active: true,
+        message: `Please enter Blog title`,
+      });
+    }
+
+    const article = {
+      blogId: obj?.blog_ID,
+      title: blogTitle,
+      handle: blogTitle.toLowerCase().replace(/\s+/g, "-"),
+      body: content,
+      isPublished: obj.visibility.includes("visible"),
+      publishDate: new Date().toISOString(),
+      tags: formData.keywords
+        ? formData.keywords.split(",").map((tag) => tag.trim())
+        : [],
+      image: {
+        altText: file ? uploadFileData?.data?.altText : "",
+        url: file ? uploadFileData?.data?.imageUrl : "",
+      },
+    };
+    createArticle(article);
+  };
 
   const handleUpload = async (fileInfo) => {
     if (!fileInfo) return alert("Please select file");
@@ -189,23 +223,28 @@ export default function CreateBlog() {
         </div>
       </Grid.Cell>
       <Grid.Cell columnSpan={{ xs: 6, sm: 3, md: 3, lg: 9, xl: 8 }}>
-        <HorizontalStack gap="4">
-          <div className="card_content_container blog_generate_container">
-            {isLoading ? (
-              <Spinner size="large" />
-            ) : (
-              <>
-                {!data ? (
+        <div className="blog_generate_container">
+          {isLoading ? (
+            <Spinner size="large" />
+          ) : (
+            <>
+              {!data ? (
+                <div className="card_content_container">
                   <EmptyState
                     heading="Generate Blog Post"
                     image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
                   ></EmptyState>
-                ) : (
-                  <>
+                </div>
+              ) : (
+                <div className="card_container">
+                  <div className="card_content_container">
                     <div className="card_container">
                       <div className="blog_generate_AI_update_button">
-                        <Button destructive onClick={() => onSubmit(formData)}>
-                          Update Blog Post
+                        <Button
+                          destructive
+                          onClick={() => onSubmitArticle(formData)}
+                        >
+                          Create Blog Post
                         </Button>
                       </div>
                       <InputField
@@ -228,22 +267,42 @@ export default function CreateBlog() {
                       </div>
                       <QuillEditor value={content} onChange={setContent} />
                     </div>
-                  </>
-                )}
-              </>
-            )}
-          </div>
-          <div className="card_content_container">
-            <div className="card_container">
-              <Text>Feature Image</Text>
-              <FileUpload
-                file={file}
-                setFile={setFile}
-                handleUpload={handleUpload}
-              />
-            </div>
-          </div>
-        </HorizontalStack>
+                  </div>
+                  <div className="card_content_container">
+                    <div className="card_container">
+                      <Text variant="headingLg" as="h5">
+                        Feature Image
+                      </Text>
+                      {file && uploadFileData ? (
+                        <div className="blog_generate_image">
+                          <img
+                            src={uploadFileData?.data?.imageUrl}
+                            alt={"Uploaded Image"}
+                          />
+                          <div className="blog_generate_image_delete">
+                            <Button
+                              icon={DeleteIcon}
+                              onClick={() => {
+                                setFile("");
+                              }}
+                            ></Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <FileUpload
+                          file={file}
+                          setFile={setFile}
+                          handleUpload={handleUpload}
+                          isBlogLoading={isBlogLoading}
+                        />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </Grid.Cell>
     </Grid>
   );

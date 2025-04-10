@@ -1,8 +1,7 @@
-import { DropZone, LegacyStack, Thumbnail, Text } from "@shopify/polaris";
-import { NoteIcon } from "@shopify/polaris-icons";
-import { useState, useCallback } from "react";
+import { DropZone, Spinner } from "@shopify/polaris";
+import { useCallback } from "react";
 
-export function FileUpload({ file, setFile, handleUpload }) {
+export function FileUpload({ file, setFile, handleUpload, isBlogLoading }) {
   //   const [file, setFile] = useState("");
 
   const handleDropZoneDrop = useCallback(
@@ -13,33 +12,17 @@ export function FileUpload({ file, setFile, handleUpload }) {
     []
   );
 
-  const validImageTypes = ["image/gif", "image/jpeg", "image/png"];
-
-  const fileUpload = !file && <DropZone.FileUpload />;
-  const uploadedFile = file && (
-    <LegacyStack>
-      <Thumbnail
-        size="small"
-        alt={file.name}
-        source={
-          validImageTypes.includes(file.type)
-            ? window.URL.createObjectURL(file)
-            : NoteIcon
-        }
-      />
-      <div>
-        {file.name}{" "}
-        <Text variant="bodySm" as="p">
-          {file.size} bytes
-        </Text>
-      </div>
-    </LegacyStack>
-  );
+  const fileUpload = <DropZone.FileUpload />;
 
   return (
-    <DropZone allowMultiple={false} onDrop={handleDropZoneDrop}>
-      {uploadedFile}
-      {fileUpload}
-    </DropZone>
+    <>
+      {isBlogLoading ? (
+        <Spinner size="large" />
+      ) : (
+        <DropZone allowMultiple={false} onDrop={handleDropZoneDrop}>
+          {fileUpload}
+        </DropZone>
+      )}
+    </>
   );
 }

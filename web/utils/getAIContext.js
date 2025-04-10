@@ -26,10 +26,21 @@ class AzureOpenAIService {
         presence_penalty: 0,
         frequency_penalty: 0,
       });
+
       return response;
     } catch (error) {
+      if (error.response && error.response.status === 429) {
+        const retryAfter = error.response.headers["retry-after"] || "unknown";
+        console.error(
+          `Rate limit exceeded. Please retry after ${retryAfter} seconds.`
+        );
+        throw new Error(
+          `Rate limit exceeded. Retry after ${retryAfter} seconds.`
+        );
+      }
+
       console.log("🚀 ~ AzureOpenAIService ~ getAIResults ~ error:", error);
-      return error;
+      throw error; // Re-throw the error for other cases
     }
   }
 }

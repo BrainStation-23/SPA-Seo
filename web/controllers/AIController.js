@@ -1,7 +1,3 @@
-import {
-  formatJSONResult,
-  formatJSONResultForList,
-} from "../utils/formatJSONResult.js";
 import AzureOpenAIService from "../utils/getAIContext.js";
 import { getCollectionByID, getCollections } from "./collections.js";
 import { getProductByID, getProducts } from "./products.js";
@@ -51,24 +47,41 @@ export const aiSeoContentController = async (req, res, next) => {
       status: "Success",
       aiContent: response,
     });
-  } catch (err) {
-    console.log("🚀 ~ aiSeoContentController ~ err:", err);
+  } catch (error) {
+    console.error("🚀 ~ aiSeoContentController ~ error:", error);
 
-    res.status(400).json({ err });
+    // Handle specific error cases
+    if (error.response && error.response.status === 429) {
+      const retryAfter = error.response.headers["retry-after"] || "unknown";
+      return res.status(429).json({
+        status: "failed",
+        error: `Rate limit exceeded. Please retry after ${retryAfter} seconds.`,
+      });
+    }
+
+    // Handle other errors
+    return res.status(400).json({
+      status: "failed",
+      error:
+        error.message || "An error occurred while generating bulk SEO content",
+    });
   }
 };
 
 async function generateWithAI(messages, isList) {
   try {
     const aiContent = await seoAI.getAIResults(messages);
-    const message = aiContent?.data?.choices[0]?.message.content || "";
-    console.log("🚀 ~ generateWithAI ~ message:", message);
-    const response = isList
-      ? formatJSONResultForList(message)
-      : formatJSONResult(message);
-    return response;
+    const message = aiContent?.data?.choices[0]?.message?.content || "";
+    // console.log("🚀 ~ generateWithAI ~ message:", message);
+    const jsonStart = message.indexOf("{");
+    const jsonEnd = message.lastIndexOf("}") + 1;
+    const jsonString = message.slice(jsonStart, jsonEnd);
+
+    const response = JSON.parse(jsonString);
+    return response?.result;
   } catch (error) {
     console.log("🚀 ~ generateWithAI ~ error:", error);
+    throw error;
   }
 }
 
@@ -102,14 +115,30 @@ export const aiSeoSingleContent = async (req, res) => {
     const response = await generateWithAI(messages);
     const newResult = {
       ...req.body,
-      suggestion: response?.result?.suggestion,
+      suggestion: response?.suggestion,
     };
     return res.status(200).json({
       status: "Success",
       aiResult: newResult,
     });
   } catch (error) {
-    console.log("🚀 ~ aiSeoSingleContent ~ error:", error);
+    console.error("🚀 ~ aiSeoBulkContent ~ error:", error);
+
+    // Handle specific error cases
+    if (error.response && error.response.status === 429) {
+      const retryAfter = error.response.headers["retry-after"] || "unknown";
+      return res.status(429).json({
+        status: "failed",
+        error: `Rate limit exceeded. Please retry after ${retryAfter} seconds.`,
+      });
+    }
+
+    // Handle other errors
+    return res.status(400).json({
+      status: "failed",
+      error:
+        error.message || "An error occurred while generating bulk SEO content",
+    });
   }
 };
 
@@ -164,7 +193,23 @@ export const aiSeoBulkContent = async (req, res) => {
       aiResult: newResult,
     });
   } catch (error) {
-    console.log("🚀 ~ aiSeoSingleContent ~ error:", error);
+    console.error("🚀 ~ aiSeoBulkContent ~ error:", error);
+
+    // Handle specific error cases
+    if (error.response && error.response.status === 429) {
+      const retryAfter = error.response.headers["retry-after"] || "unknown";
+      return res.status(429).json({
+        status: "failed",
+        error: `Rate limit exceeded. Please retry after ${retryAfter} seconds.`,
+      });
+    }
+
+    // Handle other errors
+    return res.status(400).json({
+      status: "failed",
+      error:
+        error.message || "An error occurred while generating bulk SEO content",
+    });
   }
 };
 
@@ -217,16 +262,16 @@ export const blogGenerateAIContent = async (req, res) => {
     const response = await generateWithAI(messages);
 
     // Extract the content and ensure it's in HTML format
-    const aiContent = response?.result?.content || "";
+    const aiContent = response?.content || "";
     const htmlContent = aiContent; // Assuming the AI already returns HTML content
-
+    const title = response?.title || "Untitled Blog Post";
     //Create blog post
 
     // Return the generated content
     return res.status(200).json({
       status: "Success",
       aiResult: {
-        ...response.result,
+        title: title,
         content: htmlContent, // Ensure the content is sent as HTML
       },
     });

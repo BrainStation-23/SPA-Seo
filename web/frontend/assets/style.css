@@ -464,6 +464,7 @@
   flex-direction: column;
   gap: 16px;
   width: 100%;
+  height: 100%;
 }
 
 .card_content_container {
@@ -481,7 +482,6 @@
 }
 
 .blog_generate_container {
-  min-height: 600px;
   display: flex;
   justify-content: center;
 }
@@ -489,6 +489,24 @@
 .blog_generate_AI_update_button {
   display: flex;
   justify-content: end;
+}
+
+.blog_generate_image {
+  width: 100%;
+  height: 250px;
+  position: relative;
+}
+
+.blog_generate_image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.blog_generate_image_delete {
+  position: absolute;
+  top: 0;
+  right: 0;
 }
 
 @media (max-width: 850px) {

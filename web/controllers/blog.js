@@ -1,8 +1,11 @@
-import { fileCreateQuery, uploadFileQuery } from "../graphql/article.js";
+import {
+  createArticle,
+  fileCreateQuery,
+  uploadFileQuery,
+} from "../graphql/article.js";
 import shopify from "../shopify.js";
 import axios from "axios";
 import FormData from "form-data";
-import streamifier from "streamifier";
 
 const blogQuery = (variables) => {
   let query = `query ($count: Int!, $cursor: String) {
@@ -122,6 +125,53 @@ export const getArticleList = async (req, res, next) => {
       err
     );
     res.status(400).json({ err });
+  }
+};
+
+export const createArticleContent = async (req, res, next) => {
+  try {
+    const client = new shopify.api.clients.Graphql({
+      session: res.locals.shopify.session,
+      apiVersion: "2024-10",
+    });
+
+    const shop = await shopify.api.rest.Shop.all({
+      session: res.locals.shopify.session,
+    });
+
+    // Step 1: Request to Shopify GraphQL to get the staging URL
+    const variables = {
+      article: {
+        ...req.body,
+        author: {
+          name: shop.data[0]?.name,
+        },
+      },
+    };
+
+    // console.log("🚀 ~ createArticleContent ~ shop:", req);
+    const response = await client.query({
+      data: {
+        query: createArticle(), // Query to request the staging URL
+        variables: variables,
+      },
+    });
+    const article = response?.body?.data?.articleCreate?.article;
+
+    const userErrors = response?.body?.data?.articleCreate?.userErrors;
+    if (userErrors?.length > 0) {
+      return res.status(400).json({
+        status: "Error",
+        message: userErrors[0]?.message,
+      });
+    }
+    return res.status(200).json({
+      status: "Success",
+      message: "Successfully created",
+      article,
+    });
+  } catch (error) {
+    console.log(error?.response?.errors, "error");
   }
 };
 
@@ -313,7 +363,7 @@ export async function uploadFile(req, res) {
     // Step 4: Once uploaded, create the file entry in Shopify
     const fileCreateVariables = {
       files: {
-        alt: "Seo Image", // You can modify alt text or make it dynamic
+        alt: file.originalname, // You can modify alt text or make it dynamic
         contentType: "IMAGE",
         originalSource: stagedUpload?.resourceUrl,
       },
@@ -325,6 +375,7 @@ export async function uploadFile(req, res) {
         variables: fileCreateVariables,
       },
     });
+    console.log("🚀 ~ uploadFile ~ fileCreate:");
 
     // Return the file info as a response
     res.status(200).json({ imageUrl: stagedUpload.resourceUrl });

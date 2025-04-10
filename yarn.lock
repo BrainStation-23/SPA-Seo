@@ -5505,6 +5505,7 @@ shebang-regex@^3.0.0:
     form-data "^4.0.2"
     serve-static "^1.14.1"
     sharp "^0.33.5"
+    streamifier "^0.1.1"
 
 "shopify-frontend-template-react@file:/home/bs830/Documents/working/shopify app/SPA-Seo/web/frontend":
   version "1.0.0"
@@ -5686,11 +5687,6 @@ statuses@2.0.1:
   version "2.0.1"
   resolved "https://registry.npmjs.org/statuses/-/statuses-2.0.1.tgz"
   integrity sha512-RwNA9Z/7PrK06rYLIzFMlaF+l73iwpzsqRIFgbMLbTcLD6cOao82TaWefPXQvB2fOC4AjuYSEndS7N/mTCbkdQ==
-
-streamifier@^0.1.1:
-  version "0.1.1"
-  resolved "https://registry.npmjs.org/streamifier/-/streamifier-0.1.1.tgz"
-  integrity sha512-zDgl+muIlWzXNsXeyUfOk9dChMjlpkq0DRsxujtYPgyJ676yQ8jEm6zzaaWHFDg5BNcLuif0eD2MTyJdZqXpdg==
 
 streamsearch@^1.1.0:
   version "1.1.0"

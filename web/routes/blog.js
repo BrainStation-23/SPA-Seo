@@ -7,6 +7,7 @@ import {
   getSingleArticle,
   updateImageSeoAltController,
   uploadFile,
+  createArticleContent,
 } from "../controllers/blog.js";
 import multer from "multer";
 
@@ -17,6 +18,7 @@ const router = express.Router();
 
 router.get("/list", getBlogList);
 router.get("/articles/:id", getArticleList);
+router.post("/create-article", createArticleContent);
 router.get("/article-seo/:id", getArticleSeoContent);
 router.get("/articleById/:blogId/:id", getSingleArticle);
 router.post("/update-article-seo", updateArticleSeo);
