@@ -211,7 +211,11 @@ export const useCreateBulkProductAISeo = (
   });
 };
 
-export const useCreateAIBasedBlogSeo = (setContent, setBlogTitle) => {
+export const useCreateAIBasedBlogSeo = (
+  setContent,
+  setBlogTitle,
+  setBlogSeo
+) => {
   const fetch = useAuthenticatedFetch();
   const { setToggleToast } = useUI();
   async function createStatus(status) {
@@ -236,7 +240,10 @@ export const useCreateAIBasedBlogSeo = (setContent, setBlogTitle) => {
       const response = await data.json();
       setContent(response?.aiResult?.content);
       setBlogTitle(response?.aiResult?.title);
-
+      setBlogSeo({
+        metaTitle: response?.aiResult?.metaTitle,
+        metaDescription: response?.aiResult?.metaDescription,
+      });
       setToggleToast({
         active: true,
         message: `Blog Generated Successfully`,

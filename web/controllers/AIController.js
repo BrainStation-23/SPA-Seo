@@ -261,18 +261,15 @@ export const blogGenerateAIContent = async (req, res) => {
     // Call the AI service to generate the blog content
     const response = await generateWithAI(messages);
 
-    // Extract the content and ensure it's in HTML format
-    const aiContent = response?.content || "";
-    const htmlContent = aiContent; // Assuming the AI already returns HTML content
-    const title = response?.title || "Untitled Blog Post";
-    //Create blog post
-
     // Return the generated content
     return res.status(200).json({
       status: "Success",
       aiResult: {
-        title: title,
-        content: htmlContent, // Ensure the content is sent as HTML
+        title: response?.title || "Untitled Blog Post",
+        content: response?.content || "", // Ensure the content is sent as HTML
+        metaTitle: response?.metaTitle || "Untitled Meta Title",
+        metaDescription:
+          response?.metaDescription || "Untitled Meta Description",
       },
     });
   } catch (error) {

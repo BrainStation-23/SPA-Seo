@@ -24,12 +24,13 @@ export default function CreateBlog() {
   const [content, setContent] = useState("<p>Write here...</p>");
   const [blogTitle, setBlogTitle] = useState("");
   const [file, setFile] = useState("");
+  const [blogSeo, setBlogSeo] = useState("");
   const {
     mutate: createAIBlog,
     isError,
     isLoading,
     data,
-  } = useCreateAIBasedBlogSeo(setContent, setBlogTitle);
+  } = useCreateAIBasedBlogSeo(setContent, setBlogTitle, setBlogSeo);
   const { mutate: reGenerateBlogTitle, isLoading: isReGenerateLoading } =
     useReGenerateBlogTitleSeo(setBlogTitle);
   const {
@@ -51,7 +52,7 @@ export default function CreateBlog() {
     post_length: "short",
     blog_ID: "",
   });
-  console.log("🚀 ~ CreateBlog ~ formData:", formData);
+
   const [errors, setErrors] = useState({
     blog_topic: "",
     keywords: "",
@@ -62,13 +63,10 @@ export default function CreateBlog() {
     blog_ID: "",
   });
 
-  const handleChange = useCallback(
-    (value, name) => {
-      setFormData({ ...formData, [name]: value });
-      setErrors({ ...errors, [name]: "" });
-    },
-    [formData]
-  );
+  const handleChange = (value, name) => {
+    setFormData({ ...formData, [name]: value });
+    setErrors({ ...errors, [name]: "" });
+  };
 
   const modalList = modal?.data?.blogList?.map((item) => {
     return {
@@ -101,7 +99,6 @@ export default function CreateBlog() {
       handle: blogTitle.toLowerCase().replace(/\s+/g, "-"),
       body: content,
       isPublished: obj.visibility.includes("visible"),
-      publishDate: new Date().toISOString(),
       tags: formData.keywords
         ? formData.keywords.split(",").map((tag) => tag.trim())
         : [],
@@ -109,6 +106,7 @@ export default function CreateBlog() {
         altText: file ? uploadFileData?.data?.altText : "",
         url: file ? uploadFileData?.data?.imageUrl : "",
       },
+      blogSeo: blogSeo,
     };
     createArticle(article);
   };

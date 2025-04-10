@@ -142,7 +142,14 @@ export const createArticleContent = async (req, res, next) => {
     // Step 1: Request to Shopify GraphQL to get the staging URL
     const variables = {
       article: {
-        ...req.body,
+        blogId: req?.body?.blogId,
+        title: req?.body?.title,
+        handle: req?.body?.handle,
+        body: req?.body?.content,
+        isPublished: req?.body?.isPublished,
+        publishDate: new Date().toISOString(),
+        tags: req?.body?.tags,
+        image: req?.body?.image,
         author: {
           name: shop.data[0]?.name,
         },
@@ -157,6 +164,7 @@ export const createArticleContent = async (req, res, next) => {
       },
     });
     const article = response?.body?.data?.articleCreate?.article;
+    console.log("🚀 ~ createArticleContent ~ article:", article);
 
     const userErrors = response?.body?.data?.articleCreate?.userErrors;
     if (userErrors?.length > 0) {
@@ -165,6 +173,14 @@ export const createArticleContent = async (req, res, next) => {
         message: userErrors[0]?.message,
       });
     }
+
+    updateArticleContent(res.locals.shopify.session, {
+      id: article?.id?.split("/").pop(),
+      seoTitle: req?.body?.blogSeo?.seoTitle,
+      seoDescription: req?.body?.blogSeo?.seoDescription,
+      blog_id: req?.body?.blogId?.split("/").pop(),
+    });
+
     return res.status(200).json({
       status: "Success",
       message: "Successfully created",
@@ -172,6 +188,10 @@ export const createArticleContent = async (req, res, next) => {
     });
   } catch (error) {
     console.log(error?.response?.errors, "error");
+    return res.status(400).json({
+      status: "Error",
+      message: error?.response?.errors || "Something went wrong",
+    });
   }
 };
 
@@ -236,21 +256,34 @@ export const getArticleById = async (session, blog_id, id) => {
     console.log(error);
   }
 };
-export const updateArticleSeo = async (req, res) => {
-  const { seoObj } = req.body;
 
+export const updateArticleContent = async (session, seoObj) => {
   try {
     const metafield = new shopify.api.rest.Metafield({
-      session: res.locals.shopify.session,
+      session: session,
     });
     metafield.article_id = seoObj?.id;
     metafield.namespace = "seo-app-bs23";
     metafield.key = "seo-blog-article";
     metafield.type = "json";
     metafield.value = JSON.stringify(seoObj);
-    await metafield.save({
+    console.log("first", "chill");
+    return await metafield.save({
       update: true,
     });
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateArticleSeo = async (req, res) => {
+  const { seoObj } = req.body;
+
+  try {
+    const metafield = await updateArticleContent(
+      res.locals.shopify.session,
+      seoObj
+    );
     const blog_id = seoObj?.blog_id;
     const article_id = seoObj?.id;
     const article = await getArticleById(
