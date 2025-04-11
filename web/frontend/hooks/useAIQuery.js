@@ -40,16 +40,17 @@ export const useCreateAIBasedSeo = (setAIKeywords) => {
   return useMutation((status) => createStatus(status), {
     onSuccess: async (data, obj) => {
       if (data?.status === 400) {
+        const res = await data.json();
         return setToggleToast({
           active: true,
-          message: `Something went wrong`,
+          message: res?.error || `Something went wrong`,
         });
       }
       const response = await data.json();
       if (obj?.item === "collection") {
-        setCollectionSeo(response?.aiContent?.result);
+        setCollectionSeo(response?.aiContent);
       } else {
-        setProductSeo(response?.aiContent?.result);
+        setProductSeo(response?.aiContent);
       }
       setAIKeywords("");
 
@@ -58,10 +59,10 @@ export const useCreateAIBasedSeo = (setAIKeywords) => {
         message: `Submit Successfully`,
       });
     },
-    onError: async () => {
+    onError: async (error) => {
       setToggleToast({
         active: true,
-        message: `Something went wrong`,
+        message: error?.error || `Something went wrong`,
       });
     },
     refetchOnWindowFocus: false,
@@ -86,9 +87,10 @@ export const useCreateSingleAIBasedSeo = () => {
   return useMutation((status) => createStatus(status), {
     onSuccess: async (data, obj) => {
       if (data?.status === 400) {
+        const res = await data.json();
         return setToggleToast({
           active: true,
-          message: `Something went wrong`,
+          message: res?.error || `Something went wrong`,
         });
       }
       const response = await data.json();
@@ -154,9 +156,10 @@ export const useCreateBulkProductAISeo = (
   return useMutation((status) => createStatus(status), {
     onSuccess: async (data, obj) => {
       if (data?.status === 400) {
+        const res = await data.json();
         return setToggleToast({
           active: true,
-          message: `Something went wrong`,
+          message: res?.error || `Something went wrong`,
         });
       }
 
@@ -196,6 +199,90 @@ export const useCreateBulkProductAISeo = (
 
         return mergedData;
       });
+    },
+    onError: async (error) => {
+      const res = await error.json();
+      setToggleToast({
+        active: true,
+        message: res?.error || `Something went wrong`,
+      });
+    },
+    refetchOnWindowFocus: false,
+  });
+};
+
+export const useCreateAIBasedBlogSeo = (
+  setContent,
+  setBlogTitle,
+  setBlogSeo
+) => {
+  const fetch = useAuthenticatedFetch();
+  const { setToggleToast } = useUI();
+  async function createStatus(status) {
+    return await fetch("/api/AI/blog-generation", {
+      method: "POST",
+      body: JSON.stringify(status),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  }
+
+  return useMutation((status) => createStatus(status), {
+    onSuccess: async (data, obj) => {
+      if (data?.status === 400) {
+        const res = await data.json();
+        return setToggleToast({
+          active: true,
+          message: res?.error || `Something went wrong`,
+        });
+      }
+      const response = await data.json();
+      setContent(response?.aiResult?.content);
+      setBlogTitle(response?.aiResult?.title);
+      setBlogSeo({
+        metaTitle: response?.aiResult?.metaTitle,
+        metaDescription: response?.aiResult?.metaDescription,
+      });
+      setToggleToast({
+        active: true,
+        message: `Blog Generated Successfully`,
+      });
+    },
+    onError: async () => {
+      setToggleToast({
+        active: true,
+        message: `Something went wrong`,
+      });
+    },
+    refetchOnWindowFocus: false,
+  });
+};
+
+export const useReGenerateBlogTitleSeo = (setBlogTitle) => {
+  const fetch = useAuthenticatedFetch();
+  const { setToggleToast } = useUI();
+  async function createStatus(status) {
+    return await fetch("/api/AI/blog-title-regeneration", {
+      method: "POST",
+      body: JSON.stringify(status),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  }
+
+  return useMutation((status) => createStatus(status), {
+    onSuccess: async (data, obj) => {
+      if (data?.status === 400) {
+        const res = await data.json();
+        return setToggleToast({
+          active: true,
+          message: res?.error || `Something went wrong`,
+        });
+      }
+      const response = await data.json();
+      setBlogTitle(response?.aiResult?.title);
     },
     onError: async () => {
       setToggleToast({

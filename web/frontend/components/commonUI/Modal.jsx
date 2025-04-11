@@ -4,6 +4,7 @@ import ProductSeo from "../ProductSeo";
 import CollectionSeo from "../CollectionSeo";
 import ArticlesPage from "../Articles";
 import ArticleSeo from "../ArticleSeo";
+import CreateBlog from "../CreateBlog";
 
 export function ModalArea() {
   const { modal, setCloseModal } = useUI();
@@ -19,6 +20,7 @@ export function ModalArea() {
         {modal?.view === "CREATE_COLLECTION_SEO" && <CollectionSeo />}
         {modal?.view === "BLOG_SEO" && <ArticlesPage />}
         {modal?.view === "ARTICLE_SEO" && <ArticleSeo />}
+        {modal?.view === "BLOG_CREATE" && <CreateBlog />}
       </Modal.Section>
     </Modal>
   );

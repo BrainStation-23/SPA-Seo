@@ -83,6 +83,24 @@ export default function BlogPage() {
       <VerticalStack gap="2">
         <div className="seo_score_page_title_container">
           <div className="seo_score_page_title">Blog SEO</div>
+          <Button
+            className="cursor_pointer"
+            primary
+            disabled={isLoading}
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpenModal({
+                view: "BLOG_CREATE",
+                isOpen: true,
+                data: {
+                  title: `Create Blog With AI`,
+                  blogList: data?.blogs || [],
+                },
+              });
+            }}
+          >
+            Create Blog
+          </Button>
         </div>
         {isLoading && !isError ? (
           <SkeletonBodyText lines={20} />

@@ -19,6 +19,9 @@ import imageCompression from "./routes/imageCompression.js";
 import AIRouter from "./routes/AIRoute.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const PORT = parseInt(
   process.env.BACKEND_PORT || process.env.PORT || "3000",

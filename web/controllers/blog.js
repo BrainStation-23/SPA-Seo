@@ -1,4 +1,11 @@
+import {
+  createArticle,
+  fileCreateQuery,
+  uploadFileQuery,
+} from "../graphql/article.js";
 import shopify from "../shopify.js";
+import axios from "axios";
+import FormData from "form-data";
 
 const blogQuery = (variables) => {
   let query = `query ($count: Int!, $cursor: String) {
@@ -121,6 +128,73 @@ export const getArticleList = async (req, res, next) => {
   }
 };
 
+export const createArticleContent = async (req, res, next) => {
+  try {
+    const client = new shopify.api.clients.Graphql({
+      session: res.locals.shopify.session,
+      apiVersion: "2024-10",
+    });
+
+    const shop = await shopify.api.rest.Shop.all({
+      session: res.locals.shopify.session,
+    });
+
+    // Step 1: Request to Shopify GraphQL to get the staging URL
+    const variables = {
+      article: {
+        blogId: req?.body?.blogId,
+        title: req?.body?.title,
+        handle: req?.body?.handle,
+        body: req?.body?.content,
+        isPublished: req?.body?.isPublished,
+        publishDate: new Date().toISOString(),
+        tags: req?.body?.tags,
+        image: req?.body?.image,
+        author: {
+          name: shop.data[0]?.name,
+        },
+      },
+    };
+
+    // console.log("🚀 ~ createArticleContent ~ shop:", req);
+    const response = await client.query({
+      data: {
+        query: createArticle(), // Query to request the staging URL
+        variables: variables,
+      },
+    });
+    const article = response?.body?.data?.articleCreate?.article;
+    console.log("🚀 ~ createArticleContent ~ article:", article);
+
+    const userErrors = response?.body?.data?.articleCreate?.userErrors;
+    if (userErrors?.length > 0) {
+      return res.status(400).json({
+        status: "Error",
+        message: userErrors[0]?.message,
+      });
+    }
+
+    updateArticleContent(res.locals.shopify.session, {
+      id: article?.id?.split("/").pop(),
+      seoTitle: req?.body?.blogSeo?.seoTitle,
+      seoDescription: req?.body?.blogSeo?.seoDescription,
+      blog_id: req?.body?.blogId?.split("/").pop(),
+    });
+
+    return res.status(200).json({
+      status: "Success",
+      message: "Successfully created",
+      article,
+    });
+  } catch (error) {
+    console.log(error?.response?.errors, "error");
+    return res.status(400).json({
+      status: "Error",
+      message: error?.response?.errors || "Something went wrong",
+    });
+  }
+};
+
 export const getArticleSeoContent = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -182,21 +256,34 @@ export const getArticleById = async (session, blog_id, id) => {
     console.log(error);
   }
 };
-export const updateArticleSeo = async (req, res) => {
-  const { seoObj } = req.body;
 
+export const updateArticleContent = async (session, seoObj) => {
   try {
     const metafield = new shopify.api.rest.Metafield({
-      session: res.locals.shopify.session,
+      session: session,
     });
     metafield.article_id = seoObj?.id;
     metafield.namespace = "seo-app-bs23";
     metafield.key = "seo-blog-article";
     metafield.type = "json";
     metafield.value = JSON.stringify(seoObj);
-    await metafield.save({
+    console.log("first", "chill");
+    return await metafield.save({
       update: true,
     });
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateArticleSeo = async (req, res) => {
+  const { seoObj } = req.body;
+
+  try {
+    const metafield = await updateArticleContent(
+      res.locals.shopify.session,
+      seoObj
+    );
     const blog_id = seoObj?.blog_id;
     const article_id = seoObj?.id;
     const article = await getArticleById(
@@ -242,3 +329,98 @@ export const updateImageSeoAltController = async (req, res, next) => {
     res.status(400).json({ err });
   }
 };
+
+export async function uploadFile(req, res) {
+  try {
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    const fileName = generateUniqueFileName(file.originalname);
+    const fileMime = file.mimetype || "application/octet-stream";
+
+    const client = new shopify.api.clients.Graphql({
+      session: res.locals.shopify.session,
+      apiVersion: "2024-07",
+    });
+
+    // Step 1: Request to Shopify GraphQL to get the staging URL
+    const variables = {
+      input: [
+        {
+          resource: "FILE",
+          filename: fileName,
+          httpMethod: "POST",
+          mimeType: fileMime,
+        },
+      ],
+    };
+
+    const response = await client.query({
+      data: {
+        query: uploadFileQuery(), // Query to request the staging URL
+        variables: variables,
+      },
+    });
+
+    const stagedUpload =
+      response?.body?.data?.stagedUploadsCreate?.stagedTargets?.[0];
+
+    if (!stagedUpload) {
+      throw new Error("No staging URL returned by Shopify");
+    }
+    if (!file.buffer || !Buffer.isBuffer(file.buffer)) {
+      throw new Error("Invalid file buffer");
+    }
+    const form = new FormData();
+
+    // Add staged upload parameters from Shopify
+    stagedUpload.parameters.forEach((p) => form.append(p.name, p.value));
+
+    // Append the actual file buffer
+    form.append("file", file.buffer, {
+      filename: fileName,
+      contentType: fileMime,
+    });
+
+    // Use axios to send the POST request
+    const fetchResponse = await axios.post(stagedUpload.url, form, {
+      headers: {
+        ...form.getHeaders(), // Important to include the multipart boundary
+      },
+      maxBodyLength: Infinity, // Important for large files
+      maxContentLength: Infinity,
+    });
+
+    // Step 4: Once uploaded, create the file entry in Shopify
+    const fileCreateVariables = {
+      files: {
+        alt: file.originalname, // You can modify alt text or make it dynamic
+        contentType: "IMAGE",
+        originalSource: stagedUpload?.resourceUrl,
+      },
+    };
+
+    const fileCreate = await client.query({
+      data: {
+        query: fileCreateQuery(), // Query to create a file entry in Shopify
+        variables: fileCreateVariables,
+      },
+    });
+    console.log("🚀 ~ uploadFile ~ fileCreate:");
+
+    // Return the file info as a response
+    res.status(200).json({ imageUrl: stagedUpload.resourceUrl });
+  } catch (error) {
+    console.error("Error uploading file:", error);
+    res.status(500).json({ error: "File upload failed" });
+  }
+}
+
+function generateUniqueFileName(originalName) {
+  const timestamp = Date.now();
+  const randomStr = Math.random().toString(36).substring(2, 8);
+  const ext = originalName.split(".").pop();
+  return `${timestamp}-${randomStr}.${ext}`;
+}

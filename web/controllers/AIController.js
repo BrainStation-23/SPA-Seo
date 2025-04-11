@@ -1,7 +1,3 @@
-import {
-  formatJSONResult,
-  formatJSONResultForList,
-} from "../utils/formatJSONResult.js";
 import AzureOpenAIService from "../utils/getAIContext.js";
 import { getCollectionByID, getCollections } from "./collections.js";
 import { getProductByID, getProducts } from "./products.js";
@@ -51,24 +47,41 @@ export const aiSeoContentController = async (req, res, next) => {
       status: "Success",
       aiContent: response,
     });
-  } catch (err) {
-    console.log("🚀 ~ aiSeoContentController ~ err:", err);
+  } catch (error) {
+    console.error("🚀 ~ aiSeoContentController ~ error:", error);
 
-    res.status(400).json({ err });
+    // Handle specific error cases
+    if (error.response && error.response.status === 429) {
+      const retryAfter = error.response.headers["retry-after"] || "unknown";
+      return res.status(429).json({
+        status: "failed",
+        error: `Rate limit exceeded. Please retry after ${retryAfter} seconds.`,
+      });
+    }
+
+    // Handle other errors
+    return res.status(400).json({
+      status: "failed",
+      error:
+        error.message || "An error occurred while generating bulk SEO content",
+    });
   }
 };
 
 async function generateWithAI(messages, isList) {
   try {
     const aiContent = await seoAI.getAIResults(messages);
-    const message = aiContent?.data?.choices[0]?.message.content || "";
+    const message = aiContent?.data?.choices[0]?.message?.content || "";
     // console.log("🚀 ~ generateWithAI ~ message:", message);
-    const response = isList
-      ? formatJSONResultForList(message)
-      : formatJSONResult(message);
-    return response;
+    const jsonStart = message.indexOf("{");
+    const jsonEnd = message.lastIndexOf("}") + 1;
+    const jsonString = message.slice(jsonStart, jsonEnd);
+
+    const response = JSON.parse(jsonString);
+    return response?.result;
   } catch (error) {
     console.log("🚀 ~ generateWithAI ~ error:", error);
+    throw error;
   }
 }
 
@@ -102,14 +115,30 @@ export const aiSeoSingleContent = async (req, res) => {
     const response = await generateWithAI(messages);
     const newResult = {
       ...req.body,
-      suggestion: response?.result?.suggestion,
+      suggestion: response?.suggestion,
     };
     return res.status(200).json({
       status: "Success",
       aiResult: newResult,
     });
   } catch (error) {
-    console.log("🚀 ~ aiSeoSingleContent ~ error:", error);
+    console.error("🚀 ~ aiSeoBulkContent ~ error:", error);
+
+    // Handle specific error cases
+    if (error.response && error.response.status === 429) {
+      const retryAfter = error.response.headers["retry-after"] || "unknown";
+      return res.status(429).json({
+        status: "failed",
+        error: `Rate limit exceeded. Please retry after ${retryAfter} seconds.`,
+      });
+    }
+
+    // Handle other errors
+    return res.status(400).json({
+      status: "failed",
+      error:
+        error.message || "An error occurred while generating bulk SEO content",
+    });
   }
 };
 
@@ -164,6 +193,138 @@ export const aiSeoBulkContent = async (req, res) => {
       aiResult: newResult,
     });
   } catch (error) {
-    console.log("🚀 ~ aiSeoSingleContent ~ error:", error);
+    console.error("🚀 ~ aiSeoBulkContent ~ error:", error);
+
+    // Handle specific error cases
+    if (error.response && error.response.status === 429) {
+      const retryAfter = error.response.headers["retry-after"] || "unknown";
+      return res.status(429).json({
+        status: "failed",
+        error: `Rate limit exceeded. Please retry after ${retryAfter} seconds.`,
+      });
+    }
+
+    // Handle other errors
+    return res.status(400).json({
+      status: "failed",
+      error:
+        error.message || "An error occurred while generating bulk SEO content",
+    });
+  }
+};
+
+export const blogGenerateAIContent = async (req, res) => {
+  try {
+    const {
+      blog_topic,
+      keywords,
+      visibility,
+      language,
+      blog_tone,
+      post_length,
+      blog_ID,
+    } = req.body;
+
+    // Construct the AI prompt with a standard blog post format
+    const messages = [
+      {
+        role: "user",
+        content: `Generate a blog post based on the following details:
+        - Blog Topic: ${blog_topic}
+        - Keywords: ${keywords}
+        - Language: ${language}
+        - Blog Tone: ${blog_tone}
+        - Post Length: ${post_length}
+        
+        Please ensure the content is well-structured, engaging, and optimized for SEO. The blog post should follow this standard format:
+        1. **Title**: A catchy and relevant title for the blog.
+        2. **Introduction**: A brief introduction to the topic that hooks the reader.
+        3. **Main Content**: 
+           - Use subheadings to divide the content into sections.
+           - Provide detailed and informative content under each subheading.
+           - Include examples, statistics, or quotes where applicable.
+        4. **Conclusion**: Summarize the key points and provide a call-to-action (CTA) if relevant.
+        5. **Meta Information**: Ensure the content includes meta title and meta description suggestions for SEO.
+
+        The response must be in JSON format like:
+        {
+          "result": {
+            "title": "Generated Blog Title",
+            "content": "<p>Generated Blog Content in HTML format</p>",
+            "metaTitle": "SEO Optimized Meta Title",
+            "metaDescription": "SEO Optimized Meta Description"
+          }
+        }`,
+      },
+    ];
+
+    // Call the AI service to generate the blog content
+    const response = await generateWithAI(messages);
+
+    // Return the generated content
+    return res.status(200).json({
+      status: "Success",
+      aiResult: {
+        title: response?.title || "Untitled Blog Post",
+        content: response?.content || "", // Ensure the content is sent as HTML
+        metaTitle: response?.metaTitle || "Untitled Meta Title",
+        metaDescription:
+          response?.metaDescription || "Untitled Meta Description",
+      },
+    });
+  } catch (error) {
+    console.error("Error in blogGenerateAIContent:", error);
+    return res.status(400).json({
+      status: "failed",
+      error: error.message || "An error occurred while generating blog content",
+    });
+  }
+};
+
+export const blogTitleReGenerate = async (req, res) => {
+  try {
+    const { blog_topic, keywords, language, blog_tone, previousTitle } =
+      req.body;
+
+    // Construct the AI prompt to regenerate the blog title
+    const messages = [
+      {
+        role: "user",
+        content: `Generate a catchy and SEO-optimized blog title based on the following details:
+        - Blog Topic: ${blog_topic}
+        - Keywords: ${keywords}
+        - Language: ${language}
+        - Blog Tone: ${blog_tone}
+        - Previous generated title: ${previousTitle}
+        
+        Please ensure the title is engaging, relevant to the topic, and optimized for SEO. The response must be in JSON format like:
+        {
+          "result": {
+            "title": "Generated Blog Title"
+          }
+        }`,
+      },
+    ];
+
+    // Call the AI service to generate the blog title
+    const response = await generateWithAI(messages);
+
+    // Extract the title from the response
+    const generatedTitle = response?.result?.title || "Untitled";
+
+    // Return the generated title
+    return res.status(200).json({
+      status: "Success",
+      aiResult: {
+        title: generatedTitle,
+      },
+    });
+  } catch (error) {
+    console.error("Error in blogTitleReGenerate:", error);
+    return res.status(400).json({
+      status: "failed",
+      error:
+        error.message || "An error occurred while regenerating the blog title",
+    });
   }
 };

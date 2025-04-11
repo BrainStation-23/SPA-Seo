@@ -457,6 +457,58 @@
   gap: 12px;
 }
 
+/* card content */
+
+.card_container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  height: 100%;
+}
+
+.card_content_container {
+  background-color: rgba(255, 255, 255, 1);
+  box-shadow: 0rem 0.125rem 0.25rem rgba(31, 33, 36, 0.1),
+    0rem 0.0625rem 0.375rem rgba(31, 33, 36, 0.05);
+  outline: 0.0625rem solid transparent;
+  width: 100%;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.trix-editor-container {
+  width: 100%;
+}
+
+.blog_generate_container {
+  display: flex;
+  justify-content: center;
+}
+
+.blog_generate_AI_update_button {
+  display: flex;
+  justify-content: end;
+}
+
+.blog_generate_image {
+  width: 100%;
+  height: 250px;
+  position: relative;
+}
+
+.blog_generate_image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.blog_generate_image_delete {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
 @media (max-width: 850px) {
   .app__container {
     gap: 2px;

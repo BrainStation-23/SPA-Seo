@@ -1,7 +1,6 @@
 # Environment Configuration
 .env
 .env.*
-web/config/config.js
 
 # Dependency directory
 node_modules
@@ -29,4 +28,4 @@ extensions/*/build
 web/database.sqlite
 
 # fly toml
-fly.toml
+fly.tomlweb/config/config.js

@@ -196,3 +196,83 @@ export const useUpdateArticleSeoImgAlt = () => {
     refetchOnWindowFocus: false,
   });
 };
+
+export const useUploadBlogFileSeo = () => {
+  const fetch = useAuthenticatedFetch();
+  const { setToggleToast, setOpenModal } = useUI();
+  async function createStatus(status) {
+    const response = await fetch("/api/blog/upload-blog-file", {
+      method: "POST",
+      body: status,
+      // headers: {
+      //   "Content-Type": "multipart/form-data",
+      // },
+    });
+    const uploadData = await response.json();
+    if (!response.ok) {
+      // This will trigger the `onError` block in `useMutation`
+      throw new Error(uploadData?.message || "Something went wrong");
+    }
+    return { status: response.status, data: uploadData };
+  }
+
+  return useMutation((status) => createStatus(status), {
+    onSuccess: async (data, obj) => {
+      if (data?.status === 400) {
+        return setToggleToast({
+          active: true,
+          message: `Something went wrong`,
+        });
+      }
+
+      setToggleToast({
+        active: true,
+        message: `Submit Successfully`,
+      });
+    },
+    onError: async () => {
+      setToggleToast({
+        active: true,
+        message: `Something went wrong`,
+      });
+    },
+    refetchOnWindowFocus: false,
+  });
+};
+
+export const useCreateArticle = () => {
+  const fetch = useAuthenticatedFetch();
+  const { setToggleToast, setCloseModal } = useUI();
+  async function createStatus(status) {
+    return await fetch("/api/blog/create-article", {
+      method: "POST",
+      body: JSON.stringify(status),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  }
+
+  return useMutation((status) => createStatus(status), {
+    onSuccess: async (data, obj) => {
+      if (data?.status === 400) {
+        return setToggleToast({
+          active: true,
+          message: `Something went wrong`,
+        });
+      }
+      setToggleToast({
+        active: true,
+        message: `Submit Successfully`,
+      });
+      setCloseModal();
+    },
+    onError: async () => {
+      setToggleToast({
+        active: true,
+        message: `Something went wrong`,
+      });
+    },
+    refetchOnWindowFocus: false,
+  });
+};
