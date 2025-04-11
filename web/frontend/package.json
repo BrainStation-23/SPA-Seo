@@ -31,7 +31,6 @@
     "react-query": "^3.34.19",
     "react-quill": "^2.0.0",
     "react-router-dom": "^6.3.0",
-    "trix": "^2.1.13",
     "uuid": "^11.0.2",
     "vite": "^2.8.6"
   },
