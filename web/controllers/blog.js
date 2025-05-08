@@ -47,15 +47,10 @@ const fetchAllBlogs = async (session, variables) => {
     apiVersion: "2024-10",
   });
 
-  const response = await client.query({
-    data: {
-      query: query,
-      variables: variables,
-    },
-  });
+  const response = await client.request(query, { variables });
 
-  const pageInfo = response.body.data?.blogs?.pageInfo;
-  const blogs = response.body.data?.blogs?.nodes;
+  const pageInfo = response.data?.blogs?.pageInfo;
+  const blogs = response.data?.blogs?.nodes;
 
   return { blogs, pageInfo };
 };
@@ -157,16 +152,11 @@ export const createArticleContent = async (req, res, next) => {
     };
 
     // console.log("🚀 ~ createArticleContent ~ shop:", req);
-    const response = await client.query({
-      data: {
-        query: createArticle(), // Query to request the staging URL
-        variables: variables,
-      },
-    });
-    const article = response?.body?.data?.articleCreate?.article;
+    const response = await client.request(createArticle(), { variables });
+    const article = response?.data?.articleCreate?.article;
     console.log("🚀 ~ createArticleContent ~ article:", article);
 
-    const userErrors = response?.body?.data?.articleCreate?.userErrors;
+    const userErrors = response?.data?.articleCreate?.userErrors;
     if (userErrors?.length > 0) {
       return res.status(400).json({
         status: "Error",
@@ -357,15 +347,10 @@ export async function uploadFile(req, res) {
       ],
     };
 
-    const response = await client.query({
-      data: {
-        query: uploadFileQuery(), // Query to request the staging URL
-        variables: variables,
-      },
-    });
+    const response = await client.request(uploadFileQuery(), { variables });
 
     const stagedUpload =
-      response?.body?.data?.stagedUploadsCreate?.stagedTargets?.[0];
+      response?.data?.stagedUploadsCreate?.stagedTargets?.[0];
 
     if (!stagedUpload) {
       throw new Error("No staging URL returned by Shopify");
@@ -402,11 +387,8 @@ export async function uploadFile(req, res) {
       },
     };
 
-    const fileCreate = await client.query({
-      data: {
-        query: fileCreateQuery(), // Query to create a file entry in Shopify
-        variables: fileCreateVariables,
-      },
+    const fileCreate = await client.request(fileCreateQuery(), {
+      variables: fileCreateVariables,
     });
     console.log("🚀 ~ uploadFile ~ fileCreate:");
 

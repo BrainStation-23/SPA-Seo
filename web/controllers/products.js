@@ -9,15 +9,10 @@ const fetchAllProducts = async (session, variables) => {
     session: session,
   });
 
-  const response = await client.query({
-    data: {
-      query: query,
-      variables: variables,
-    },
-  });
+  const response = await client.request(query, { variables });
 
-  const pageInfo = response.body.data.products.pageInfo;
-  const products = response.body.data.products.edges;
+  const pageInfo = response.data.products.pageInfo;
+  const products = response.data.products.edges;
 
   return { products, pageInfo };
 };
@@ -171,8 +166,8 @@ export const getProductByID = async (session, id) => {
 
     const client = new shopify.api.clients.Graphql({ session });
 
-    const productInfo = await client.query({ data: query });
-    return productInfo?.body?.data?.product;
+    const productInfo = await client.request(query);
+    return productInfo?.data?.product;
   } catch (err) {
     console.log("🚀 ~ getProductByID ~ error:", err);
     throw err;
@@ -240,25 +235,20 @@ export const updateProductSEO = async (req, res, next) => {
       session: res.locals.shopify.session,
     });
 
-    const response = await client.query({
-      data: {
-        query: mutation,
-        variables: variables,
-      },
-    });
+    const response = await client.request(mutation, { variables });
 
-    if (response.body.data.productUpdate.userErrors.length > 0) {
-      console.error("Errors:", response.body.data.productUpdate.userErrors);
+    if (response.data.productUpdate.userErrors.length > 0) {
+      console.error("Errors:", response.data.productUpdate.userErrors);
       return res
         .status(400)
-        .json({ error: response.body.data.productUpdate.userErrors });
+        .json({ error: response.data.productUpdate.userErrors });
     } else {
       const productByID = await getProductByID(
         res.locals.shopify.session,
         productID
       );
       return res.status(200).json({
-        product: response.body.data.productUpdate.product,
+        product: response.data.productUpdate.product,
         productByID,
       });
     }
@@ -276,15 +266,12 @@ export const getProducts = async (session, productsIds) => {
     const queryString = await fetchAllProductsQuery();
     const client = new shopify.api.clients.Graphql({ session });
 
-    const productsInfo = await client.query({
-      data: {
-        query: queryString,
-        variables: {
-          productIds: pIds,
-        },
+    const productsInfo = await client.request(queryString, {
+      variables: {
+        productIds: pIds,
       },
     });
-    return productsInfo?.body?.data;
+    return productsInfo?.data;
   } catch (error) {
     console.log("🚀 ~ getProducts ~ error:", error);
     throw error;
@@ -327,18 +314,16 @@ export const updateProductBulkSeo = async (req, res) => {
     session: res.locals.shopify.session,
   });
 
-  const response = await client.query({
-    data: mutation,
-  });
+  const response = await client.request(mutation);
 
   console.log(
     "🚀 ~ updateProductBulkSeo ~ response:",
-    response.body.data?.productUpdate_0?.userErrors
+    response.data?.productUpdate_0?.userErrors
   );
-  if (response.body?.data?.productUpdate_0?.userErrors?.length > 0) {
-    return res.status(400).json({ error: response.body.data });
+  if (response?.data?.productUpdate_0?.userErrors?.length > 0) {
+    return res.status(400).json({ error: response.data });
   } else {
-    return res.status(200).json({ product: response.body.data });
+    return res.status(200).json({ product: response.data });
   }
 };
 
@@ -386,28 +371,20 @@ export const updateImageSeoAltController = async (req, res, next) => {
       session: res.locals.shopify.session,
     });
 
-    const response = await client.query({
-      data: {
-        query: mutation,
-        variables: variables,
-      },
-    });
+    const response = await client.request(mutation, { variables });
 
-    if (response.body.data?.productImageUpdate?.userErrors?.length > 0) {
-      console.error(
-        "Errors:",
-        response.body.data.productImageUpdate.userErrors
-      );
+    if (response.data?.productImageUpdate?.userErrors?.length > 0) {
+      console.error("Errors:", response.data.productImageUpdate.userErrors);
       return res
         .status(400)
-        .json({ error: response.body.data?.productUpdateMedia?.userErrors });
+        .json({ error: response.data?.productUpdateMedia?.userErrors });
     } else {
       const productByID = await getProductByID(
         res.locals.shopify.session,
         productID
       );
       return res.status(200).json({
-        product: response.body.data.productUpdateMedia.media,
+        product: response.data.productUpdateMedia.media,
         productByID,
       });
     }

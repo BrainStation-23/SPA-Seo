@@ -51,17 +51,12 @@ const fetchAllCollections = async (session, variables) => {
 
   try {
     const query = collectionQuery(variables);
-    const response = await client.query({
-      data: {
-        query: query,
-        variables: variables,
-      },
-    });
+    const response = await client.request(query, { variables });
 
-    const collections = response.body.data.collections.edges.map(
+    const collections = response.data.collections.edges.map(
       (edge) => edge.node
     );
-    const pageInfo = response.body.data.collections.pageInfo;
+    const pageInfo = response.data.collections.pageInfo;
     return { collections, pageInfo };
   } catch (error) {
     console.error("Error fetching customers:", error);
@@ -98,8 +93,8 @@ export const getCollectionByID = async (session, id) => {
 
     const client = new shopify.api.clients.Graphql({ session });
 
-    const collectionInfo = await client.query({ data: query });
-    return collectionInfo?.body?.data?.collection;
+    const collectionInfo = await client.request(query);
+    return collectionInfo?.data?.collection;
   } catch (err) {
     console.log("🚀 ~ getProductByID ~ error:", err);
     throw err;
@@ -171,25 +166,20 @@ export const updateCollectionSEO = async (req, res, next) => {
       session: res.locals.shopify.session,
     });
 
-    const response = await client.query({
-      data: {
-        query: mutation,
-        variables: variables,
-      },
-    });
+    const response = await client.request(mutation, { variables });
 
-    if (response.body.data.collectionUpdate.userErrors.length > 0) {
-      console.error("Errors:", response.body.data.collectionUpdate.userErrors);
+    if (response.data.collectionUpdate.userErrors.length > 0) {
+      console.error("Errors:", response.data.collectionUpdate.userErrors);
       return res
         .status(400)
-        .json({ error: response.body.data.collectionUpdate.userErrors });
+        .json({ error: response.data.collectionUpdate.userErrors });
     } else {
       const collectionByID = await getCollectionByID(
         res.locals.shopify.session,
         collectionID
       );
       return res.status(200).json({
-        product: response.body.data.collectionUpdate.collection,
+        product: response.data.collectionUpdate.collection,
         collectionByID,
       });
     }
@@ -237,18 +227,13 @@ export const updateCollectionAltTextSEO = async (req, res, next) => {
       session: res.locals.shopify.session,
     });
 
-    const response = await client.query({
-      data: {
-        query: mutation,
-        variables: variables,
-      },
-    });
+    const response = await client.request(mutation, { variables });
 
-    if (response.body.data.collectionUpdate.userErrors.length > 0) {
-      console.error("Errors:", response.body.data.collectionUpdate.userErrors);
+    if (response.data.collectionUpdate.userErrors.length > 0) {
+      console.error("Errors:", response.data.collectionUpdate.userErrors);
       return res
         .status(400)
-        .json({ error: response.body.data.collectionUpdate.userErrors });
+        .json({ error: response.data.collectionUpdate.userErrors });
     } else {
       const collectionByID = await getCollectionByID(
         res.locals.shopify.session,
@@ -306,18 +291,16 @@ export const updateCollectionBulkSeo = async (req, res) => {
     session: res.locals.shopify.session,
   });
 
-  const response = await client.query({
-    data: mutation,
-  });
+  const response = await client.request(mutation);
 
   console.log(
     "🚀 ~ updateProductBulkSeo ~ response:",
-    response.body.data?.collectionUpdate_0?.userErrors
+    response.data?.collectionUpdate_0?.userErrors
   );
-  if (response.body?.data?.collectionUpdate_0?.userErrors?.length > 0) {
-    return res.status(400).json({ error: response.body.data });
+  if (response?.data?.collectionUpdate_0?.userErrors?.length > 0) {
+    return res.status(400).json({ error: response.data });
   } else {
-    return res.status(200).json({ product: response.body.data });
+    return res.status(200).json({ product: response.data });
   }
 };
 
@@ -350,25 +333,17 @@ export const updateImageSeoAltController = async (req, res, next) => {
       session: res.locals.shopify.session,
     });
 
-    const response = await client.query({
-      data: {
-        query: mutation,
-        variables: variables,
-      },
-    });
+    const response = await client.request(mutation, { variables });
 
-    if (response.body.data?.productImageUpdate?.userErrors?.length > 0) {
-      console.error(
-        "Errors:",
-        response.body.data.productImageUpdate.userErrors
-      );
+    if (response.data?.productImageUpdate?.userErrors?.length > 0) {
+      console.error("Errors:", response.data.productImageUpdate.userErrors);
       return res
         .status(400)
-        .json({ error: response.body.data?.productImageUpdate?.userErrors });
+        .json({ error: response.data?.productImageUpdate?.userErrors });
     } else {
       return res
         .status(200)
-        .json({ product: response.body.data.productImageUpdate.image });
+        .json({ product: response.data.productImageUpdate.image });
     }
   } catch (err) {
     console.log(
@@ -385,15 +360,12 @@ export const getCollections = async (session, collectionsIds) => {
     const queryString = await fetchAllCollectionQuery();
     const client = new shopify.api.clients.Graphql({ session });
 
-    const collectionInfo = await client.query({
-      data: {
-        query: queryString,
-        variables: {
-          collectionIds: pIds,
-        },
+    const collectionInfo = await client.request(queryString, {
+      variables: {
+        collectionIds: pIds,
       },
     });
-    return collectionInfo?.body?.data;
+    return collectionInfo?.data;
   } catch (error) {
     console.log("🚀 ~ getProducts ~ error:", error);
     throw error;
