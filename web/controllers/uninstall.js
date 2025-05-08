@@ -9,9 +9,7 @@ export const uninstallCleanup = async (req, res) => {
       session: res.locals.shopify.session,
     });
 
-    let initialData = await client.query({
-      data: {
-        query: `
+    let initialData = await client.request(`
               query GetShopMetafield {
                 shop {
                   metafield(key: "json-ld-saved-history", namespace: "bs-23-seo-app") {
@@ -74,12 +72,10 @@ export const uninstallCleanup = async (req, res) => {
                   }
                 }
               }
-            `,
-      },
-    });
-    const data = initialData.body.data;
+            `);
+    const data = initialData.data;
     const previousThemeCodes = JSON.parse(
-      initialData.body.data.shop.metafield.value
+      initialData.data.shop.metafield.value
     );
 
     const metafieldDefinitionIds = [];
@@ -112,9 +108,7 @@ export const uninstallCleanup = async (req, res) => {
     const deleteAllMetafieldsQuery = metafieldDefinitionIds.join("");
 
     const themeFilesMap = new Map();
-    let themeQueryResponse = await client.query({
-      data: {
-        query: `
+    let themeQueryResponse = await client.request(`
                       query GetDevTheme {
                         themes(first: 1, roles: MAIN) {
                           edges {
@@ -142,11 +136,9 @@ export const uninstallCleanup = async (req, res) => {
                           }
                         }
                       }
-                    `,
-      },
-    });
-    const themeId = themeQueryResponse.body.data.themes.edges[0].node.id;
-    themeQueryResponse.body.data.themes.edges[0].node.files.edges.forEach(
+                    `);
+    const themeId = themeQueryResponse.data.themes.edges[0].node.id;
+    themeQueryResponse.data.themes.edges[0].node.files.edges.forEach(
       ({ node }) => {
         themeFilesMap.set(node.filename, node.body.content);
       }
@@ -224,24 +216,15 @@ export const uninstallCleanup = async (req, res) => {
       return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
-    await client.query({
-      data: {
-        query: `mutation ThemeCleanupMutation {
+    await client.request(`mutation ThemeCleanupMutation {
                       ${deleteAllMetafieldsQuery}
-                    }`,
-      },
-    });
+                    }`);
 
     console.log("all metafields deleted");
 
     await wait(2000);
-    const cleanupResponse = await client.query({
-      data: {
-        variables: {
-          themeId: themeId,
-          filesToBeReverted: filesToBeReverted,
-        },
-        query: `mutation CleanupMutation($themeId: ID!, $filesToBeReverted: [OnlineStoreThemeFilesUpsertFileInput!]!) {
+    const cleanupResponse = await client.request(
+      `mutation CleanupMutation($themeId: ID!, $filesToBeReverted: [OnlineStoreThemeFilesUpsertFileInput!]!) {
                         themeFilesUpsert(files: $filesToBeReverted, themeId: $themeId) {
                           job {
                             id
@@ -256,19 +239,19 @@ export const uninstallCleanup = async (req, res) => {
                           }
                         }
                       }`,
-      },
-    });
+      {
+        variables: {
+          themeId: themeId,
+          filesToBeReverted: filesToBeReverted,
+        },
+      }
+    );
 
     console.log("theme code reverted");
 
     await wait(5000);
-    const themeFilesDelete = await client.query({
-      data: {
-        variables: {
-          themeId: themeId,
-          filesToBeDeleted: filesToBeDeleted,
-        },
-        query: `mutation ThemeFilesDeleteMutation($themeId: ID!, $filesToBeDeleted: [String!]!) {
+    const themeFilesDelete = await client.request(
+      `mutation ThemeFilesDeleteMutation($themeId: ID!, $filesToBeDeleted: [String!]!) {
                       themeFilesDelete(files: $filesToBeDeleted, themeId: $themeId) {
                           deletedThemeFiles {
                             filename
@@ -279,8 +262,13 @@ export const uninstallCleanup = async (req, res) => {
                           }
                         }
                       }`,
-      },
-    });
+      {
+        variables: {
+          themeId: themeId,
+          filesToBeDeleted: filesToBeDeleted,
+        },
+      }
+    );
 
     console.log("theme files deleted");
 

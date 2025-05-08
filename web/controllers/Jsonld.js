@@ -25,39 +25,32 @@ async function initializeMetafield(session) {
   try {
     const metafieldData = null;
     const client = new shopify.api.clients.Graphql({ session });
-    const checkMetafieldResponse = await client.query({
-      data: {
-        query: CheckShopMetafieldDefinition(
+    const checkMetafieldResponse = await client.request(
+      CheckShopMetafieldDefinition(
+        "SHOP",
+        "bs-23-seo-app",
+        "json-ld-saved-history"
+      )
+    );
+
+    if (checkMetafieldResponse.data.metafieldDefinitions.edges.length == 0) {
+      const metafieldCreationResponse = await client.request(
+        CreateShopMetafieldDefinition(
           "SHOP",
           "bs-23-seo-app",
-          "json-ld-saved-history"
-        ),
-      },
-    });
-
-    if (
-      checkMetafieldResponse.body.data.metafieldDefinitions.edges.length == 0
-    ) {
-      const metafieldCreationResponse = await client.query({
-        data: {
-          query: CreateShopMetafieldDefinition(
-            "SHOP",
-            "bs-23-seo-app",
-            "json-ld-saved-history",
-            "Metafield to save code snippets of the original theme file before adding json-ld snippets"
-          ),
-        },
-      });
+          "json-ld-saved-history",
+          "Metafield to save code snippets of the original theme file before adding json-ld snippets"
+        )
+      );
 
       if (
-        metafieldCreationResponse.body.data.metafieldDefinitionCreate.userErrors
+        metafieldCreationResponse.data.metafieldDefinitionCreate.userErrors
           .length > 0
       ) {
         throw new Error({
           status: 400,
           error:
-            metafieldCreationResponse.body.data.metafieldDefinitionCreate
-              .userErrors,
+            metafieldCreationResponse.data.metafieldDefinitionCreate.userErrors,
         });
       }
     }
@@ -73,9 +66,7 @@ async function savePreviousThemeCodesToMetafield({ session, payload }) {
     console.log("saving previous theme codes to metafield");
 
     const client = new shopify.api.clients.Graphql({ session });
-    const shopMetafieldQuery = await client.query({
-      data: {
-        query: `
+    const shopMetafieldQuery = await client.request(`
       query GetShopMetafield {
         shop {
             id
@@ -86,29 +77,24 @@ async function savePreviousThemeCodesToMetafield({ session, payload }) {
                 value
             }      
         }
-    }`,
-      },
-    });
+    }`);
 
-    if (!shopMetafieldQuery.body.data.shop.metafield) {
-      const setMetafieldResponse = await client.query({
-        data: {
-          query: SetShopMetafield,
-          variables: {
-            metafields: [
-              {
-                key: "json-ld-saved-history",
-                namespace: "bs-23-seo-app",
-                ownerId: shopMetafieldQuery.body.data.shop.id,
-                value: JSON.stringify(payload),
-              },
-            ],
-          },
+    if (!shopMetafieldQuery.data.shop.metafield) {
+      const setMetafieldResponse = await client.request(SetShopMetafield, {
+        variables: {
+          metafields: [
+            {
+              key: "json-ld-saved-history",
+              namespace: "bs-23-seo-app",
+              ownerId: shopMetafieldQuery.data.shop.id,
+              value: JSON.stringify(payload),
+            },
+          ],
         },
       });
 
-      if (setMetafieldResponse.body.data.metafieldsSet.userErrors.length > 0) {
-        throw setMetafieldResponse.body.data.metafieldsSet.userErrors;
+      if (setMetafieldResponse.data.metafieldsSet.userErrors.length > 0) {
+        throw setMetafieldResponse.data.metafieldsSet.userErrors;
       }
 
       console.log("saved previous theme codes to metafield");
@@ -122,13 +108,11 @@ async function savePreviousThemeCodesToMetafield({ session, payload }) {
 async function updateThemeFiles(session) {
   try {
     const client = new shopify.api.clients.Graphql({
-      apiVersion: "2024-10",
+      apiVersion: "2025-01",
       session,
     });
 
-    const themeQueryResponse = await client.query({
-      data: {
-        query: `
+    const themeQueryResponse = await client.request(`
                   query GetDevTheme {
                     themes(first: 1, roles: MAIN) {
                       edges {
@@ -156,16 +140,14 @@ async function updateThemeFiles(session) {
                       }
                     }
                   }
-                `,
-      },
-    });
+                `);
 
     console.log("got theme files");
 
-    const themeId = themeQueryResponse.body.data.themes.edges[0].node.id;
+    const themeId = themeQueryResponse.data.themes.edges[0].node.id;
     const themeFilesMap = new Map();
 
-    themeQueryResponse.body.data.themes.edges[0].node.files.edges.forEach(
+    themeQueryResponse.data.themes.edges[0].node.files.edges.forEach(
       ({ node }) => {
         themeFilesMap.set(node.filename, {
           filename: node.filename,
@@ -240,35 +222,32 @@ async function updateThemeFiles(session) {
       console.log("added seo jsonld snippet");
     }
 
-    const response = await client.query({
-      data: {
-        variables,
-        query: `
-          mutation EditThemeFiles($files: [OnlineStoreThemeFilesUpsertFileInput!]!, $themeId: ID!) {
-            themeFilesUpsert(files: $files, themeId: $themeId) {
-              job {
-                # Job fields
-                id
-                done
-              }
-              upsertedThemeFiles {
-                # OnlineStoreThemeFileOperationResult fields
-                filename
-              }
-              userErrors {
-                field
-                message
-              }
-            }
+    const response = await client.request(
+      `
+      mutation EditThemeFiles($files: [OnlineStoreThemeFilesUpsertFileInput!]!, $themeId: ID!) {
+        themeFilesUpsert(files: $files, themeId: $themeId) {
+          job {
+            # Job fields
+            id
+            done
           }
-        `,
-      },
-    });
+          upsertedThemeFiles {
+            # OnlineStoreThemeFileOperationResult fields
+            filename
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }`,
+      { variables }
+    );
 
     console.log("updated theme files");
 
-    if (response.body.data.themeFilesUpsert.userErrors.length > 0) {
-      throw response.body.data.themeFilesUpsert.userErrors;
+    if (response.data.themeFilesUpsert.userErrors.length > 0) {
+      throw response.data.themeFilesUpsert.userErrors;
     }
 
     return {

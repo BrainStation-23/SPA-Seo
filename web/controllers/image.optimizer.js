@@ -19,21 +19,16 @@ const fetchAllFromDataSource = async ({ session, query, datasource }) => {
 
   while (hasNextPage) {
     try {
-      const response = await client.query({
-        data: {
-          query: query,
-          variables: variables,
-        },
-      });
+      const response = await client.request(query, { variables });
 
-      const products = response.body.data[`${datasource}`].edges.map(
+      const products = response.data[`${datasource}`].edges.map(
         (edge) => edge.node
       );
-      const pageInfo = response.body.data[`${datasource}`].pageInfo;
+      const pageInfo = response.data[`${datasource}`].pageInfo;
       const endCursor =
-        response.body.data[`${datasource}`].edges.length > 0
-          ? response.body.data[`${datasource}`].edges[
-              response.body.data[`${datasource}`].edges.length - 1
+        response.data[`${datasource}`].edges.length > 0
+          ? response.data[`${datasource}`].edges[
+              response.data[`${datasource}`].edges.length - 1
             ].cursor
           : null;
       allData = allData.concat(products);
@@ -190,11 +185,7 @@ const updateImageAltManually = async ({
         }
       });
 
-      const response = await client.query({
-        data: {
-          query: `mutation { ${mutation_query} }`,
-        },
-      });
+      const response = await client.request(`mutation { ${mutation_query} }`);
 
       if (start + batchSize >= datasource.length) {
         hasNextSlice = false;
@@ -215,9 +206,7 @@ export const BulkUpdateAltText = async (req, res, next) => {
     await SaveImageAltOptimizerMetafiled(req, res, next);
 
     let metafieldData = null,
-      shopData = await client.query({
-        data: {
-          query: `
+      shopData = await client.request(`
           query GetShopMetafield {
             shop {
                 name
@@ -233,12 +222,10 @@ export const BulkUpdateAltText = async (req, res, next) => {
                     value
                 }      
             }
-          }`,
-        },
-      });
+          }`);
 
-    if (shopData.body.data.shop.metafield) {
-      metafieldData = JSON.parse(shopData.body.data.shop.metafield.value);
+    if (shopData.data.shop.metafield) {
+      metafieldData = JSON.parse(shopData.data.shop.metafield.value);
     }
 
     if (!metafieldData) {
@@ -304,9 +291,8 @@ export const BulkUpdateAltText = async (req, res, next) => {
         });
       });
 
-      const productImageUpdateResponse = await client.query({
-        data: {
-          query: `
+      const productImageUpdateResponse = await client.request(
+        `
         mutation FileUpdate($input: [FileUpdateInput!]!) {
           fileUpdate(files: $input) {
             userErrors {
@@ -320,9 +306,8 @@ export const BulkUpdateAltText = async (req, res, next) => {
           }
         }
         `,
-          variables: { input },
-        },
-      });
+        { variables: { input } }
+      );
 
       console.log("product image alt updated successfully");
     }
@@ -440,9 +425,7 @@ export const updateProductImageFilename = async (req, res, next) => {
       session: res.locals.shopify.session,
     });
     const { id, fileNameSettings, fileExt, productId } = req.body;
-    const queryData = await client.query({
-      data: {
-        query: `
+    const queryData = await client.request(`
           query QueryData{
             shop {
               name
@@ -459,12 +442,10 @@ export const updateProductImageFilename = async (req, res, next) => {
               vendor
               tags
             }          
-          }`,
-      },
-    });
+          }`);
 
-    const shop = queryData.body.data.shop,
-      product = queryData.body.data.product;
+    const shop = queryData.data.shop,
+      product = queryData.data.product;
 
     const filename = translateAltText(
       fileNameSettings,
@@ -480,9 +461,8 @@ export const updateProductImageFilename = async (req, res, next) => {
       },
     ];
 
-    const productImageFilenameUpdateResponse = await client.query({
-      data: {
-        query: `
+    const productImageFilenameUpdateResponse = await client.request(
+      `
         mutation FileUpdate($input: [FileUpdateInput!]!) {
           fileUpdate(files: $input) {
             userErrors {
@@ -493,18 +473,16 @@ export const updateProductImageFilename = async (req, res, next) => {
           }
         }
         `,
-        variables: { input },
-      },
-    });
+      { variables: { input } }
+    );
 
     if (
-      productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors
-        .length > 0
+      productImageFilenameUpdateResponse.data.fileUpdate.userErrors.length > 0
     ) {
       return res.status(400).json({
         message:
-          productImageFilenameUpdateResponse.body.data.fileUpdate
-            .userErrors?.[0].message,
+          productImageFilenameUpdateResponse.data.fileUpdate.userErrors?.[0]
+            .message,
       });
     }
     const product_id = productId.split("/").pop();
@@ -592,9 +570,8 @@ async function batchUpdateImageFileName({ input, client }) {
 
   async function updateFile(file, attempt = 1) {
     try {
-      const productImageFilenameUpdateResponse = await client.query({
-        data: {
-          query: `
+      const productImageFilenameUpdateResponse = await client.request(
+        `
             mutation FileUpdate($input: [FileUpdateInput!]!) {
               fileUpdate(files: $input) {
                 userErrors {
@@ -614,12 +591,11 @@ async function batchUpdateImageFileName({ input, client }) {
               }
             }
           `,
-          variables: { input: [file] },
-        },
-      });
+        { variables: { input: [file] } }
+      );
 
       const userErrors =
-        productImageFilenameUpdateResponse.body.data.fileUpdate.userErrors;
+        productImageFilenameUpdateResponse.data.fileUpdate.userErrors;
       if (userErrors.length > 0) {
         const fileLockedErrors = userErrors.filter(
           (error) => error.code === "FILE_LOCKED"
@@ -674,9 +650,7 @@ async function saveGlobalImageFilenameToMetafield({ session, filename }) {
       session,
     });
 
-    const initialQuery = await client.query({
-      data: {
-        query: `{
+    const initialQuery = await client.request(`{
                   metafieldDefinitions(first:1, namespace: "bs-23-seo-app", ownerType: SHOP, key: "image-optimizer") {
                     edges {
                       node {
@@ -690,14 +664,10 @@ async function saveGlobalImageFilenameToMetafield({ session, filename }) {
                       value
                     }
                   }
-                }`,
-      },
-    });
+                }`);
 
-    if (initialQuery.body.data.metafieldDefinitions.edges.length === 0) {
-      const createMetafieldDefinition = await client.query({
-        data: {
-          query: `mutation {
+    if (initialQuery.data.metafieldDefinitions.edges.length === 0) {
+      const createMetafieldDefinition = await client.request(`mutation {
                     metafieldDefinitionCreate(definition: {
                       namespace: "bs-23-seo-app",
                       key: "image-optimizer",
@@ -714,36 +684,23 @@ async function saveGlobalImageFilenameToMetafield({ session, filename }) {
                         field
                       }
                     }
-                  }`,
-        },
-      });
+                  }`);
 
       if (
-        createMetafieldDefinition.body.data.metafieldDefinitionCreate.userErrors
+        createMetafieldDefinition.data.metafieldDefinitionCreate.userErrors
           .length > 0
       ) {
-        throw createMetafieldDefinition.body.data.metafieldDefinitionCreate
+        throw createMetafieldDefinition.data.metafieldDefinitionCreate
           .userErrors;
       }
     }
 
-    const shopId = initialQuery.body.data.shop.id;
-    const prevData = initialQuery.body.data.shop.metafield
-      ? JSON.parse(initialQuery.body.data.shop.metafield.value)
+    const shopId = initialQuery.data.shop.id;
+    const prevData = initialQuery.data.shop.metafield
+      ? JSON.parse(initialQuery.data.shop.metafield.value)
       : {};
-    const setMetafield = await client.query({
-      data: {
-        variables: {
-          metafields: [
-            {
-              key: "image-optimizer",
-              namespace: "bs-23-seo-app",
-              ownerId: shopId,
-              value: JSON.stringify({ ...prevData, filename }),
-            },
-          ],
-        },
-        query: `mutation MetafieldsSet($metafields: [MetafieldsSetInput!]!) {
+    const setMetafield = await client.request(
+      `mutation MetafieldsSet($metafields: [MetafieldsSetInput!]!) {
                   metafieldsSet(metafields: $metafields) {
                     metafields {
                         id
@@ -758,11 +715,22 @@ async function saveGlobalImageFilenameToMetafield({ session, filename }) {
                     }
                   }
                 }`,
-      },
-    });
+      {
+        variables: {
+          metafields: [
+            {
+              key: "image-optimizer",
+              namespace: "bs-23-seo-app",
+              ownerId: shopId,
+              value: JSON.stringify({ ...prevData, filename }),
+            },
+          ],
+        },
+      }
+    );
 
-    if (setMetafield.body.data.metafieldsSet.userErrors.length > 0) {
-      throw setMetafield.body.data.metafieldsSet.userErrors;
+    if (setMetafield.data.metafieldsSet.userErrors.length > 0) {
+      throw setMetafield.data.metafieldsSet.userErrors;
     }
   } catch (error) {
     throw error;
@@ -782,9 +750,7 @@ export const bulkUpdateProductImageFilename = async (req, res, next) => {
       apiVersion: "2024-10",
       session: res.locals.shopify.session,
     });
-    const queryData = await client.query({
-      data: {
-        query: `
+    const queryData = await client.request(`
           query QueryData{
             shop {
               name
@@ -794,10 +760,8 @@ export const bulkUpdateProductImageFilename = async (req, res, next) => {
                 url
               }
             }          
-          }`,
-      },
-    });
-    const shop = queryData.body.data.shop;
+          }`);
+    const shop = queryData.data.shop;
 
     const allProducts = await fetchAllFromDataSource({
       datasource: "products",
