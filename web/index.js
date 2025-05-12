@@ -13,6 +13,7 @@ import blogRoute from "./routes/blog.js";
 import jsonLdRoute from "./routes/Jsonld.js";
 import ImageOptimizerRoute from "./routes/image.optimizer.js";
 import sitemapRoute from "./routes/htmlsitemap.js";
+import appBilling from "./routes/appBilling.js";
 import UninstallCleanupRouter from "./routes/uninstall.js";
 import { errorRouter, updateErrorInsightsRouter } from "./routes/404error.js";
 import imageCompression from "./routes/imageCompression.js";
@@ -20,6 +21,7 @@ import AIRouter from "./routes/AIRoute.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
+import { connectDB } from "./utils/mongoDBConnection.js";
 
 dotenv.config();
 
@@ -39,6 +41,9 @@ app.use(
     origin: "http://127.0.0.1:9292", // Allow requests from your local development server
   })
 );
+
+connectDB();
+
 app.use(express.json());
 app.use(cookieParser());
 
@@ -90,6 +95,7 @@ app.use("/api/uninstall", UninstallCleanupRouter);
 app.use("/api/image-compression", imageCompression);
 app.use("/api/products", productsRoute);
 app.use("/api/AI", AIRouter);
+app.use("/api/billing", appBilling);
 
 app.use(shopify.cspHeaders());
 app.use(serveStatic(STATIC_PATH, { index: false }));

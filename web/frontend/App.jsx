@@ -21,6 +21,8 @@ export default function App() {
   // See documentation for <Routes /> for more info
   const pages = import.meta.globEager("./pages/**/!(*.test.[jt]sx)*.([jt]sx)");
 
+  // import { SpeedInsights } from "../components";
+
   return (
     <ManagedUIContext>
       <ManagedAIContext>
@@ -32,6 +34,10 @@ export default function App() {
                   <QueryProvider>
                     <NavigationMenu
                       navigationLinks={[
+                        {
+                          label: "Subscription",
+                          destination: "/subscription",
+                        },
                         {
                           label: "User manual",
                           destination: "/manual",
