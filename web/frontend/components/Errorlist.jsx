@@ -1,6 +1,6 @@
 import {
   Grid,
-  LegacyCard,
+  Card,
   IndexTable,
   Text,
   SkeletonBodyText,
@@ -45,35 +45,35 @@ export function ErrorList() {
       <div className="seo_error_insights_options">
         <Grid>
           <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 3, lg: 3, xl: 3 }}>
-            <LegacyCard title="Total Errors For 404" sectioned>
+            <Card title="Total Errors For 404" sectioned>
               <p>
                 <b>Counts: </b>
                 {data?.totalVisits}
               </p>
               <p style={{ opacity: "0" }}>0</p>
-            </LegacyCard>
+            </Card>
           </Grid.Cell>
           <Grid.Cell columnSpan={{ xs: 6, sm: 3, md: 3, lg: 3, xl: 3 }}>
-            <LegacyCard title="Total Unique URL visits (404)" sectioned>
+            <Card title="Total Unique URL visits (404)" sectioned>
               <p>
                 <b>Counts: </b>
                 {data?.uniqueUrlsCount}
               </p>
               <p style={{ opacity: "0" }}>0</p>
-            </LegacyCard>
+            </Card>
           </Grid.Cell>
           <Grid.Cell columnSpan={{ xs: 6, sm: 3, md: 3, lg: 3, xl: 3 }}>
-            <LegacyCard title="Most Frequent URL visits (404)" sectioned>
+            <Card title="Most Frequent URL visits (404)" sectioned>
               <p>
                 <b>URL:</b> {data?.mostFrequentOne?.url}
               </p>
               <p>
                 <b>Counts:</b> {data?.mostFrequentOne?.count}
               </p>
-            </LegacyCard>
+            </Card>
           </Grid.Cell>
           <Grid.Cell columnSpan={{ xs: 6, sm: 3, md: 3, lg: 3, xl: 3 }}>
-            <LegacyCard title="Last time visited URL (404)" sectioned>
+            <Card title="Last time visited URL (404)" sectioned>
               <p>
                 <b>URL:</b> {data?.lastVisit?.url}
               </p>
@@ -83,7 +83,7 @@ export function ErrorList() {
                   data?.lastVisit?.timestamp &&
                   formattedDate(data?.lastVisit?.timestamp)}
               </p>
-            </LegacyCard>
+            </Card>
           </Grid.Cell>
         </Grid>
       </div>

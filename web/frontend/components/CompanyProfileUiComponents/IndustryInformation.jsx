@@ -3,9 +3,9 @@ import {
   Layout,
   Box,
   Text,
-  AlphaCard,
+  Card,
   Select,
-  VerticalStack,
+  BlockStack,
   TextField,
   Tag,
   Button,
@@ -104,8 +104,8 @@ export default function IndustryInformation({
         </Layout.Section>
         <Layout.Section oneHalf>
           <Box>
-            <AlphaCard>
-              <VerticalStack gap={"4"}>
+            <Card>
+              <BlockStack gap={"4"}>
                 <div className="d-flex d-flex-gap">
                   <div className="select_for_industry">
                     <Select
@@ -143,8 +143,8 @@ export default function IndustryInformation({
                       )
                   )}
                 </div>
-              </VerticalStack>
-            </AlphaCard>
+              </BlockStack>
+            </Card>
           </Box>
         </Layout.Section>
       </Layout>

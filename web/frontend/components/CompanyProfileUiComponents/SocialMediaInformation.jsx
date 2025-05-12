@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Layout, Box, Text, AlphaCard, VerticalStack, TextField } from "@shopify/polaris";
+import {
+  Layout,
+  Box,
+  Text,
+  Card,
+  BlockStack,
+  TextField,
+} from "@shopify/polaris";
 import { useHomeSeo } from "../../contexts/home.context";
 
 export default function SocialMediaInformation({ setHasSocialErrors }) {
@@ -7,7 +14,8 @@ export default function SocialMediaInformation({ setHasSocialErrors }) {
   const [errors, setErrors] = useState({});
 
   const validateURL = (url) => {
-    const urlPattern = /^(https?:\/\/)?(www\.)?([a-zA-Z0-9._-]+\.[a-zA-Z]{2,})(\/[a-zA-Z0-9._-]*)*\/?$/;
+    const urlPattern =
+      /^(https?:\/\/)?(www\.)?([a-zA-Z0-9._-]+\.[a-zA-Z]{2,})(\/[a-zA-Z0-9._-]*)*\/?$/;
     return urlPattern.test(url);
   };
 
@@ -34,14 +42,15 @@ export default function SocialMediaInformation({ setHasSocialErrors }) {
           </Box>
           <Box>
             <Text variant="bodyMd">
-              Let search engines like Google know you have a social media presence and a real company.
+              Let search engines like Google know you have a social media
+              presence and a real company.
             </Text>
           </Box>
         </Layout.Section>
         <Layout.Section oneHalf>
           <Box>
-            <AlphaCard>
-              <VerticalStack gap={"4"}>
+            <Card>
+              <BlockStack gap={"4"}>
                 <TextField
                   label="Facebook page URL"
                   value={organization?.socialLinks?.facebook}
@@ -98,8 +107,8 @@ export default function SocialMediaInformation({ setHasSocialErrors }) {
                   onChange={(value) => handleURLChange("tiktok", value)}
                   error={errors.tiktok}
                 />
-              </VerticalStack>
-            </AlphaCard>
+              </BlockStack>
+            </Card>
           </Box>
         </Layout.Section>
       </Layout>

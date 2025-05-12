@@ -3,8 +3,8 @@ import {
   Layout,
   Box,
   Text,
-  AlphaCard,
-  VerticalStack,
+  Card,
+  BlockStack,
   TextField,
 } from "@shopify/polaris";
 
@@ -29,11 +29,11 @@ export default function ProductReviewInformation() {
         </Layout.Section>
         <Layout.Section oneHalf>
           <Box>
-            <AlphaCard>
-              <VerticalStack gap={"4"}>
+            <Card>
+              <BlockStack gap={"4"}>
                 <Text variant="headingSm">Feature coming soon</Text>
-              </VerticalStack>
-            </AlphaCard>
+              </BlockStack>
+            </Card>
           </Box>
         </Layout.Section>
       </Layout>

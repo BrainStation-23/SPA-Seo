@@ -2,8 +2,8 @@ import React, { useEffect } from "react";
 import {
   IndexTable,
   Text,
-  HorizontalStack,
-  VerticalStack,
+  InlineStack,
+  BlockStack,
   Button,
   SkeletonBodyText,
 } from "@shopify/polaris";
@@ -43,7 +43,7 @@ export default function BlogPage() {
             <Text as="span">{info?.tags}</Text>
           </IndexTable.Cell>
           <IndexTable.Cell>
-            <HorizontalStack gap="4" align="center">
+            <InlineStack gap="4" align="center">
               <Button
                 className="cursor_pointer"
                 primary
@@ -61,7 +61,7 @@ export default function BlogPage() {
               >
                 Articles
               </Button>
-            </HorizontalStack>
+            </InlineStack>
           </IndexTable.Cell>
         </IndexTable.Row>
       ))) ||
@@ -80,7 +80,7 @@ export default function BlogPage() {
 
   return (
     <>
-      <VerticalStack gap="2">
+      <BlockStack gap="2">
         <div className="seo_score_page_title_container">
           <div className="seo_score_page_title">Blog SEO</div>
           <Button
@@ -114,7 +114,7 @@ export default function BlogPage() {
             setSearchParams={setSearchParams}
           />
         )}
-      </VerticalStack>
+      </BlockStack>
     </>
   );
 }

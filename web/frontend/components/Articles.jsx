@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { HorizontalStack, VerticalStack, Button } from "@shopify/polaris";
+import { InlineStack, BlockStack, Button } from "@shopify/polaris";
 import { Spinners } from "./Spinner";
 import { useUI } from "../contexts/ui.context";
 import { useArticlesQuery } from "../hooks/useBlogsQuery";
@@ -37,7 +37,7 @@ export default function ArticlesPage() {
           <div className="app_product_bulk_input">{info?.tags}</div>
           <div className="app_product_bulk_input">{info?.author}</div>
           <div className="app_product_bulk_input">
-            <HorizontalStack gap="4" align="center">
+            <InlineStack gap="4" align="center">
               <Button
                 className="cursor_pointer"
                 primary
@@ -55,7 +55,7 @@ export default function ArticlesPage() {
               >
                 SEO
               </Button>
-            </HorizontalStack>
+            </InlineStack>
           </div>
         </div>
       ))}
@@ -67,7 +67,7 @@ export default function ArticlesPage() {
       {isLoading && !isError ? (
         <Spinners />
       ) : (
-        <VerticalStack gap="2">
+        <BlockStack gap="2">
           {rowMarkup}
           {data?.length > itemsPerPage && (
             <div className="center__align content__margin_top">
@@ -79,7 +79,7 @@ export default function ArticlesPage() {
               />
             </div>
           )}
-        </VerticalStack>
+        </BlockStack>
       )}
     </>
   );

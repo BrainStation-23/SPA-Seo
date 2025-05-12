@@ -2,11 +2,11 @@ import React, { useState, useCallback, useEffect } from "react";
 import {
   Box,
   Layout,
-  HorizontalStack,
+  InlineStack,
   Thumbnail,
-  VerticalStack,
+  BlockStack,
   Text,
-  AlphaCard,
+  Card,
   List,
   Divider,
   TextField,
@@ -55,9 +55,9 @@ function ImageTextField({ image, product, shop }) {
     setErrors("");
   };
   return (
-    <HorizontalStack gap={"2"} blockAlign="center">
+    <InlineStack gap={"2"} blockAlign="center">
       <Thumbnail source={image?.url ? image?.url : image?.src} />
-      <HorizontalStack gap={"1"}>
+      <InlineStack gap={"1"}>
         <Box width="400px">
           <TextField
             onChange={handleFilenameChange}
@@ -67,7 +67,7 @@ function ImageTextField({ image, product, shop }) {
           />
         </Box>
         <Text>{fileExt}</Text>
-      </HorizontalStack>
+      </InlineStack>
       <Button
         loading={isLoading}
         disabled={filename === prev_filename}
@@ -76,7 +76,7 @@ function ImageTextField({ image, product, shop }) {
       >
         Save
       </Button>
-    </HorizontalStack>
+    </InlineStack>
   );
 }
 
@@ -102,7 +102,7 @@ export function ProductImageFilenameOptimizer() {
       <Layout>
         <Layout.Section>
           <Box paddingBlockStart={"4"}>
-            <VerticalStack gap={"4"}>
+            <BlockStack gap={"4"}>
               {images?.map((image, index) => (
                 <ImageTextField
                   key={index}
@@ -111,7 +111,7 @@ export function ProductImageFilenameOptimizer() {
                   shop={shop}
                 />
               ))}
-            </VerticalStack>
+            </BlockStack>
           </Box>
           <Box paddingBlockStart={"10"}>
             <Banner title="Filename Guidelines" status="warning">
@@ -138,8 +138,8 @@ export function ProductImageFilenameOptimizer() {
           </Box>
         </Layout.Section>
         <Layout.Section oneThird>
-          <VerticalStack gap={"2"}>
-            <AlphaCard background="bg-app-selected">
+          <BlockStack gap={"2"}>
+            <Card background="bg-app-selected">
               <Text variant="bodyMd">
                 You can use the following variables to dynamically generate the
                 content based on the product and shop information.
@@ -150,8 +150,8 @@ export function ProductImageFilenameOptimizer() {
                   whitespace, to set image alt text.
                 </Text>
               </Box>
-            </AlphaCard>
-            <AlphaCard padding={"0"} background="bg-app-selected">
+            </Card>
+            <Card padding={"0"} background="bg-app-selected">
               <Box padding={"5"}>
                 <Text variant="headingLg">Variables</Text>
               </Box>
@@ -189,8 +189,8 @@ export function ProductImageFilenameOptimizer() {
                   </List.Item>
                 </List>
               </Box>
-            </AlphaCard>
-          </VerticalStack>
+            </Card>
+          </BlockStack>
         </Layout.Section>
       </Layout>
     </Box>

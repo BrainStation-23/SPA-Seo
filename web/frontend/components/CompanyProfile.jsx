@@ -4,9 +4,9 @@ import {
   Divider,
   Page,
   Layout,
-  AlphaCard,
+  Card,
   Text,
-  VerticalStack,
+  BlockStack,
 } from "@shopify/polaris";
 import {
   IndustryInformation,
@@ -111,20 +111,20 @@ export default function CompanyProfile() {
             </Layout.Section>
             <Layout.Section oneHalf>
               <Box>
-                <AlphaCard>
-                  <VerticalStack gap={"6"}>
+                <Card>
+                  <BlockStack gap={"6"}>
                     <Text variant="bodyMd">
                       Add organization snippet in storefront.
                     </Text>
-                    <VerticalStack gap={"2"}>
+                    <BlockStack gap={"2"}>
                       <Text variant="headingSm">Status</Text>
                       <Switch
                         checked={organization?.status}
                         handleClick={handleCheckedChange}
                       />
-                    </VerticalStack>
-                  </VerticalStack>
-                </AlphaCard>
+                    </BlockStack>
+                  </BlockStack>
+                </Card>
               </Box>
             </Layout.Section>
           </Layout>
