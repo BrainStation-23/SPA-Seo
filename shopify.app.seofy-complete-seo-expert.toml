@@ -1,0 +1,33 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "695da14ec05f37f6cdd63a2b3c20b444"
+name = "SEOfy - Complete SEO Expert"
+handle = "seofy-complete-seo-expert"
+application_url = "https://agricultural-date-lightweight-ez.trycloudflare.com"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "joy-matubber-store.myshopify.com"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_content,read_customers,read_products,read_themes,write_content,write_products,write_themes"
+
+[auth]
+redirect_urls = [
+  "https://agricultural-date-lightweight-ez.trycloudflare.com/auth/callback",
+  "https://agricultural-date-lightweight-ez.trycloudflare.com/auth/shopify/callback",
+  "https://agricultural-date-lightweight-ez.trycloudflare.com/api/auth/callback"
+]
+
+[webhooks]
+api_version = "2024-10"
+
+[app_proxy]
+url = "https://agricultural-date-lightweight-ez.trycloudflare.com/api"
+subpath = "error-insights"
+prefix = "apps"
+
+[pos]
+embedded = false
