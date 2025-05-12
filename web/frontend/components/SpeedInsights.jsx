@@ -18,10 +18,20 @@ import {
   LightbulbIcon,
 } from "@shopify/polaris-icons";
 import { SpeedFeatureCard } from "./SpeedFeatureCard";
+import { useUI } from "../contexts/ui.context";
+import useFetchQuery from "../hooks/useGlobalQuery";
 
 export default function SpeedInsights() {
   const [selected, setSelected] = useState(0);
   const [instantPageEnabled, setInstantPageEnabled] = useState(true);
+  const { isLoading, data } = useFetchQuery({
+    apiEndpoint: "/api/billing/get-store-info",
+    apiKey: "getActiveSubscription",
+    dependency: [],
+  });
+
+  const { appBilling } = useUI();
+  console.log("🚀 ~ SpeedInsights ~ appBilling:", appBilling);
 
   const handleTabChange = (selectedTabIndex) => {
     setSelected(selectedTabIndex);

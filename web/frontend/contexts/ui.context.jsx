@@ -15,6 +15,8 @@ const initialState = {
     active: false,
     data: null,
   },
+  appBilling: {},
+  speedInsights: {},
 };
 
 export const UIContext = React.createContext(initialState);
@@ -72,6 +74,14 @@ function uiReducer(state, action) {
         },
       };
     }
+
+    case "SET_STORE_INFO": {
+      return {
+        ...state,
+        appBilling: action?.payload?.billing,
+        speedInsights: action?.payload?.speedInsights,
+      };
+    }
   }
 }
 
@@ -87,6 +97,9 @@ export const UIProvider = (props) => {
   const setToggleAIButton = (payload) =>
     dispatch({ type: "TOGGLE_AI", payload });
 
+  const setStoreInfo = (payload) =>
+    dispatch({ type: "SET_STORE_INFO", payload });
+
   const value = React.useMemo(
     () => ({
       ...state,
@@ -95,6 +108,7 @@ export const UIProvider = (props) => {
       setCloseModal,
       setToggleToast,
       setToggleAIButton,
+      setStoreInfo,
     }),
     [state]
   );
