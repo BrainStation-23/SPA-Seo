@@ -3,7 +3,7 @@
 client_id = "695da14ec05f37f6cdd63a2b3c20b444"
 name = "SEOfy - Complete SEO Expert"
 handle = "seofy-complete-seo-expert"
-application_url = "https://agricultural-date-lightweight-ez.trycloudflare.com"
+application_url = "https://voltage-discovered-weeks-sticker.trycloudflare.com"
 embedded = true
 
 [build]
@@ -16,16 +16,16 @@ scopes = "read_content,read_customers,read_products,read_themes,write_content,wr
 
 [auth]
 redirect_urls = [
-  "https://agricultural-date-lightweight-ez.trycloudflare.com/auth/callback",
-  "https://agricultural-date-lightweight-ez.trycloudflare.com/auth/shopify/callback",
-  "https://agricultural-date-lightweight-ez.trycloudflare.com/api/auth/callback"
+  "https://voltage-discovered-weeks-sticker.trycloudflare.com/auth/callback",
+  "https://voltage-discovered-weeks-sticker.trycloudflare.com/auth/shopify/callback",
+  "https://voltage-discovered-weeks-sticker.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
 api_version = "2024-10"
 
 [app_proxy]
-url = "https://agricultural-date-lightweight-ez.trycloudflare.com/api"
+url = "https://voltage-discovered-weeks-sticker.trycloudflare.com/api"
 subpath = "error-insights"
 prefix = "apps"
 

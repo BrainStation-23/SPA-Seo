@@ -4,7 +4,6 @@ import { SkeletonBodyText, Button } from "@shopify/polaris";
 
 export function PageSpeedInsights() {
   const { data, isLoading } = useSeoInsightsQuery({ url: "api/seo/insights" });
-  const { data: lazyLoadingData, isLoading: lazyLoadingLoading } = useSeoLeazyLoaddingQuery({ url: "api/seo/lazy-loading" });
 
   console.log("🚀 ~ lazyLoadingData:", lazyLoadingData);
   return (

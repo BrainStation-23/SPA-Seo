@@ -197,10 +197,32 @@ async function analyzeAndOptimizeFiles(themeFiles) {
   const optimizedFiles = [];
   const startTime = performance.now();
 
-  for (const { node } of themeFiles) {
-    if (node.contentType !== "text/css" && node.contentType !== "application/json") {
+  for (const fileEdge of themeFiles) {
+    // Skip if node is undefined
+    if (!fileEdge || !fileEdge.node) {
+      continue;
+    }
+    
+    const node = fileEdge.node;
+    
+    // Skip if missing critical properties
+    if (!node.body || !node.body.content) {
+      continue;
+    }
+    
+    // Skip CSS and JSON files 
+    if (node.contentType === "text/css" || 
+        node.contentType === "application/json" ||
+        (node.filename && (
+          node.filename.endsWith('.css') || 
+          node.filename.endsWith('.json')
+        ))) {
+      continue;
+    }
+
+    try {
       const optimizedContent = await optimizeFileContent(node.body.content, node.filename);
-      if (optimizedContent !== node.body.content) {
+      if (optimizedContent && optimizedContent !== node.body.content) {
         optimizedFiles.push({
           filename: node.filename,
           body: {
@@ -209,6 +231,8 @@ async function analyzeAndOptimizeFiles(themeFiles) {
           },
         });
       }
+    } catch (error) {
+      console.error(`Error optimizing file ${node.filename}:`, error);
     }
   }
 
@@ -218,15 +242,23 @@ async function analyzeAndOptimizeFiles(themeFiles) {
 }
 
 async function optimizeFileContent(content, filename) {
+  // Check if content is null or undefined
+  if (!content) {
+    console.log(`Skipping file ${filename} - content is undefined`);
+    return content || '';
+  }
+
   let optimizedContent = content;
 
-  // Add lazy loading to images
-  optimizedContent = optimizedContent.replace(/<img([^>]*)>/g, (match, attributes) => {
-    if (!attributes.includes("loading=")) {
-      return `<img${attributes} loading="lazy">`;
-    }
-    return match;
-  });
+  try {
+    optimizedContent = content.replace(
+      /<img(?!\s+loading=)/g,
+      '<img loading="lazy"'
+    );
+  } catch (error) {
+    console.error(`Error processing file ${filename}:`, error);
+    return content; 
+  }
 
   return optimizedContent;
 }
