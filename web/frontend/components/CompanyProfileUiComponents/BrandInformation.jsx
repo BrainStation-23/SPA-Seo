@@ -3,8 +3,8 @@ import {
   Layout,
   Box,
   Text,
-  AlphaCard,
-  VerticalStack,
+  Card,
+  BlockStack,
   TextField,
 } from "@shopify/polaris";
 import { useHomeSeo } from "../../contexts/home.context";
@@ -36,8 +36,8 @@ export default function BrandInformation() {
         </Layout.Section>
         <Layout.Section oneHalf>
           <Box>
-            <AlphaCard>
-              <VerticalStack gap={"4"}>
+            <Card>
+              <BlockStack gap={"4"}>
                 <TextField
                   label="Brand Name"
                   value={organization?.brand?.name}
@@ -52,8 +52,8 @@ export default function BrandInformation() {
                     onChange={handleBrandLogoChange}
                   ></TextField>
                 )}
-              </VerticalStack>
-            </AlphaCard>
+              </BlockStack>
+            </Card>
           </Box>
         </Layout.Section>
       </Layout>

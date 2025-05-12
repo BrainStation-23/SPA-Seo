@@ -1,12 +1,5 @@
 import React, { useState } from "react";
-import {
-  Layout,
-  Box,
-  Text,
-  AlphaCard,
-  VerticalStack,
-  Button,
-} from "@shopify/polaris";
+import { Layout, Box, Text, Card, BlockStack, Button } from "@shopify/polaris";
 import Switch from "../commonUI/Switch/Switch";
 import { useHomeSeo } from "../../contexts/home.context";
 
@@ -33,21 +26,21 @@ export default function ContactInformation() {
         </Layout.Section>
         <Layout.Section oneHalf>
           <Box>
-            <AlphaCard>
-              <VerticalStack gap={"6"}>
+            <Card>
+              <BlockStack gap={"6"}>
                 <Text variant="bodyMd">
                   This will include phone and address details of your business
                   in Google JSONLD data.
                 </Text>
-                <VerticalStack gap={"2"}>
+                <BlockStack gap={"2"}>
                   <Text variant="headingSm">Status</Text>
                   <Switch
                     checked={organization?.showContact}
                     handleClick={handleCheckedChange}
                   />
-                </VerticalStack>
-              </VerticalStack>
-            </AlphaCard>
+                </BlockStack>
+              </BlockStack>
+            </Card>
           </Box>
         </Layout.Section>
       </Layout>
