@@ -3,12 +3,12 @@
 client_id = "695da14ec05f37f6cdd63a2b3c20b444"
 name = "SEOfy - Complete SEO Expert"
 handle = "seofy-complete-seo-expert"
-application_url = "https://superintendent-economic-liver-tsunami.trycloudflare.com"
+application_url = "https://7448-103-95-99-147.ngrok-free.app"
 embedded = true
 
 [build]
 automatically_update_urls_on_dev = true
-dev_store_url = "demo-store-kazi.myshopify.com"
+dev_store_url = "algorithm-with-shop.myshopify.com"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
@@ -16,16 +16,16 @@ scopes = "read_content,read_customers,read_products,read_themes,write_content,wr
 
 [auth]
 redirect_urls = [
-  "https://superintendent-economic-liver-tsunami.trycloudflare.com/auth/callback",
-  "https://superintendent-economic-liver-tsunami.trycloudflare.com/auth/shopify/callback",
-  "https://superintendent-economic-liver-tsunami.trycloudflare.com/api/auth/callback"
+  "https://7448-103-95-99-147.ngrok-free.app/auth/callback",
+  "https://7448-103-95-99-147.ngrok-free.app/auth/shopify/callback",
+  "https://7448-103-95-99-147.ngrok-free.app/api/auth/callback"
 ]
 
 [webhooks]
 api_version = "2024-10"
 
 [app_proxy]
-url = "https://superintendent-economic-liver-tsunami.trycloudflare.com/api"
+url = "https://7448-103-95-99-147.ngrok-free.app/api"
 subpath = "error-insights"
 prefix = "apps"
 
