@@ -82,91 +82,34 @@ export const speedInsightsController = async (req, res, next) => {
       session,
     });
 
-    // Get theme ID first
-    const themeIdResponse = await client.request(`
-            query GetThemeId {
-                themes(first: 1, roles: MAIN) {
-                    edges {
-                        node {
-                            id
-                        }
-                    }
-                }
-            }
-        `);
+    // Get all theme files
+    const allThemeFiles = await getAllThemeFiles(client);
 
-    const themeId = themeIdResponse.data.themes.edges[0].node.id;
-
-    // Fetch all files with pagination
-    const allThemeFiles = [];
-    let hasNextPage = true;
-    let cursor = null;
-
-    while (hasNextPage) {
-      const afterParam = cursor ? `, after: "${cursor}"` : "";
-      const paginatedFilesResponse = await client.request(`
-                query GetThemeFiles {
-                    theme(id: "${themeId}") {
-                        files(first: 100${afterParam}) {
-                            edges {
-                                cursor
-                                node {
-                                    filename
-                                    size
-                                    body {
-                                        ... on OnlineStoreThemeFileBodyText {
-                                            content
-                                        }
-                                    }
-                                    checksumMd5
-                                    contentType
-                                }
-                            }
-                            pageInfo {
-                                hasNextPage
-                            }
-                        }
-                    }
-                }
-            `);
-
-      const fileEdges = paginatedFilesResponse.data.theme.files.edges;
-      allThemeFiles.push(...fileEdges);
-
-      hasNextPage = paginatedFilesResponse.data.theme.files.pageInfo.hasNextPage;
-
-      if (hasNextPage && fileEdges.length > 0) {
-        cursor = fileEdges[fileEdges.length - 1].cursor;
-      }
-
-      console.log(`🚀 ~ Fetched batch of ${fileEdges.length} files. More pages: ${hasNextPage}`);
-    }
-
-
-    const optimizedFiles = await analyzeAndOptimizeFiles(allThemeFiles);
-
+    // Analyze and optimize files
+    const optimizationResult = await analyzeAndOptimizeFiles(allThemeFiles, client);
+    
     // Update theme files with optimizations
     const updateResponse = await client.request(
       `
-            mutation EditThemeFiles($files: [OnlineStoreThemeFilesUpsertFileInput!]!, $themeId: ID!) {
-                themeFilesUpsert(files: $files, themeId: $themeId) {
-                    job {
-                        id
-                        done
-                    }
-                    upsertedThemeFiles {
-                        filename
-                    }
-                    userErrors {
-                        field
-                        message
-                    }
-                }
-            }`,
+      mutation EditThemeFiles($files: [OnlineStoreThemeFilesUpsertFileInput!]!, $themeId: ID!) {
+        themeFilesUpsert(files: $files, themeId: $themeId) {
+          job {
+            id
+            done
+          }
+          upsertedThemeFiles {
+            filename
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }`,
       {
         variables: {
-          themeId: themeId,
-          files: optimizedFiles,
+          themeId: optimizationResult.themeId,
+          files: optimizationResult.optimizedFiles,
         },
       }
     );
@@ -179,7 +122,7 @@ export const speedInsightsController = async (req, res, next) => {
       success: true,
       message: "Theme files optimized successfully",
       data: {
-        optimizedFilesCount: optimizedFiles.length,
+        optimizedFilesCount: optimizationResult.optimizedFiles.length,
         totalFilesProcessed: allThemeFiles.length,
       },
     });
@@ -193,10 +136,95 @@ export const speedInsightsController = async (req, res, next) => {
   }
 };
 
-async function analyzeAndOptimizeFiles(themeFiles) {
-  const optimizedFiles = [];
-  const startTime = performance.now();
+// Get all theme files with pagination
+async function getAllThemeFiles(client) {
+  // Get theme ID first
+  const themeIdResponse = await client.request(`
+    query GetThemeId {
+      themes(first: 1, roles: MAIN) {
+        edges {
+          node {
+            id
+          }
+        }
+      }
+    }
+  `);
 
+  const themeId = themeIdResponse.data.themes.edges[0].node.id;
+  
+  // Fetch all files with pagination
+  const allThemeFiles = [];
+  let hasNextPage = true;
+  let cursor = null;
+
+  while (hasNextPage) {
+    const afterParam = cursor ? `, after: "${cursor}"` : "";
+    
+    const paginatedFilesResponse = await client.request(`
+      query GetThemeFiles {
+        theme(id: "${themeId}") {
+          files(first: 100${afterParam}) {
+            edges {
+              cursor
+              node {
+                filename
+                size
+                body {
+                  ... on OnlineStoreThemeFileBodyText {
+                    content
+                  }
+                }
+                checksumMd5
+                contentType
+              }
+            }
+            pageInfo {
+              hasNextPage
+            }
+          }
+        }
+      }
+    `);
+
+    const fileEdges = paginatedFilesResponse.data.theme.files.edges;
+    allThemeFiles.push(...fileEdges);
+
+    hasNextPage = paginatedFilesResponse.data.theme.files.pageInfo.hasNextPage;
+
+    if (hasNextPage && fileEdges.length > 0) {
+      cursor = fileEdges[fileEdges.length - 1].cursor;
+    }
+  }
+  
+  // Add themeId to the array so we can use it later
+  allThemeFiles.themeId = themeId;
+  
+  return allThemeFiles;
+}
+
+async function analyzeAndOptimizeFiles(themeFiles, client) {
+  const optimizedFiles = [];
+  const themeId = themeFiles.themeId;
+  
+  // Check if we need to add the lazy loading script
+  let needsLazyScript = false;
+  let hasLazyScript = false;
+  let themeLayout = null;
+  
+  // Check if lazy loading script already exists
+  for (const fileEdge of themeFiles) {
+    if (fileEdge.node.filename === 'assets/lazy-load.js' || 
+        fileEdge.node.filename === 'assets/js/lazy-load.js') {
+      hasLazyScript = true;
+    }
+    
+    if (fileEdge.node.filename === 'layout/theme.liquid') {
+      themeLayout = fileEdge.node;
+    }
+  }
+
+  // Process each file
   for (const fileEdge of themeFiles) {
     // Skip if node is undefined
     if (!fileEdge || !fileEdge.node) {
@@ -210,18 +238,26 @@ async function analyzeAndOptimizeFiles(themeFiles) {
       continue;
     }
     
-    // Skip CSS and JSON files 
+    // Skip specific file types
     if (node.contentType === "text/css" || 
         node.contentType === "application/json" ||
         (node.filename && (
           node.filename.endsWith('.css') || 
-          node.filename.endsWith('.json')
+          node.filename.endsWith('.json') 
+         
         ))) {
       continue;
     }
 
     try {
       const optimizedContent = await optimizeFileContent(node.body.content, node.filename);
+      
+      // Check if we found iframe or video tags that need lazy loading
+      if (optimizedContent.includes('lazy-iframe') || optimizedContent.includes('lazy-video')) {
+        needsLazyScript = true;
+      }
+      
+      // Only add files that were changed
       if (optimizedContent && optimizedContent !== node.body.content) {
         optimizedFiles.push({
           filename: node.filename,
@@ -236,9 +272,35 @@ async function analyzeAndOptimizeFiles(themeFiles) {
     }
   }
 
-  const endTime = performance.now();
-  console.log(`File optimization completed in ${endTime - startTime}ms`);
-  return optimizedFiles;
+  // Add lazy loading script if needed and not already present
+  if (needsLazyScript && !hasLazyScript) {
+    optimizedFiles.push({
+      filename: 'assets/lazy-load-SEOfy.js',
+      body: {
+        type: "TEXT",
+        value: createLazyLoadScript()
+      }
+    });
+    
+    // Add script reference to theme.liquid if not already there
+    if (themeLayout && themeLayout.body && themeLayout.body.content && 
+        !themeLayout.body.content.includes('lazy-load.js')) {
+      const updatedThemeContent = themeLayout.body.content.replace(
+        '</head>',
+        '  {{ "lazy-load.js" | asset_url | script_tag }}\n</head>'
+      );
+      
+      optimizedFiles.push({
+        filename: 'layout/theme.liquid',
+        body: {
+          type: "TEXT",
+          value: updatedThemeContent
+        }
+      });
+    }
+  }
+
+  return { optimizedFiles, themeId };
 }
 
 async function optimizeFileContent(content, filename) {
@@ -248,12 +310,38 @@ async function optimizeFileContent(content, filename) {
     return content || '';
   }
 
+  // Don't lazy load critical above-the-fold content
+  if (filename.includes('header') || 
+      filename.includes('hero')) {
+    return content;
+  }
+
   let optimizedContent = content;
 
   try {
-    optimizedContent = content.replace(
+    // 1. Add lazy loading to images - right after the <img tag
+    optimizedContent = optimizedContent.replace(
       /<img(?!\s+loading=)/g,
       '<img loading="lazy"'
+    );
+
+    // 2. Add lazy loading to iframes - convert src to data-src for JavaScript handling
+    optimizedContent = optimizedContent.replace(
+      /<iframe(?!\s+data-src)([^>]*?)\s+src="([^"]+)"/g,
+      '<iframe$1 data-src="$2" class="lazy-iframe"'
+    );
+
+    // 3. Add lazy loading to videos - handle existing preload attributes
+    // First, replace videos that already have a preload attribute
+    optimizedContent = optimizedContent.replace(
+      /<video([^>]*?)preload=["'](?:auto|metadata)["']([^>]*?)>/g,
+      '<video$1preload="none"$2 class="lazy-video">'
+    );
+    
+    // Then handle videos without a preload attribute
+    optimizedContent = optimizedContent.replace(
+      /<video(?![^>]*?preload=)(?![^>]*?class="lazy-video")([^>]*?)>/g,
+      '<video$1 preload="none" class="lazy-video">'
     );
   } catch (error) {
     console.error(`Error processing file ${filename}:`, error);
@@ -261,4 +349,85 @@ async function optimizeFileContent(content, filename) {
   }
 
   return optimizedContent;
+}
+
+// Create the JavaScript for lazy loading
+function createLazyLoadScript() {
+  return `
+// Lazy Loading Script for iframes and videos
+document.addEventListener('DOMContentLoaded', function() {
+  // Check for Intersection Observer API support
+  if ('IntersectionObserver' in window) {
+    // Options for observer
+    const options = {
+      rootMargin: '50px 0px',
+      threshold: 0
+    };
+    
+    // Lazy load iframes
+    const iframeObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const iframe = entry.target;
+          const src = iframe.getAttribute('data-src');
+          
+          if (src) {
+            iframe.setAttribute('src', src);
+            iframe.removeAttribute('data-src');
+            observer.unobserve(iframe);
+          }
+        }
+      });
+    }, options);
+    
+    // Lazy load videos
+    const videoObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const video = entry.target;
+          
+          // Start loading the video
+          if (video.getAttribute('preload') === 'none') {
+            video.setAttribute('preload', 'metadata');
+            
+            // If video has autoplay, start it when visible
+            if (video.hasAttribute('autoplay')) {
+              video.play().catch(e => console.log('Autoplay error:', e));
+            }
+            
+            observer.unobserve(video);
+          }
+        }
+      });
+    }, options);
+    
+    // Get all elements to lazy load
+    const lazyIframes = document.querySelectorAll('.lazy-iframe');
+    const lazyVideos = document.querySelectorAll('.lazy-video');
+    
+    // Observe each element
+    lazyIframes.forEach(iframe => iframeObserver.observe(iframe));
+    lazyVideos.forEach(video => videoObserver.observe(video));
+  } else {
+    // Fallback for browsers without Intersection Observer support
+    // Add a small delay to ensure critical content loads first
+    setTimeout(() => {
+      const lazyIframes = document.querySelectorAll('.lazy-iframe');
+      lazyIframes.forEach(iframe => {
+        const src = iframe.getAttribute('data-src');
+        if (src) {
+          iframe.setAttribute('src', src);
+          iframe.removeAttribute('data-src');
+        }
+      });
+      
+      const lazyVideos = document.querySelectorAll('.lazy-video');
+      lazyVideos.forEach(video => {
+        if (video.getAttribute('preload') === 'none') {
+          video.setAttribute('preload', 'metadata');
+        }
+      });
+    }, 2000);
+  }
+});`;
 }
