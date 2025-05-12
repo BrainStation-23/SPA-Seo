@@ -1,4 +1,5 @@
 import shopify from "../shopify.js";
+import { GetThemeFile, UpdateThemeFiles } from "../graphql/theme.js";
 
 export const getSeoInsightsController = async (req, res, next) => {
   try {
@@ -73,5 +74,79 @@ export const getSeoInsightsController = async (req, res, next) => {
   } catch (err) {
     console.log("🚀 ~ getSeoInsightsController ~ Error:", err);
     res.status(400).json({ error: err.message });
+  }
+};
+
+export const toggleInstantPages = async (req, res, next) => {
+  try {
+    const addInstantPage = req.query.activate === "true";
+    const checkInstantPagesScriptRegex =
+      /<script\b[^>]*\bsrc=(['"])\/\/instant\.page\/[^'"]+\1[^>]*><\/script>/i;
+    const instantPagesScript = `<script src="//instant.page/5.2.0" type="module" integrity="sha384-jnZyxPjiipYXnSU0ygqeac2q7CVYMbh84q0uHVRRxEtvFPiQYbXWUorga2aqZJ0z"></script>`;
+    const client = new shopify.api.clients.Graphql({
+      apiVersion: "2025-01",
+      session: res.locals.shopify.session,
+    });
+
+    const getThemeFileResponse = await client.request(GetThemeFile, {
+      variables: { count: 1, role: "MAIN", filename: "layout/theme.liquid" },
+    });
+    const themeId = getThemeFileResponse.data.themes.edges[0].node.id;
+    const themeFileText =
+      getThemeFileResponse.data.themes.edges[0].node.files.edges[0].node.body
+        .content;
+
+    const alreadyActivatedInstantPages =
+      checkInstantPagesScriptRegex.test(themeFileText);
+
+    console.log(themeId);
+
+    let responseMessage = "N/A";
+    if (addInstantPage && !alreadyActivatedInstantPages) {
+      const updatedThemeFile = themeFileText.replace(
+        `</body>`,
+        `${instantPagesScript} </body>`
+      );
+      await client.request(UpdateThemeFiles, {
+        variables: {
+          themeId,
+          files: [
+            {
+              filename: "layout/theme.liquid",
+              body: {
+                type: "TEXT",
+                value: updatedThemeFile,
+              },
+            },
+          ],
+        },
+      });
+      responseMessage = "added";
+    }
+    if (!addInstantPage && alreadyActivatedInstantPages) {
+      const updatedThemeFile = themeFileText.replace(
+        checkInstantPagesScriptRegex,
+        ""
+      );
+      await client.request(UpdateThemeFiles, {
+        variables: {
+          themeId,
+          files: [
+            {
+              filename: "layout/theme.liquid",
+              body: {
+                type: "TEXT",
+                value: updatedThemeFile,
+              },
+            },
+          ],
+        },
+      });
+      responseMessage = "removed";
+    }
+
+    res.status(200).json(responseMessage);
+  } catch (error) {
+    throw error;
   }
 };
