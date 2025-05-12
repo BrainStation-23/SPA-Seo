@@ -28,12 +28,6 @@ export function Dashboard() {
 
   const [selectedSidebar, setSelectedSidebar] = useState(1);
 
-  // Testing part
-  const authedFetch = useAuthenticatedFetch();
-  const handleTestButtonClick = (toggle) => {
-    authedFetch(`/api/seo/instant-pages?activate=${toggle}`);
-  };
-
   return (
     <>
       <div className="app__container">
@@ -42,9 +36,6 @@ export function Dashboard() {
           setSelectedSidebar={setSelectedSidebar}
         />
         <div className="app__dashboard_container">
-          <button onClick={() => handleTestButtonClick(true)}>Test ON</button>
-          <button onClick={() => handleTestButtonClick(false)}>Test OFF</button>
-
           {selectedSidebar === 1 && <PageSpeedInsights />}
           {selectedSidebar === 2 && <HomeSeo />}
           {selectedSidebar === 3 && <Product />}
