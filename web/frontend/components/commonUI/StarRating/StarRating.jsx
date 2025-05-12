@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { HorizontalStack, Icon } from "@shopify/polaris";
+import { InlineStack, Icon } from "@shopify/polaris";
 import { StarFilledIcon, StarIcon } from "@shopify/polaris-icons";
 
 const StarRating = ({ size, rating = 0, onRate }) => {
@@ -77,7 +77,7 @@ const StarRating = ({ size, rating = 0, onRate }) => {
 
   return (
     <>
-      <HorizontalStack gap={"2"}>{stars}</HorizontalStack>
+      <InlineStack gap={"2"}>{stars}</InlineStack>
     </>
   );
 };

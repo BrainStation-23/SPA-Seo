@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import {
   IndexTable,
   Text,
-  HorizontalStack,
-  VerticalStack,
+  InlineStack,
+  BlockStack,
   Button,
   SkeletonBodyText,
 } from "@shopify/polaris";
@@ -59,7 +59,7 @@ export default function Product() {
             <Text as="span">{info?.node?.status}</Text>
           </IndexTable.Cell>
           <IndexTable.Cell>
-            <HorizontalStack gap="4" align="center">
+            <InlineStack gap="4" align="center">
               <Button
                 className="cursor_pointer"
                 primary
@@ -77,7 +77,7 @@ export default function Product() {
               >
                 SEO
               </Button>
-            </HorizontalStack>
+            </InlineStack>
           </IndexTable.Cell>
         </IndexTable.Row>
       ))) ||
@@ -97,7 +97,7 @@ export default function Product() {
 
   return (
     <>
-      <VerticalStack gap="2">
+      <BlockStack gap="2">
         <div className="seo_score_page_title_container">
           <div className="seo_score_page_title">Product SEO</div>
           <Search setSearchTerm={setSearchTerm} />
@@ -114,7 +114,7 @@ export default function Product() {
             setSearchParams={setSearchParams}
           />
         )}
-      </VerticalStack>
+      </BlockStack>
     </>
   );
 }

@@ -1,12 +1,5 @@
 import React from "react";
-import {
-  Layout,
-  Box,
-  Text,
-  AlphaCard,
-  VerticalStack,
-  Select,
-} from "@shopify/polaris";
+import { Layout, Box, Text, Card, BlockStack, Select } from "@shopify/polaris";
 import { useHomeSeo } from "../../contexts/home.context";
 
 export default function BusinessTypeInformation() {
@@ -42,16 +35,16 @@ export default function BusinessTypeInformation() {
         </Layout.Section>
         <Layout.Section oneHalf>
           <Box>
-            <AlphaCard>
-              <VerticalStack gap={"6"}>
+            <Card>
+              <BlockStack gap={"6"}>
                 <Select
                   label="Select business type"
                   options={options}
                   onChange={handleSelectChange}
                   value={getIndustryValue(organization?.businessType)}
                 />
-              </VerticalStack>
-            </AlphaCard>
+              </BlockStack>
+            </Card>
           </Box>
         </Layout.Section>
       </Layout>

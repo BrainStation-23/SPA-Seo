@@ -2,28 +2,32 @@ import React, { useState, useCallback, useEffect } from "react";
 import {
   Page,
   Layout,
-  AlphaCard,
+  Card,
   Box,
   Text,
   Divider,
   List,
-  VerticalStack,
+  BlockStack,
   Form,
   FormLayout,
   TextField,
   Button,
-  HorizontalStack,
+  InlineStack,
 } from "@shopify/polaris";
 import { RefreshIcon } from "@shopify/polaris-icons";
 import { Spinners } from "./Spinner";
-import { useImageOptimizerQuery, useBulkUpdateAltText } from "../hooks/useImageOptimizer";
+import {
+  useImageOptimizerQuery,
+  useBulkUpdateAltText,
+} from "../hooks/useImageOptimizer";
 
 export function ImageAltOptimizer() {
   const [errors, setErrors] = useState({});
   const { data, isSuccess, isLoading } = useImageOptimizerQuery({
     url: "/api/metafields/get/image-optimizer",
   });
-  const { mutate: runBulkImageUpdate, isLoading: isBulkAltUpdating } = useBulkUpdateAltText();
+  const { mutate: runBulkImageUpdate, isLoading: isBulkAltUpdating } =
+    useBulkUpdateAltText();
 
   const [productImageAlt, setProductImageAlt] = useState(null);
   const [collectionImgeAlt, setCollectionImageAlt] = useState(null);
@@ -114,40 +118,49 @@ export function ImageAltOptimizer() {
           title="Image Alt Optimization"
           subtitle="Alt tags helps you improve accessibility, relevance between images and content, and increase the ability to rank high in Google Images."
           primaryAction={
-            <HorizontalStack gap={"2"}>
-              <Button primary icon={RefreshIcon} loading={isBulkAltUpdating} onClick={handleSubmit}>
+            <InlineStack gap={"2"}>
+              <Button
+                primary
+                icon={RefreshIcon}
+                loading={isBulkAltUpdating}
+                onClick={handleSubmit}
+              >
                 Sync
               </Button>
-            </HorizontalStack>
+            </InlineStack>
           }
         >
           <Box paddingBlockStart={"2"}>
             <Layout>
               <Layout.Section>
                 <Form onSubmit={handleSubmit}>
-                  <VerticalStack gap={"4"}>
+                  <BlockStack gap={"4"}>
                     <Box>
                       <Layout>
                         <Layout.Section oneThird>
-                          <VerticalStack>
+                          <BlockStack>
                             <Text variant="headingMd">Product Image Alt</Text>
-                            <Text variant="bodyMd">Can use variables in the PRODUCT and SHOP section</Text>
-                          </VerticalStack>
+                            <Text variant="bodyMd">
+                              Can use variables in the PRODUCT and SHOP section
+                            </Text>
+                          </BlockStack>
                         </Layout.Section>
                         <Layout.Section>
                           <Box>
-                            <AlphaCard>
+                            <Card>
                               <FormLayout>
                                 <TextField
                                   value={productImageAlt}
                                   onChange={handleProductImageAltChange}
-                                  label={<Text variant="headingSm">Alt Text</Text>}
+                                  label={
+                                    <Text variant="headingSm">Alt Text</Text>
+                                  }
                                   placeholder="Enter alt text or use variables"
                                   type="text"
                                   error={errors?.productImageAlt}
                                 />
                               </FormLayout>
-                            </AlphaCard>
+                            </Card>
                           </Box>
                         </Layout.Section>
                       </Layout>
@@ -156,25 +169,32 @@ export function ImageAltOptimizer() {
                     <Box>
                       <Layout>
                         <Layout.Section oneThird>
-                          <VerticalStack>
-                            <Text variant="headingMd">Collection Image Alt</Text>
-                            <Text variant="bodyMd">Can use variables in the COLLECTION and SHOP section</Text>
-                          </VerticalStack>
+                          <BlockStack>
+                            <Text variant="headingMd">
+                              Collection Image Alt
+                            </Text>
+                            <Text variant="bodyMd">
+                              Can use variables in the COLLECTION and SHOP
+                              section
+                            </Text>
+                          </BlockStack>
                         </Layout.Section>
                         <Layout.Section>
                           <Box>
-                            <AlphaCard>
+                            <Card>
                               <FormLayout>
                                 <TextField
                                   value={collectionImgeAlt}
                                   onChange={handleCollectionImageAltChange}
-                                  label={<Text variant="headingSm">Alt Text</Text>}
+                                  label={
+                                    <Text variant="headingSm">Alt Text</Text>
+                                  }
                                   placeholder="Enter alt text or use variables"
                                   type="text"
                                   error={errors?.collectionImgeAlt}
                                 />
                               </FormLayout>
-                            </AlphaCard>
+                            </Card>
                           </Box>
                         </Layout.Section>
                       </Layout>
@@ -183,47 +203,55 @@ export function ImageAltOptimizer() {
                     <Box>
                       <Layout>
                         <Layout.Section oneThird>
-                          <VerticalStack>
+                          <BlockStack>
                             <Text variant="headingMd">Blog Post Image Alt</Text>
-                            <Text variant="bodyMd">Can use variables in the BLOG POST and SHOP section</Text>
+                            <Text variant="bodyMd">
+                              Can use variables in the BLOG POST and SHOP
+                              section
+                            </Text>
                             <Box paddingBlockStart={"4"}></Box>
-                          </VerticalStack>
+                          </BlockStack>
                         </Layout.Section>
                         <Layout.Section>
                           <Box>
-                            <AlphaCard>
+                            <Card>
                               <FormLayout>
                                 <TextField
                                   value={articleImageAlt}
                                   onChange={handleArticleImageAltChange}
-                                  label={<Text variant="headingSm">Alt Text</Text>}
+                                  label={
+                                    <Text variant="headingSm">Alt Text</Text>
+                                  }
                                   placeholder="Enter alt text or use variables"
                                   type="text"
                                   error={errors?.articleImageAlt}
                                 />
                               </FormLayout>
-                            </AlphaCard>
+                            </Card>
                           </Box>
                         </Layout.Section>
                       </Layout>
                     </Box>
-                  </VerticalStack>
+                  </BlockStack>
                 </Form>
               </Layout.Section>
               <Layout.Section oneThird>
-                <VerticalStack gap={"4"}>
-                  <AlphaCard>
+                <BlockStack gap={"4"}>
+                  <Card>
                     <Text variant="bodyMd">
-                      Use custom text and variables to create alt text templates for images. Your custom text works as a
-                      static template, while the variables pull in dynamic values from your store's content.
+                      Use custom text and variables to create alt text templates
+                      for images. Your custom text works as a static template,
+                      while the variables pull in dynamic values from your
+                      store's content.
                     </Text>
                     <Box paddingBlockStart={"3"}>
                       <Text variant="bodyMd" fontWeight="bold">
-                        Use the following variables exactly as listed, including whitespace, to set image alt text.
+                        Use the following variables exactly as listed, including
+                        whitespace, to set image alt text.
                       </Text>
                     </Box>
-                  </AlphaCard>
-                  <AlphaCard padding={"0"}>
+                  </Card>
+                  <Card padding={"0"}>
                     <Box padding={"5"}>
                       <Text variant="headingLg">Variables</Text>
                     </Box>
@@ -289,8 +317,8 @@ export function ImageAltOptimizer() {
                         </List.Item>
                       </List>
                     </Box>
-                  </AlphaCard>
-                </VerticalStack>
+                  </Card>
+                </BlockStack>
               </Layout.Section>
             </Layout>
           </Box>

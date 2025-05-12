@@ -4,7 +4,7 @@ import {
   EmptyState,
   Spinner,
   Text,
-  HorizontalStack,
+  InlineStack,
 } from "@shopify/polaris";
 import { SingleChoiceList } from "./commonUI/ChoiceList";
 import { Selection } from "./commonUI/Selection";

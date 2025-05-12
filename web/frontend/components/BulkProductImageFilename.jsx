@@ -2,17 +2,17 @@ import React, { useState, useCallback, useEffect } from "react";
 import {
   Page,
   Layout,
-  AlphaCard,
+  Card,
   Box,
   Text,
   Divider,
   List,
-  VerticalStack,
+  BlockStack,
   Form,
   FormLayout,
   TextField,
   Button,
-  HorizontalStack,
+  InlineStack,
   Banner,
 } from "@shopify/polaris";
 import { RefreshIcon } from "@shopify/polaris-icons";
@@ -85,7 +85,7 @@ export function BulkProductImageFilename() {
           title="Product Image Filename Optimization"
           subtitle="Filename optimization for better SEO"
           primaryAction={
-            <HorizontalStack gap={"2"}>
+            <InlineStack gap={"2"}>
               <Button
                 primary
                 icon={RefreshIcon}
@@ -94,18 +94,18 @@ export function BulkProductImageFilename() {
               >
                 Sync
               </Button>
-            </HorizontalStack>
+            </InlineStack>
           }
         >
           <Box paddingBlockStart={"2"}>
             <Layout>
               <Layout.Section>
                 <Form onSubmit={handleSubmit}>
-                  <VerticalStack gap={"4"}>
+                  <BlockStack gap={"4"}>
                     <Box>
                       <Layout>
                         <Layout.Section oneThird>
-                          <VerticalStack>
+                          <BlockStack>
                             <Text variant="headingMd">
                               Product image filename
                             </Text>
@@ -113,11 +113,11 @@ export function BulkProductImageFilename() {
                               Set up a global structure for product image
                               filenames for better SEO.
                             </Text>
-                          </VerticalStack>
+                          </BlockStack>
                         </Layout.Section>
                         <Layout.Section>
                           <Box>
-                            <AlphaCard>
+                            <Card>
                               <FormLayout>
                                 <TextField
                                   value={filename}
@@ -131,7 +131,7 @@ export function BulkProductImageFilename() {
                                   error={errors}
                                 />
                               </FormLayout>
-                            </AlphaCard>
+                            </Card>
                           </Box>
 
                           <Box paddingBlockStart={"3"}>
@@ -166,12 +166,12 @@ export function BulkProductImageFilename() {
                         </Layout.Section>
                       </Layout>
                     </Box>
-                  </VerticalStack>
+                  </BlockStack>
                 </Form>
               </Layout.Section>
               <Layout.Section oneThird>
-                <VerticalStack gap={"4"}>
-                  <AlphaCard>
+                <BlockStack gap={"4"}>
+                  <Card>
                     <Text variant="bodyMd">
                       Use custom text and variables to create alt text templates
                       for images. Your custom text works as a static template,
@@ -184,8 +184,8 @@ export function BulkProductImageFilename() {
                         whitespace, to set image filename.
                       </Text>
                     </Box>
-                  </AlphaCard>
-                  <AlphaCard padding={"0"}>
+                  </Card>
+                  <Card padding={"0"}>
                     <Box padding={"5"}>
                       <Text variant="headingLg">Variables</Text>
                     </Box>
@@ -223,8 +223,8 @@ export function BulkProductImageFilename() {
                         </List.Item>
                       </List>
                     </Box>
-                  </AlphaCard>
-                </VerticalStack>
+                  </Card>
+                </BlockStack>
               </Layout.Section>
             </Layout>
           </Box>

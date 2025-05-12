@@ -1,10 +1,11 @@
 import { Page } from "@shopify/polaris";
-import { Dashboard } from "../components";
+import SpeedInsights from "../components/SpeedInsights";
+// import { SpeedInsights } from "../components";
 
 export default function HomePage() {
   return (
-    <Page title="SEO" fullWidth>
-      <Dashboard />
+    <Page title="Speed insights" fullWidth>
+      <SpeedInsights />
     </Page>
   );
 }

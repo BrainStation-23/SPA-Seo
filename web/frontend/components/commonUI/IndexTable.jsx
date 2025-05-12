@@ -1,4 +1,4 @@
-import { IndexTable, LegacyCard, Pagination } from "@shopify/polaris";
+import { IndexTable, Card, Pagination } from "@shopify/polaris";
 import React from "react";
 import { handleNext, handlePrevious } from "../../utils/paginationUtils";
 // import { Spinners } from "../Spinner";
@@ -28,7 +28,7 @@ export function IndexTableData({
   // };
   return (
     <>
-      <LegacyCard>
+      <Card>
         <IndexTable
           resourceName={resourceName}
           itemCount={rowMarkup?.length}
@@ -37,7 +37,7 @@ export function IndexTableData({
         >
           {currentPageData}
         </IndexTable>
-      </LegacyCard>
+      </Card>
       {/* {isRefetching ? (
         <Spinners />
       ) : ( */}

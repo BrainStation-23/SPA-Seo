@@ -3,8 +3,8 @@ import {
   Layout,
   Box,
   Text,
-  AlphaCard,
-  VerticalStack,
+  Card,
+  BlockStack,
   TextField,
   RangeSlider,
   LegacyStack,
@@ -93,8 +93,8 @@ export default function PriceRangeInformation() {
         </Layout.Section>
         <Layout.Section oneHalf>
           <Box>
-            <AlphaCard>
-              <VerticalStack gap={"4"}>
+            <Card>
+              <BlockStack gap={"4"}>
                 <Text variant="headingSm">Price range for your store:</Text>
                 <div onKeyDown={handleEnterKeyPress}>
                   <RangeSlider
@@ -133,8 +133,8 @@ export default function PriceRangeInformation() {
                     />
                   </LegacyStack>
                 </div>
-              </VerticalStack>
-            </AlphaCard>
+              </BlockStack>
+            </Card>
           </Box>
         </Layout.Section>
       </Layout>

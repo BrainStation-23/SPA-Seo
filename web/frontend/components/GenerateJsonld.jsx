@@ -7,9 +7,9 @@ import {
   Checkbox,
   TextField,
   Button,
-  HorizontalStack,
+  InlineStack,
   Thumbnail,
-  VerticalStack,
+  BlockStack,
   Tag,
   Select,
   Spinner,
@@ -41,7 +41,9 @@ export function GenerateJsonld({ obj_type }) {
       : obj_type?.toLowerCase() == "article" && owner?.image
       ? [owner?.image]
       : null;
-  const metaData = owner?.metafield ? JSON.parse(owner?.metafield?.value) : null;
+  const metaData = owner?.metafield
+    ? JSON.parse(owner?.metafield?.value)
+    : null;
   const ownerMetaData = metaData?.[`${obj_type?.toLowerCase()}`] || null;
 
   const invalidationTarget =
@@ -55,10 +57,16 @@ export function GenerateJsonld({ obj_type }) {
   const [pushJson, setPushJson] = useState(metaData?.active || false);
   const [showTags, setShowTags] = useState(ownerMetaData?.showTags || false);
   const [rating, setRating] = useState(ownerMetaData?.rating || 0);
-  const [showVarinats, setShowVariants] = useState(ownerMetaData?.showVarinats | false);
-  const [reviewCount, setReviewCount] = useState(ownerMetaData?.reviewCount || 0);
+  const [showVarinats, setShowVariants] = useState(
+    ownerMetaData?.showVarinats | false
+  );
+  const [reviewCount, setReviewCount] = useState(
+    ownerMetaData?.reviewCount || 0
+  );
   const [keywordsInput, setKeywordsInput] = useState("");
-  const [keywords, setKeywords] = useState(ownerMetaData?.keywords?.split(",") || []);
+  const [keywords, setKeywords] = useState(
+    ownerMetaData?.keywords?.split(",") || []
+  );
   const [audiance, setAudience] = useState(null);
   const [authorUrl, setAuthorUrl] = useState(null);
   const [additionalAuthors, setAdditionalAuthors] = useState([]);
@@ -113,7 +121,8 @@ export function GenerateJsonld({ obj_type }) {
           keywords: keywords.join(","),
           audienceType: audiance || null,
           authorUrl: authorUrl || null,
-          additionalAuthors: additionalAuthors.length > 0 ? additionalAuthors : null,
+          additionalAuthors:
+            additionalAuthors.length > 0 ? additionalAuthors : null,
         },
       },
       {
@@ -125,7 +134,18 @@ export function GenerateJsonld({ obj_type }) {
         },
       }
     );
-  }, [rating, reviewCount, showTags, owner, pushJson, keywords, showVarinats, audiance, authorUrl, additionalAuthors]);
+  }, [
+    rating,
+    reviewCount,
+    showTags,
+    owner,
+    pushJson,
+    keywords,
+    showVarinats,
+    audiance,
+    authorUrl,
+    additionalAuthors,
+  ]);
 
   const handleShowTagsChange = useCallback((value) => setShowTags(value), []);
   const handleRatingChange = useCallback((value) => {
@@ -157,8 +177,14 @@ export function GenerateJsonld({ obj_type }) {
     setAudience(value);
   };
   const handleAuthorUrlChange = useCallback((value) => setAuthorUrl(value), []);
-  const handleAdditionalAuthorNamneChange = useCallback((value) => setAdditionalAuthorName(value), []);
-  const handleAdditionalAuthorUrlChange = useCallback((value) => setAdditionalAuthorUrl(value), []);
+  const handleAdditionalAuthorNamneChange = useCallback(
+    (value) => setAdditionalAuthorName(value),
+    []
+  );
+  const handleAdditionalAuthorUrlChange = useCallback(
+    (value) => setAdditionalAuthorUrl(value),
+    []
+  );
 
   const options = [
     { label: "General", value: "General" },
@@ -182,7 +208,7 @@ export function GenerateJsonld({ obj_type }) {
 
   return (
     <Box paddingBlockStart={"2"}>
-      <HorizontalStack align="space-between" ali>
+      <InlineStack align="space-between" ali>
         <Text variant="headingMd">{obj_type} information for Jsonld</Text>
         <div
           style={{
@@ -195,20 +221,25 @@ export function GenerateJsonld({ obj_type }) {
           <Text variant="headingSm">Status</Text>
           <Switch checked={pushJson} handleClick={handlePushJsonChange} />
         </div>
-      </HorizontalStack>
+      </InlineStack>
       <Box paddingBlockStart={"4"}>
         <Form onSubmit={handleSubmit}>
           <FormLayout>
-            <TextField value={owner?.title} disabled label="Title" type="text" />
+            <TextField
+              value={owner?.title}
+              disabled
+              label="Title"
+              type="text"
+            />
             {images && images.length > 0 && (
-              <VerticalStack gap={"2"}>
+              <BlockStack gap={"2"}>
                 <Text>Images</Text>
-                <HorizontalStack gap={"3"}>
+                <InlineStack gap={"3"}>
                   {images.map((img) => (
                     <Thumbnail source={img?.url ? img?.url : img?.src} />
                   ))}
-                </HorizontalStack>
-              </VerticalStack>
+                </InlineStack>
+              </BlockStack>
             )}
             {obj_type?.toLowerCase() != "article" && (
               <TextField
@@ -226,7 +257,9 @@ export function GenerateJsonld({ obj_type }) {
                 type="text"
                 placeholder="A link to a web page that uniquely identifies the author of the article"
                 onChange={handleAuthorUrlChange}
-                connectedLeft={<TextField disabled value={owner?.author} type="text" />}
+                connectedLeft={
+                  <TextField disabled value={owner?.author} type="text" />
+                }
               />
             )}
             {additionalAuthors.map((auth, index) => (
@@ -235,12 +268,16 @@ export function GenerateJsonld({ obj_type }) {
                 type="text"
                 disabled
                 placeholder="A link to a web page that uniquely identifies the author of the article"
-                connectedLeft={<TextField disabled value={auth.name} type="text" />}
+                connectedLeft={
+                  <TextField disabled value={auth.name} type="text" />
+                }
                 connectedRight={
                   <Button
                     destructive
                     onClick={() => {
-                      setAdditionalAuthors((prev) => prev.filter((_, i) => i !== index));
+                      setAdditionalAuthors((prev) =>
+                        prev.filter((_, i) => i !== index)
+                      );
                     }}
                   >
                     Remove
@@ -285,13 +322,23 @@ export function GenerateJsonld({ obj_type }) {
               />
             )}
             {obj_type?.toLowerCase() == "article" && (
-              <Select label="Set audience type" options={options} onChange={handleAudienceChange} value={audiance} />
+              <Select
+                label="Set audience type"
+                options={options}
+                onChange={handleAudienceChange}
+                value={audiance}
+              />
             )}
             {obj_type.toLowerCase() == "product" && (
-              <TextField label={`Vendor`} type="text" disabled value={owner?.vendor} />
+              <TextField
+                label={`Vendor`}
+                type="text"
+                disabled
+                value={owner?.vendor}
+              />
             )}
             {obj_type.toLowerCase() == "collection" && (
-              <VerticalStack gap={"3"}>
+              <BlockStack gap={"3"}>
                 <TextField
                   value={keywordsInput}
                   onChange={handleKeywordsChange}
@@ -315,16 +362,19 @@ export function GenerateJsonld({ obj_type }) {
                     )
                   }
                 />
-                <HorizontalStack gap={"2"}>
+                <InlineStack gap={"2"}>
                   {keywords &&
                     keywords.length > 0 &&
                     keywords.map((k, index) => (
-                      <Tag key={index} onRemove={() => handleRemoveKeyword(index)}>
+                      <Tag
+                        key={index}
+                        onRemove={() => handleRemoveKeyword(index)}
+                      >
                         {k}
                       </Tag>
                     ))}
-                </HorizontalStack>
-              </VerticalStack>
+                </InlineStack>
+              </BlockStack>
             )}
             {obj_type.toLowerCase() == "product" && (
               <div
@@ -335,15 +385,18 @@ export function GenerateJsonld({ obj_type }) {
                 }}
               >
                 <Text variant="bodyMd">Show all variants data</Text>
-                <Switch checked={showVarinats} handleClick={handleShowVariantsChange} />
+                <Switch
+                  checked={showVarinats}
+                  handleClick={handleShowVariantsChange}
+                />
                 <Text variant="bodySm">
-                  This shows all vairants data on your jsonld. If turned off the jsonld will only show the data for
-                  default variant.
+                  This shows all vairants data on your jsonld. If turned off the
+                  jsonld will only show the data for default variant.
                 </Text>
               </div>
             )}
             {obj_type.toLowerCase() == "product" && (
-              <HorizontalStack gap={"4"} blockAlign="center">
+              <InlineStack gap={"4"} blockAlign="center">
                 <TextField
                   value={rating}
                   onChange={handleRatingChange}
@@ -353,8 +406,12 @@ export function GenerateJsonld({ obj_type }) {
                   // min={0}
                   error={errors?.rating}
                 />
-                <StarRating size={30} rating={rating} onRate={handleStarClick} />
-              </HorizontalStack>
+                <StarRating
+                  size={30}
+                  rating={rating}
+                  onRate={handleStarClick}
+                />
+              </InlineStack>
             )}
             {obj_type.toLowerCase() == "product" && (
               <TextField
@@ -373,11 +430,11 @@ export function GenerateJsonld({ obj_type }) {
                   onChange={handleShowTagsChange}
                 />
               ))}
-            <HorizontalStack align="end">
+            <InlineStack align="end">
               <Button primary submit disabled={isLoading}>
                 {isLoading ? <Spinner size="small" /> : "Save"}
               </Button>
-            </HorizontalStack>
+            </InlineStack>
           </FormLayout>
         </Form>
       </Box>
