@@ -1,15 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  Page,
-  Layout,
-  Box,
-  Text,
-  Button,
-  HorizontalStack,
-  AlphaCard,
-  Banner,
-  List,
-} from "@shopify/polaris";
+import { Page, Layout, Box, Text, Card, Banner, List } from "@shopify/polaris";
 import { AlertDiamondIcon } from "@shopify/polaris-icons";
 import { Modal, useAppBridge } from "@shopify/app-bridge-react";
 import { useUninstall } from "../hooks/useUninstall";
@@ -61,7 +51,7 @@ export default function manual() {
       <Box paddingBlockEnd={"5"}>
         <Layout>
           <Layout.Section>
-            <AlphaCard padding={"0"}>
+            <Card padding={"0"}>
               <Banner status="warning" title="App uninstall instructions" />
               <Box padding={"6"}>
                 <Text variant="bodyMd">
@@ -103,7 +93,7 @@ export default function manual() {
                   </Text>
                 </Banner>
               </Box>
-            </AlphaCard>
+            </Card>
           </Layout.Section>
         </Layout>
       </Box>

@@ -3,8 +3,8 @@ import {
   Layout,
   Box,
   Text,
-  AlphaCard,
-  VerticalStack,
+  Card,
+  BlockStack,
   TextField,
 } from "@shopify/polaris";
 import { useHomeSeo } from "../../contexts/home.context";
@@ -31,8 +31,8 @@ export default function CompanyLogoInformation() {
         </Layout.Section>
         <Layout.Section oneHalf>
           <Box>
-            <AlphaCard>
-              <VerticalStack gap={"4"}>
+            <Card>
+              <BlockStack gap={"4"}>
                 <Text variant="headingSm">Company logo URL</Text>
                 <TextField
                   helpText="This is an optional step, we'll find your logo automatically if you leave this empty."
@@ -40,8 +40,8 @@ export default function CompanyLogoInformation() {
                   placeholder="Paste your company logo URL here"
                   onChange={handleLogoUrlChange}
                 ></TextField>
-              </VerticalStack>
-            </AlphaCard>
+              </BlockStack>
+            </Card>
           </Box>
         </Layout.Section>
       </Layout>

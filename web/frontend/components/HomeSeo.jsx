@@ -3,8 +3,8 @@ import {
   Layout,
   Box,
   Text,
-  AlphaCard,
-  VerticalStack,
+  Card,
+  BlockStack,
   Form,
   Button,
   Spinner,
@@ -102,8 +102,8 @@ export default function HomeSeo() {
               </Layout.Section>
               <Layout.Section oneHalf>
                 <Box>
-                  <AlphaCard>
-                    <VerticalStack gap={"6"}>
+                  <Card>
+                    <BlockStack gap={"6"}>
                       <TextareaField
                         value={formData?.seo_title}
                         onChange={handleChange}
@@ -114,8 +114,8 @@ export default function HomeSeo() {
                         error={errors?.seo_title}
                         rows={2}
                       />
-                    </VerticalStack>
-                  </AlphaCard>
+                    </BlockStack>
+                  </Card>
                 </Box>
               </Layout.Section>
             </Layout>
@@ -136,8 +136,8 @@ export default function HomeSeo() {
               </Layout.Section>
               <Layout.Section oneHalf>
                 <Box>
-                  <AlphaCard>
-                    <VerticalStack gap={"6"}>
+                  <Card>
+                    <BlockStack gap={"6"}>
                       <TextareaField
                         value={formData?.seo_description}
                         onChange={handleChange}
@@ -148,8 +148,8 @@ export default function HomeSeo() {
                         error={errors?.seo_description}
                         rows={"3"}
                       />
-                    </VerticalStack>
-                  </AlphaCard>
+                    </BlockStack>
+                  </Card>
                 </Box>
               </Layout.Section>
             </Layout>
