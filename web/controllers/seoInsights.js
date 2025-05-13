@@ -210,7 +210,7 @@ export const speedInsightsController = async (req, res, next) => {
     if (originalContent.includes('seofy-lazy-script')) {
       return res.status(200).json({
         success: true,
-        message: "Lazy loading is  applied",
+        message: "Lazy loading is already applied",
       });
     }
     
@@ -227,92 +227,7 @@ export const speedInsightsController = async (req, res, next) => {
     
   const scriptTag = `
   <script id="seofy-lazy-script">
-    document.addEventListener('DOMContentLoaded', function() {      
-      document.querySelectorAll('img:not([loading="lazy"])').forEach(function(img) {
-        img.setAttribute('loading', 'lazy');
-      });      
-      document.querySelectorAll('img').forEach(function(img) {
-        img.classList.add('seofy-img-lazy-bg');
-        img.addEventListener('load', function() {
-          this.classList.add('seofy-img-loaded');
-        });
-        if (img.complete) {
-          img.classList.add('seofy-img-loaded');
-        }
-      });            
-      document.querySelectorAll('iframe').forEach(function(iframe) {
-        if (iframe.hasAttribute('data-src')) return;
-        var src = iframe.getAttribute('src');
-        if (src) {
-          iframe.setAttribute('data-src', src);
-          iframe.removeAttribute('src');
-          iframe.classList.add('lazy-iframe');
-        }
-      });            
-      document.querySelectorAll('video').forEach(function(video) {
-        if (video.classList.contains('lazy-video')) return;
-        video.setAttribute('preload', 'none');
-        video.classList.add('lazy-video');
-      });
-      if ('IntersectionObserver' in window) {
-        var options = {
-          rootMargin: '50px 0px',
-          threshold: 0
-        };        
-        var iframeObserver = new IntersectionObserver(function(entries, observer) {
-          entries.forEach(function(entry) {
-            if (entry.isIntersecting) {
-              var iframe = entry.target;
-              var src = iframe.getAttribute('data-src');
-              
-              if (src) {
-                iframe.setAttribute('src', src);
-                iframe.removeAttribute('data-src');
-                observer.unobserve(iframe);
-              }
-            }
-          });
-        }, options);        
-        var videoObserver = new IntersectionObserver(function(entries, observer) {
-          entries.forEach(function(entry) {
-            if (entry.isIntersecting) {
-              var video = entry.target;
-              
-              if (video.getAttribute('preload') === 'none') {
-                video.setAttribute('preload', 'metadata');
-                
-                if (video.hasAttribute('autoplay')) {
-                  video.play().catch(function() {});
-                }
-                
-                observer.unobserve(video);
-              }
-            }
-          });
-        }, options);        
-        document.querySelectorAll('.lazy-iframe').forEach(function(iframe) {
-          iframeObserver.observe(iframe);
-        });        
-        document.querySelectorAll('.lazy-video').forEach(function(video) {
-          videoObserver.observe(video);
-        });
-      } else {
-        setTimeout(function() {
-          document.querySelectorAll('.lazy-iframe').forEach(function(iframe) {
-            var src = iframe.getAttribute('data-src');
-            if (src) {
-              iframe.setAttribute('src', src);
-              iframe.removeAttribute('data-src');
-            }
-          });          
-          document.querySelectorAll('.lazy-video').forEach(function(video) {
-            if (video.getAttribute('preload') === 'none') {
-              video.setAttribute('preload', 'metadata');
-            }
-          });
-        }, 2000);
-      }
-    });
+    document.addEventListener("DOMContentLoaded",(function(){if(document.querySelectorAll('img:not([loading="lazy"])').forEach((function(t){t.setAttribute("loading","lazy")})),document.querySelectorAll("img").forEach((function(t){t.classList.add("seofy-img-lazy-bg"),t.addEventListener("load",(function(){this.classList.add("seofy-img-loaded")})),t.complete&&t.classList.add("seofy-img-loaded")})),document.querySelectorAll("iframe").forEach((function(t){if(!t.hasAttribute("data-src")){var e=t.getAttribute("src");e&&(t.setAttribute("data-src",e),t.removeAttribute("src"),t.classList.add("lazy-iframe"))}})),document.querySelectorAll("video").forEach((function(t){t.classList.contains("lazy-video")||(t.setAttribute("preload","none"),t.classList.add("lazy-video"))})),"IntersectionObserver"in window){var t={rootMargin:"50px 0px",threshold:0},e=new IntersectionObserver((function(t,e){t.forEach((function(t){if(t.isIntersecting){var r=t.target,o=r.getAttribute("data-src");o&&(r.setAttribute("src",o),r.removeAttribute("data-src"),e.unobserve(r))}}))}),t),r=new IntersectionObserver((function(t,e){t.forEach((function(t){if(t.isIntersecting){var r=t.target;"none"===r.getAttribute("preload")&&(r.setAttribute("preload","metadata"),r.hasAttribute("autoplay")&&r.play().catch((function(){})),e.unobserve(r))}}))}),t);document.querySelectorAll(".lazy-iframe").forEach((function(t){e.observe(t)})),document.querySelectorAll(".lazy-video").forEach((function(t){r.observe(t)}))}else setTimeout((function(){document.querySelectorAll(".lazy-iframe").forEach((function(t){var e=t.getAttribute("data-src");e&&(t.setAttribute("src",e),t.removeAttribute("data-src"))})),document.querySelectorAll(".lazy-video").forEach((function(t){"none"===t.getAttribute("preload")&&t.setAttribute("preload","metadata")}))}),2e3)}));
   </script>`;
     
     const updatedContent = originalContent.replace(
