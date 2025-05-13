@@ -1,4 +1,5 @@
 import shopify from "../shopify.js";
+import { GET_THEME_ID, GET_THEME_ALL_FILES, EDIT_THEME_FILES } from "../graphql/theme.js";
 
 export const getSeoInsightsController = async (req, res, next) => {
   try {
@@ -90,22 +91,7 @@ export const speedInsightsController = async (req, res, next) => {
     
     // Update theme files with optimizations
     const updateResponse = await client.request(
-      `
-      mutation EditThemeFiles($files: [OnlineStoreThemeFilesUpsertFileInput!]!, $themeId: ID!) {
-        themeFilesUpsert(files: $files, themeId: $themeId) {
-          job {
-            id
-            done
-          }
-          upsertedThemeFiles {
-            filename
-          }
-          userErrors {
-            field
-            message
-          }
-        }
-      }`,
+      EDIT_THEME_FILES,
       {
         variables: {
           themeId: optimizationResult.themeId,
@@ -138,17 +124,7 @@ export const speedInsightsController = async (req, res, next) => {
 
 // Get all theme files with pagination
 async function getAllThemeFiles(client) {
-  const themeIdResponse = await client.request(`
-    query GetThemeId {
-      themes(first: 1, roles: MAIN) {
-        edges {
-          node {
-            id
-          }
-        }
-      }
-    }
-  `);
+  const themeIdResponse = await client.request(GET_THEME_ID);
 
   const themeId = themeIdResponse.data.themes.edges[0].node.id;
   
@@ -158,33 +134,7 @@ async function getAllThemeFiles(client) {
   let cursor = null;
 
   while (hasNextPage) {
-    const afterParam = cursor ? `, after: "${cursor}"` : "";
-    
-    const paginatedFilesResponse = await client.request(`
-      query GetThemeFiles {
-        theme(id: "${themeId}") {
-          files(first: 100${afterParam}) {
-            edges {
-              cursor
-              node {
-                filename
-                size
-                body {
-                  ... on OnlineStoreThemeFileBodyText {
-                    content
-                  }
-                }
-                checksumMd5
-                contentType
-              }
-            }
-            pageInfo {
-              hasNextPage
-            }
-          }
-        }
-      }
-    `);
+    const paginatedFilesResponse = await client.request(GET_THEME_ALL_FILES(themeId, cursor));
 
     const fileEdges = paginatedFilesResponse.data.theme.files.edges;
     allThemeFiles.push(...fileEdges);
