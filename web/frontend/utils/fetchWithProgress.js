@@ -1,5 +1,6 @@
 export const fetchWithProgess = async (
   taskQueue,
+  fetcher,
   setProgress,
   setCompleatedTask,
   updateSiteSpeedUpState
@@ -10,9 +11,23 @@ export const fetchWithProgess = async (
     for (const [key, val] of Object.entries(taskQueue)) {
       // call api
       if (key === "instantPage") {
-        const mutate = val.mutate;
-        mutate({ activate: val.flag });
+        await fetcher("/api/seo/instant-pages", {
+          method: "POST",
+          body: JSON.stringify({ activate: val }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
       } else if (key === "lazyLoading") {
+        const mutate = val.mutate;
+        mutate({});
+        await fetcher("/api/seo/lazy-loading", {
+          method: "POST",
+          body: JSON.stringify({}),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
       } else if (key === "streamlinedLoadin1g") {
       } else if (key === "optimizedLoading") {
       } else if (key === "assetFileOptimization") {

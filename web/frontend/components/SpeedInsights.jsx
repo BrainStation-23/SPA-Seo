@@ -26,10 +26,12 @@ import { useUI } from "../contexts/ui.context";
 import useFetchQuery from "../hooks/useGlobalQuery";
 import useFetchMutation from "../hooks/useGlobalMutation";
 import { fetchWithProgess } from "../utils/fetchWithProgress";
+import { useAuthenticatedFetch } from "../hooks/useAuthenticatedFetch";
 
 export default function SpeedInsights() {
-    const { data: lazyLoadingData, isLoading: lazyLoadingLoading } = useSeoLeazyLoaddingQuery({ url: "api/seo/lazy-loading" });
-   console.log('data',lazyLoadingData)
+  const { data: lazyLoadingData, isLoading: lazyLoadingLoading } =
+    useSeoLeazyLoaddingQuery({ url: "api/seo/lazy-loading" });
+  console.log("data", lazyLoadingData);
   const [selected, setSelected] = useState(0);
   const { isLoading, data } = useFetchQuery({
     apiEndpoint: "/api/billing/get-store-info",
@@ -60,50 +62,41 @@ export default function SpeedInsights() {
 
   const [showDropdown, setShowDropdown] = useState(false);
 
-  const { mutate: callInstantPage } = useFetchMutation(
-    "/api/seo/instant-pages",
-    "activateInstantPage"
-  );
+  // Ami choto amake marben
+  // ami asolei choto marben na plz
+  const fetcher = useAuthenticatedFetch();
   const handleSpeedupButtonClick = () => {
     let currentTaskCount = taskCount,
       taskQueue = {};
 
     if (instantPage !== siteSpeedUpState.instantPage) {
-      taskQueue["instantPage"] = { flag: instantPage, mutate: callInstantPage };
+      taskQueue["instantPage"] = instantPage;
       currentTaskCount++;
     }
     if (lazyLoading !== siteSpeedUpState.lazyLoading) {
-      taskQueue["lazyLoading"] = { flag: lazyLoading, mutate: () => {} };
+      taskQueue["lazyLoading"] = lazyLoading;
       currentTaskCount++;
     }
     if (streamlinedLoading !== siteSpeedUpState.streamlinedLoading) {
-      taskQueue["streamlinedLoading"] = {
-        flag: streamlinedLoading,
-        mutate: () => {},
-      };
+      taskQueue["streamlinedLoading"] = streamlinedLoading;
       currentTaskCount++;
     }
     if (optimizedLoading !== siteSpeedUpState.optimizedLoading) {
-      taskQueue["optimizedLoading"] = {
-        flag: optimizedLoading,
-        mutate: () => {},
-      };
+      taskQueue["optimizedLoading"] = optimizedLoading;
       currentTaskCount++;
     }
     if (assetFileOptimization !== siteSpeedUpState.assetFileOptimization) {
-      taskQueue["assetFileOptimization"] = {
-        flag: assetFileOptimization,
-        mutate: () => {},
-      };
+      taskQueue["assetFileOptimization"] = assetFileOptimization;
       currentTaskCount++;
     }
     if (streamlineCode !== siteSpeedUpState.streamlineCode) {
-      taskQueue["streamlineCode"] = { flag: streamlineCode, mutate: () => {} };
+      taskQueue["streamlineCode"] = streamlineCode;
       currentTaskCount++;
     }
 
     fetchWithProgess(
       taskQueue,
+      fetcher,
       setProgress,
       setCompleatedTask,
       setSiteSpeedUpState
