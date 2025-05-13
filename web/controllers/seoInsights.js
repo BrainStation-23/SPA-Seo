@@ -1,5 +1,6 @@
 import shopify from "../shopify.js";
 import { GetThemeFile, UpdateThemeFiles } from "../graphql/theme.js";
+import SpeedInsights from "../models/speedInsights.js";
 
 export const getSeoInsightsController = async (req, res, next) => {
   try {
@@ -74,6 +75,33 @@ export const getSeoInsightsController = async (req, res, next) => {
   } catch (err) {
     console.log("🚀 ~ getSeoInsightsController ~ Error:", err);
     res.status(400).json({ error: err.message });
+  }
+};
+
+export const updateSpeedEffects = async (req, res) => {
+  try {
+    const platformStoreURL = res.locals.shopify.session?.shop;
+    const updateData = req.body;
+
+    if (!platformStoreURL) {
+      return res
+        .status(400)
+        .json({ message: "platformStoreURL is required in params." });
+    }
+
+    const updated = await SpeedInsights.findOneAndUpdate(
+      { platformStoreURL },
+      { $set: updateData, $setOnInsert: { platformStoreURL } },
+      {
+        new: true,
+        upsert: true,
+        runValidators: true,
+      }
+    );
+
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 };
 

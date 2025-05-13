@@ -34,8 +34,8 @@ export default function SpeedInsights() {
     dependency: [],
   });
 
-  const { appBilling } = useUI();
-  console.log("🚀 ~ SpeedInsights ~ appBilling:", appBilling);
+  const { appBilling, speedInsights } = useUI();
+  console.log("🚀 ~ SpeedInsights ~ appBilling:", appBilling, speedInsights);
 
   const [progress, setProgress] = useState(0);
   const [compleatedTask, setCompleatedTask] = useState(0);

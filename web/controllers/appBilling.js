@@ -4,16 +4,28 @@ import {
   subscriptionCreate,
 } from "../utils/query.js";
 import { queryDataWithVariables, getQueryData } from "../utils/getQueryData.js";
+import SpeedInsights from "../models/speedInsights.js";
 
 export const getActiveSubscription = async (req, res) => {
   try {
+    let speedData = await SpeedInsights.findOne({
+      platformStoreURL: res.locals.shopify.session?.shop,
+    });
+
+    if (!speedData) {
+      speedData = {
+        platformStoreURL: res.locals.shopify.session?.shop,
+        isInstantPage: true,
+        isLazyLoading: false,
+        isStreamLineLoading: false,
+        isOptimizedLoading: false,
+        isAssetFileOptimization: false,
+        isStreamlineCode: false,
+      };
+    }
     const query = activeSubscription();
 
     const appSubscription = await getQueryData(res, query);
-    console.log(
-      "🚀 ~ getActiveSubscription ~ appSubscription:",
-      appSubscription
-    );
 
     if (appSubscription?.errors) {
       return res.status(400).json({
@@ -29,6 +41,7 @@ export const getActiveSubscription = async (req, res) => {
     res.status(200).json({
       activeSubscription:
         appSubscription.data?.appInstallation?.activeSubscriptions?.[0] || {},
+      speedInsights: speedData,
       message: "Success",
     });
   } catch (error) {
