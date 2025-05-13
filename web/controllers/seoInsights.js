@@ -1,5 +1,5 @@
 import shopify from "../shopify.js";
-import { GET_THEME_ID, GET_THEME_ALL_FILES, EDIT_THEME_FILES } from "../graphql/theme.js";
+import { GET_THEME_ID, EDIT_THEME_FILES, GET_THEME_FILE } from "../graphql/theme.js";
 
 export const getSeoInsightsController = async (req, res, next) => {
   try {
@@ -83,213 +83,41 @@ export const speedInsightsController = async (req, res, next) => {
       session,
     });
 
-    // Get all theme files
-    const allThemeFiles = await getAllThemeFiles(client);
-
-    // Analyze and optimize files
-    const optimizationResult = await analyzeAndOptimizeFiles(allThemeFiles, client);
+    // Get theme ID
+    const themeIdResponse = await client.request(GET_THEME_ID);
+    const themeId = themeIdResponse.data.themes.edges[0].node.id;
     
-    // Update theme files with optimizations
-    const updateResponse = await client.request(
-      EDIT_THEME_FILES,
-      {
-        variables: {
-          themeId: optimizationResult.themeId,
-          files: optimizationResult.optimizedFiles,
-        },
-      }
-    );
-
-    if (updateResponse.data.themeFilesUpsert.userErrors.length > 0) {
-      throw updateResponse.data.themeFilesUpsert.userErrors;
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: "Theme files optimized successfully",
-      data: {
-        optimizedFilesCount: optimizationResult.optimizedFiles.length,
-        totalFilesProcessed: allThemeFiles.length,
-      },
-    });
-  } catch (error) {
-    console.error("Speed Insights Error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to optimize theme files",
-      error: error.message,
-    });
-  }
-};
-
-// Get all theme files with pagination
-async function getAllThemeFiles(client) {
-  const themeIdResponse = await client.request(GET_THEME_ID);
-
-  const themeId = themeIdResponse.data.themes.edges[0].node.id;
-  
-  // Fetch all files with pagination
-  const allThemeFiles = [];
-  let hasNextPage = true;
-  let cursor = null;
-
-  while (hasNextPage) {
-    const paginatedFilesResponse = await client.request(GET_THEME_ALL_FILES(themeId, cursor));
-
-    const fileEdges = paginatedFilesResponse.data.theme.files.edges;
-    allThemeFiles.push(...fileEdges);
-
-    hasNextPage = paginatedFilesResponse.data.theme.files.pageInfo.hasNextPage;
-
-    if (hasNextPage && fileEdges.length > 0) {
-      cursor = fileEdges[fileEdges.length - 1].cursor;
-    }
-  }
-  
-  allThemeFiles.themeId = themeId;
-  return allThemeFiles;
-}
-
-async function analyzeAndOptimizeFiles(themeFiles, client) {
-  const optimizedFiles = [];
-  const themeId = themeFiles.themeId;
-  
-  // Check if we need to add the lazy loading script
-  let needsLazyScript = false;
-  let hasLazyScript = false;
-  let themeLayout = null;
-  
-  // Check if lazy loading script already exists
-  for (const fileEdge of themeFiles) {
-    if (fileEdge.node.filename === 'assets/lazy-load-SEOfy.js' || 
-        fileEdge.node.filename === 'assets/js/lazy-load-SEOfy.js') {
-      hasLazyScript = true;
-    }
-    
-    if (fileEdge.node.filename === 'layout/theme.liquid') {
-      themeLayout = fileEdge.node;
-    }
-  }
-
-  // Process each file
-  for (const fileEdge of themeFiles) {
-    // Skip if node is undefined
-    if (!fileEdge || !fileEdge.node) {
-      continue;
-    }
-    
-    const node = fileEdge.node;
-    
-    // Skip if missing critical properties
-    if (!node.body || !node.body.content) {
-      continue;
-    }
-    
-    // Skip specific file types
-    if (node.contentType === "text/css" || 
-        node.contentType === "application/json" ||
-        (node.filename && (
-          node.filename.endsWith('.css') || 
-          node.filename.endsWith('.json') 
-         
-        ))) {
-      continue;
-    }
-
-    try {
-      const optimizedContent = await optimizeFileContent(node.body.content, node.filename);
-      
-      // Check if we found iframe or video tags that need lazy loading
-      if (optimizedContent.includes('lazy-iframe') || optimizedContent.includes('lazy-video')) {
-        needsLazyScript = true;
-      }
-      
-      // Only add files that were changed
-      if (optimizedContent && optimizedContent !== node.body.content) {
-        optimizedFiles.push({
-          filename: node.filename,
-          body: {
-            type: "TEXT",
-            value: optimizedContent,
-          },
-        });
-      }
-    } catch (error) {
-      console.error(`Error optimizing file ${node.filename}:`, error);
-    }
-  }
-
-  // Add lazy loading script if needed and not already present
-  if (needsLazyScript && !hasLazyScript) {
-    optimizedFiles.push({
-      filename: 'assets/lazy-load-SEOfy.js',
-      body: {
-        type: "TEXT",
-        value: createLazyLoadScript()
+    // Get theme.liquid file using the GET_THEME_FILE query
+    const themeFileResponse = await client.request(GET_THEME_FILE, {
+      variables: {
+        count: 1,
+        role: "MAIN",
+        filename: "layout/theme.liquid"
       }
     });
     
-    // Add script reference to theme.liquid if not already there
-    if (themeLayout && themeLayout.body && themeLayout.body.content && 
-        !themeLayout.body.content.includes('lazy-load.js')) {
-      const updatedThemeContent = themeLayout.body.content.replace(
-        '</head>',
-        '  {{ "lazy-load.js" | asset_url | script_tag }}\n</head>'
-      );
-      
-      optimizedFiles.push({
-        filename: 'layout/theme.liquid',
-        body: {
-          type: "TEXT",
-          value: updatedThemeContent
-        }
+    const themeFiles = themeFileResponse.data.themes.edges[0].node.files.edges;
+    
+    if (themeFiles.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Theme.liquid file not found",
       });
     }
-  }
-
-  return { optimizedFiles, themeId };
-}
-
-async function optimizeFileContent(content, filename) {
-  // Check if content is null or undefined
-  if (!content) {
-    console.log(`Skipping file ${filename} - content is undefined`);
-    return content || '';
-  }
-
-  let optimizedContent = content;
-
-  try {
-    optimizedContent = optimizedContent.replace(
-      /loading=["']lazy["']([^>]*?)loading=["']lazy["']/g,
-      'loading="lazy"$1'
-    );
     
-    optimizedContent = optimizedContent.replace(
-      /<img(?![^>]*?loading=["']lazy["'])([^>]*?)>/g,
-      '<img loading="lazy"$1>'
-    );
-
-    optimizedContent = optimizedContent.replace(
-      /<iframe(?!\s+data-src)([^>]*?)\s+src="([^"]+)"/g,
-      '<iframe$1 data-src="$2" class="lazy-iframe"'
-    );
-
-  
-    optimizedContent = optimizedContent.replace(
-      /<video([^>]*?)preload=["'](?:auto|metadata)["']([^>]*?)>/g,
-      '<video$1preload="none"$2 class="lazy-video">'
-    );
+    const themeLiquidFile = themeFiles[0].node;
+    const originalContent = themeLiquidFile.body.content;
     
-    optimizedContent = optimizedContent.replace(
-      /<video(?![^>]*?preload=)(?![^>]*?class="lazy-video")([^>]*?)>/g,
-      '<video$1 preload="none" class="lazy-video">'
-    );
+    // Skip if already has lazy loading script
+    if (originalContent.includes('seofy-lazy-script')) {
+      return res.status(200).json({
+        success: true,
+        message: "Lazy loading is already applied",
+      });
+    }
     
-    if ((filename.includes('layout') || filename.includes('theme.liquid')) && 
-        !optimizedContent.includes('seofy-lazy-styles')) {
-      
-      const styleTag = `
+    // Create the lazy loading script
+    const styleTag = `
   <style id="seofy-lazy-styles">
     .seofy-img-lazy-bg {
       background-color: #f0f0f0;
@@ -299,13 +127,19 @@ async function optimizeFileContent(content, filename) {
       background-color: transparent;
     }
   </style>`;
-      
-      const scriptTag = `
+    
+    const scriptTag = `
   <script id="seofy-lazy-script">
     document.addEventListener('DOMContentLoaded', function() {
-      // Apply lazy loading class to all images
-      var allImages = document.querySelectorAll('img');
-      allImages.forEach(function(img) {
+      // ---- IMAGE HANDLING ----
+      
+      // Add native lazy loading to all images without it
+      document.querySelectorAll('img:not([loading="lazy"])').forEach(function(img) {
+        img.setAttribute('loading', 'lazy');
+      });
+      
+      // Add background class to all images
+      document.querySelectorAll('img').forEach(function(img) {
         // Add our background class
         img.classList.add('seofy-img-lazy-bg');
         
@@ -319,99 +153,145 @@ async function optimizeFileContent(content, filename) {
           img.classList.add('seofy-img-loaded');
         }
       });
+      
+      // ---- IFRAME HANDLING ----
+      
+      // Find all iframes and convert to lazy loading
+      document.querySelectorAll('iframe').forEach(function(iframe) {
+        // Skip iframes that are already set up for lazy loading
+        if (iframe.hasAttribute('data-src')) return;
+        
+        // Save original src
+        var src = iframe.getAttribute('src');
+        if (src) {
+          // Set data-src and remove src to prevent loading
+          iframe.setAttribute('data-src', src);
+          iframe.removeAttribute('src');
+          iframe.classList.add('lazy-iframe');
+        }
+      });
+      
+      // ---- VIDEO HANDLING ----
+      
+      // Find all videos and set to lazy loading
+      document.querySelectorAll('video').forEach(function(video) {
+        // Skip videos that are already lazy loading
+        if (video.classList.contains('lazy-video')) return;
+        
+        // Set preload to none to prevent automatic loading
+        video.setAttribute('preload', 'none');
+        video.classList.add('lazy-video');
+      });
+      
+      // ---- LAZY LOADING IMPLEMENTATION ----
+      
+      // Set up Intersection Observer if available
+      if ('IntersectionObserver' in window) {
+        var options = {
+          rootMargin: '50px 0px',
+          threshold: 0
+        };
+        
+        // Lazy load iframes
+        var iframeObserver = new IntersectionObserver(function(entries, observer) {
+          entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+              var iframe = entry.target;
+              var src = iframe.getAttribute('data-src');
+              
+              if (src) {
+                iframe.setAttribute('src', src);
+                iframe.removeAttribute('data-src');
+                observer.unobserve(iframe);
+              }
+            }
+          });
+        }, options);
+        
+        // Lazy load videos
+        var videoObserver = new IntersectionObserver(function(entries, observer) {
+          entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+              var video = entry.target;
+              
+              if (video.getAttribute('preload') === 'none') {
+                video.setAttribute('preload', 'metadata');
+                
+                if (video.hasAttribute('autoplay')) {
+                  video.play().catch(function() {});
+                }
+                
+                observer.unobserve(video);
+              }
+            }
+          });
+        }, options);
+        
+        // Start observing
+        document.querySelectorAll('.lazy-iframe').forEach(function(iframe) {
+          iframeObserver.observe(iframe);
+        });
+        
+        document.querySelectorAll('.lazy-video').forEach(function(video) {
+          videoObserver.observe(video);
+        });
+      } else {
+        // Fallback for browsers without Intersection Observer
+        setTimeout(function() {
+          document.querySelectorAll('.lazy-iframe').forEach(function(iframe) {
+            var src = iframe.getAttribute('data-src');
+            if (src) {
+              iframe.setAttribute('src', src);
+              iframe.removeAttribute('data-src');
+            }
+          });
+          
+          document.querySelectorAll('.lazy-video').forEach(function(video) {
+            if (video.getAttribute('preload') === 'none') {
+              video.setAttribute('preload', 'metadata');
+            }
+          });
+        }, 2000);
+      }
     });
   </script>`;
-      
-      optimizedContent = optimizedContent.replace(
-        '</body>',
-        `${styleTag}\n${scriptTag}\n</body>`
-      );
+    
+    // Update the theme.liquid file content
+    const updatedContent = originalContent.replace(
+      '</head>',
+      `${styleTag}\n${scriptTag}\n</head>`
+    );
+    
+    // Save the updated file
+    const updateResponse = await client.request(EDIT_THEME_FILES, {
+      variables: {
+        themeId,
+        files: [
+          {
+            filename: themeLiquidFile.filename,
+            body: {
+              type: "TEXT",
+              value: updatedContent
+            }
+          }
+        ]
+      }
+    });
+    
+    if (updateResponse.data.themeFilesUpsert.userErrors.length > 0) {
+      throw updateResponse.data.themeFilesUpsert.userErrors;
     }
 
-    return optimizedContent;
+    return res.status(200).json({
+      success: true,
+      message: "Lazy loading applied successfully",
+    });
   } catch (error) {
-    console.error(`Error processing file ${filename}:`, error);
-    return content; // Return original content on error
+    console.error("Speed Insights Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to optimize theme files",
+      error: error.message,
+    });
   }
-}
-
-// Create the JavaScript for lazy loading
-function createLazyLoadScript() {
-  return `
-// Lazy Loading Script for iframes and videos
-document.addEventListener('DOMContentLoaded', function() {
-  // Check for Intersection Observer API support
-  if ('IntersectionObserver' in window) {
-    // Options for observer
-    const options = {
-      rootMargin: '50px 0px',
-      threshold: 0
-    };
-    
-    // Lazy load iframes
-    const iframeObserver = new IntersectionObserver((entries, observer) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const iframe = entry.target;
-          const src = iframe.getAttribute('data-src');
-          
-          if (src) {
-            iframe.setAttribute('src', src);
-            iframe.removeAttribute('data-src');
-            observer.unobserve(iframe);
-          }
-        }
-      });
-    }, options);
-    
-    // Lazy load videos
-    const videoObserver = new IntersectionObserver((entries, observer) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const video = entry.target;
-          
-          // Start loading the video
-          if (video.getAttribute('preload') === 'none') {
-            video.setAttribute('preload', 'metadata');
-            
-            // If video has autoplay, start it when visible
-            if (video.hasAttribute('autoplay')) {
-              video.play().catch(e => console.log('Autoplay error:', e));
-            }
-            
-            observer.unobserve(video);
-          }
-        }
-      });
-    }, options);
-    
-    // Get all elements to lazy load
-    const lazyIframes = document.querySelectorAll('.lazy-iframe');
-    const lazyVideos = document.querySelectorAll('.lazy-video');
-    
-    // Observe each element
-    lazyIframes.forEach(iframe => iframeObserver.observe(iframe));
-    lazyVideos.forEach(video => videoObserver.observe(video));
-  } else {
-    // Fallback for browsers without Intersection Observer support
-    // Add a small delay to ensure critical content loads first
-    setTimeout(() => {
-      const lazyIframes = document.querySelectorAll('.lazy-iframe');
-      lazyIframes.forEach(iframe => {
-        const src = iframe.getAttribute('data-src');
-        if (src) {
-          iframe.setAttribute('src', src);
-          iframe.removeAttribute('data-src');
-        }
-      });
-      
-      const lazyVideos = document.querySelectorAll('.lazy-video');
-      lazyVideos.forEach(video => {
-        if (video.getAttribute('preload') === 'none') {
-          video.setAttribute('preload', 'metadata');
-        }
-      });
-    }, 2000);
-  }
-});`;
-}
+};

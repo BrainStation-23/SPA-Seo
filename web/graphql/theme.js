@@ -13,35 +13,6 @@ export const GET_THEME_ID = `
   }
 `;
 
-// Get theme files with pagination
-export const GET_THEME_ALL_FILES = (themeId, cursor = null) => {
-  const afterParam = cursor ? `, after: "${cursor}"` : "";
-  return `
-    query GetThemeFiles {
-      theme(id: "${themeId}") {
-        files(first: 100${afterParam}) {
-          edges {
-            cursor
-            node {
-              filename
-              size
-              body {
-                ... on OnlineStoreThemeFileBodyText {
-                  content
-                }
-              }
-              checksumMd5
-              contentType
-            }
-          }
-          pageInfo {
-            hasNextPage
-          }
-        }
-      }
-    }
-  `;
-};
 
 // Edit theme files
 export const EDIT_THEME_FILES = `
@@ -61,5 +32,34 @@ export const EDIT_THEME_FILES = `
     }
   }
 `;
+
+// Get specific theme file
+export const GET_THEME_FILE = `#graphql
+query GetThemeFile($count: Int!, $role: ThemeRole!, $filename: String!) {
+  themes(first: $count, roles: [$role]) {
+    edges {
+      node {
+        id
+        files(filenames: [$filename]) {
+          edges {
+            node {
+              filename
+              size
+              createdAt
+              updatedAt
+              checksumMd5
+              contentType
+              body {
+                ... on OnlineStoreThemeFileBodyText {
+                  content
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}`;
 
 
