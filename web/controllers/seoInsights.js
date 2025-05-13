@@ -260,49 +260,79 @@ async function optimizeFileContent(content, filename) {
   let optimizedContent = content;
 
   try {
-    // First pass: Fix duplicate loading="lazy" attributes
     optimizedContent = optimizedContent.replace(
       /loading=["']lazy["']([^>]*?)loading=["']lazy["']/g,
       'loading="lazy"$1'
     );
     
-    // Add lazy loading to images without the attribute
     optimizedContent = optimizedContent.replace(
       /<img(?![^>]*?loading=["']lazy["'])([^>]*?)>/g,
       '<img loading="lazy"$1>'
     );
-    
-    // Second pass: Add background-color style to all images
-    // This applies to all images regardless of whether they have loading="lazy" or not
-    optimizedContent = optimizedContent.replace(
-      /<img([^>]*?)>/g,
-      '<img$1 style="background-color: #f0f0f0;" onload="this.style.backgroundColor=\'transparent\'">'
-    );
 
-    // Add lazy loading to iframes
     optimizedContent = optimizedContent.replace(
       /<iframe(?!\s+data-src)([^>]*?)\s+src="([^"]+)"/g,
       '<iframe$1 data-src="$2" class="lazy-iframe"'
     );
 
-    // Add lazy loading to videos - handle existing preload attributes
-    // First, replace videos that already have a preload attribute
+  
     optimizedContent = optimizedContent.replace(
       /<video([^>]*?)preload=["'](?:auto|metadata)["']([^>]*?)>/g,
       '<video$1preload="none"$2 class="lazy-video">'
     );
     
-    // Then handle videos without a preload attribute
     optimizedContent = optimizedContent.replace(
       /<video(?![^>]*?preload=)(?![^>]*?class="lazy-video")([^>]*?)>/g,
       '<video$1 preload="none" class="lazy-video">'
     );
+    
+    if ((filename.includes('layout') || filename.includes('theme.liquid')) && 
+        !optimizedContent.includes('seofy-lazy-styles')) {
+      
+      const styleTag = `
+  <style id="seofy-lazy-styles">
+    .seofy-img-lazy-bg {
+      background-color: #f0f0f0;
+      transition: background-color 0.3s ease;
+    }
+    .seofy-img-loaded {
+      background-color: transparent;
+    }
+  </style>`;
+      
+      const scriptTag = `
+  <script id="seofy-lazy-script">
+    document.addEventListener('DOMContentLoaded', function() {
+      // Apply lazy loading class to all images
+      var allImages = document.querySelectorAll('img');
+      allImages.forEach(function(img) {
+        // Add our background class
+        img.classList.add('seofy-img-lazy-bg');
+        
+        // When image loads, add the loaded class
+        img.addEventListener('load', function() {
+          this.classList.add('seofy-img-loaded');
+        });
+        
+        // For images that are already loaded
+        if (img.complete) {
+          img.classList.add('seofy-img-loaded');
+        }
+      });
+    });
+  </script>`;
+      
+      optimizedContent = optimizedContent.replace(
+        '</body>',
+        `${styleTag}\n${scriptTag}\n</body>`
+      );
+    }
+
+    return optimizedContent;
   } catch (error) {
     console.error(`Error processing file ${filename}:`, error);
     return content; // Return original content on error
   }
-
-  return optimizedContent;
 }
 
 // Create the JavaScript for lazy loading
