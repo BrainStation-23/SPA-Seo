@@ -206,16 +206,14 @@ export const speedInsightsController = async (req, res, next) => {
 
     const themeLiquidFile = themeFiles[0].node;
     const originalContent = themeLiquidFile.body.content;
-
-    // Skip if already has lazy loading script
-    if (originalContent.includes("seofy-lazy-script")) {
+    
+    if (originalContent.includes('seofy-lazy-script')) {
       return res.status(200).json({
         success: true,
-        message: "Lazy loading is already applied",
+        message: "Lazy loading is  applied",
       });
     }
-
-    // Create the lazy loading script
+    
     const styleTag = `
   <style id="seofy-lazy-styles">
     .seofy-img-lazy-bg {
@@ -226,72 +224,41 @@ export const speedInsightsController = async (req, res, next) => {
       background-color: transparent;
     }
   </style>`;
-
-    const scriptTag = `
+    
+  const scriptTag = `
   <script id="seofy-lazy-script">
-    document.addEventListener('DOMContentLoaded', function() {
-      // ---- IMAGE HANDLING ----
-      
-      // Add native lazy loading to all images without it
+    document.addEventListener('DOMContentLoaded', function() {      
       document.querySelectorAll('img:not([loading="lazy"])').forEach(function(img) {
         img.setAttribute('loading', 'lazy');
-      });
-      
-      // Add background class to all images
+      });      
       document.querySelectorAll('img').forEach(function(img) {
-        // Add our background class
         img.classList.add('seofy-img-lazy-bg');
-        
-        // When image loads, add the loaded class
         img.addEventListener('load', function() {
           this.classList.add('seofy-img-loaded');
         });
-        
-        // For images that are already loaded
         if (img.complete) {
           img.classList.add('seofy-img-loaded');
         }
-      });
-      
-      // ---- IFRAME HANDLING ----
-      
-      // Find all iframes and convert to lazy loading
+      });            
       document.querySelectorAll('iframe').forEach(function(iframe) {
-        // Skip iframes that are already set up for lazy loading
         if (iframe.hasAttribute('data-src')) return;
-        
-        // Save original src
         var src = iframe.getAttribute('src');
         if (src) {
-          // Set data-src and remove src to prevent loading
           iframe.setAttribute('data-src', src);
           iframe.removeAttribute('src');
           iframe.classList.add('lazy-iframe');
         }
-      });
-      
-      // ---- VIDEO HANDLING ----
-      
-      // Find all videos and set to lazy loading
+      });            
       document.querySelectorAll('video').forEach(function(video) {
-        // Skip videos that are already lazy loading
         if (video.classList.contains('lazy-video')) return;
-        
-        // Set preload to none to prevent automatic loading
         video.setAttribute('preload', 'none');
         video.classList.add('lazy-video');
       });
-      
-      // ---- LAZY LOADING IMPLEMENTATION ----
-      
-      // Set up Intersection Observer if available
       if ('IntersectionObserver' in window) {
         var options = {
           rootMargin: '50px 0px',
           threshold: 0
-        };
-        
-        // Lazy load iframes
+        };        
         var iframeObserver = new IntersectionObserver(function(entries, observer) {
           entries.forEach(function(entry) {
             if (entry.isIntersecting) {
@@ -305,9 +272,7 @@ export const speedInsightsController = async (req, res, next) => {
               }
             }
           });
-        }, options);
-        
-        // Lazy load videos
+        }, options);        
         var videoObserver = new IntersectionObserver(function(entries, observer) {
           entries.forEach(function(entry) {
             if (entry.isIntersecting) {
@@ -324,18 +289,14 @@ export const speedInsightsController = async (req, res, next) => {
               }
             }
           });
-        }, options);
-        
-        // Start observing
+        }, options);        
         document.querySelectorAll('.lazy-iframe').forEach(function(iframe) {
           iframeObserver.observe(iframe);
-        });
-        
+        });        
         document.querySelectorAll('.lazy-video').forEach(function(video) {
           videoObserver.observe(video);
         });
       } else {
-        // Fallback for browsers without Intersection Observer
         setTimeout(function() {
           document.querySelectorAll('.lazy-iframe').forEach(function(iframe) {
             var src = iframe.getAttribute('data-src');
@@ -343,8 +304,7 @@ export const speedInsightsController = async (req, res, next) => {
               iframe.setAttribute('src', src);
               iframe.removeAttribute('data-src');
             }
-          });
-          
+          });          
           document.querySelectorAll('.lazy-video').forEach(function(video) {
             if (video.getAttribute('preload') === 'none') {
               video.setAttribute('preload', 'metadata');
@@ -354,8 +314,7 @@ export const speedInsightsController = async (req, res, next) => {
       }
     });
   </script>`;
-
-    // Update the theme.liquid file content
+    
     const updatedContent = originalContent.replace(
       "</head>",
       `${styleTag}\n${scriptTag}\n</head>`
