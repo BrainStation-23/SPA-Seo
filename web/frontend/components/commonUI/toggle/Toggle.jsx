@@ -1,7 +1,6 @@
-import React from "react";
 import "./toggle.css";
 
-export function Toggle({ isOn, handleToggle }) {
+export function Toggle({ isOn, handleToggle, featureName }) {
   return (
     <div className="toggle-container">
       <input
@@ -9,9 +8,9 @@ export function Toggle({ isOn, handleToggle }) {
         checked={isOn}
         onChange={handleToggle}
         className="toggle-input"
-        id="toggle-switch"
+        id={`toggle-switch-${featureName}`}
       />
-      <label className="toggle-label" htmlFor="toggle-switch">
+      <label className="toggle-label" htmlFor={`toggle-switch-${featureName}`}>
         <span className="toggle-button"></span>
       </label>
     </div>

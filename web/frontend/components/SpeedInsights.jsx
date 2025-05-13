@@ -10,20 +10,24 @@ import {
   BlockStack,
   InlineStack,
   ButtonGroup,
+  Divider,
+  ProgressBar,
 } from "@shopify/polaris";
 import {
   MobileIcon,
   DesktopIcon,
   InfoIcon,
   LightbulbIcon,
+  StopCircleIcon,
 } from "@shopify/polaris-icons";
 import { SpeedFeatureCard } from "./SpeedFeatureCard";
 import { useUI } from "../contexts/ui.context";
 import useFetchQuery from "../hooks/useGlobalQuery";
+import useFetchMutation from "../hooks/useGlobalMutation";
+import { fetchWithProgess } from "../utils/fetchWithProgress";
 
 export default function SpeedInsights() {
   const [selected, setSelected] = useState(0);
-  const [instantPageEnabled, setInstantPageEnabled] = useState(true);
   const { isLoading, data } = useFetchQuery({
     apiEndpoint: "/api/billing/get-store-info",
     apiKey: "getActiveSubscription",
@@ -32,6 +36,83 @@ export default function SpeedInsights() {
 
   const { appBilling } = useUI();
   console.log("🚀 ~ SpeedInsights ~ appBilling:", appBilling);
+
+  const [progress, setProgress] = useState(0);
+  const [compleatedTask, setCompleatedTask] = useState(0);
+  const [taskCount, setTaskCount] = useState(0);
+  const [siteSpeedUpState, setSiteSpeedUpState] = useState({
+    instantPage: false,
+    lazyLoading: false,
+    streamlinedLoading: false,
+    optimizedLoading: false,
+    assetFileOptimization: false,
+    streamlineCode: false,
+  });
+  const [instantPage, setInstantPage] = useState(false);
+  const [lazyLoading, setLazyLoading] = useState(false);
+  const [streamlinedLoading, setStreamlinedLoading] = useState(false);
+  const [optimizedLoading, setOptimizedLoading] = useState(false);
+  const [assetFileOptimization, setAssetFileOptimization] = useState(false);
+  const [streamlineCode, setStreamlineCode] = useState(false);
+
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const { mutate: callInstantPage } = useFetchMutation(
+    "/api/seo/instant-pages"
+  );
+  const handleSpeedupButtonClick = () => {
+    let currentTaskCount = taskCount,
+      taskQueue = {};
+
+    if (instantPage !== siteSpeedUpState.instantPage) {
+      taskQueue["instantPage"] = { flag: instantPage, mutate: callInstantPage };
+      currentTaskCount++;
+    }
+    if (lazyLoading !== siteSpeedUpState.lazyLoading) {
+      taskQueue["lazyLoading"] = { flag: lazyLoading, mutate: () => {} };
+      currentTaskCount++;
+    }
+    if (streamlinedLoading !== siteSpeedUpState.streamlinedLoading) {
+      taskQueue["streamlinedLoading"] = {
+        flag: streamlinedLoading,
+        mutate: () => {},
+      };
+      currentTaskCount++;
+    }
+    if (optimizedLoading !== siteSpeedUpState.optimizedLoading) {
+      taskQueue["optimizedLoading"] = {
+        flag: optimizedLoading,
+        mutate: () => {},
+      };
+      currentTaskCount++;
+    }
+    if (assetFileOptimization !== siteSpeedUpState.assetFileOptimization) {
+      taskQueue["assetFileOptimization"] = {
+        flag: assetFileOptimization,
+        mutate: () => {},
+      };
+      currentTaskCount++;
+    }
+    if (streamlineCode !== siteSpeedUpState.streamlineCode) {
+      taskQueue["streamlineCode"] = { flag: streamlineCode, mutate: () => {} };
+      currentTaskCount++;
+    }
+
+    fetchWithProgess(
+      taskQueue,
+      setProgress,
+      setCompleatedTask,
+      setSiteSpeedUpState
+    );
+    setTaskCount(currentTaskCount);
+    setShowDropdown(true);
+  };
+  const handleStopButtonClick = () => {
+    setProgress(0);
+    setTaskCount(0);
+    setCompleatedTask(0);
+    setShowDropdown(false);
+  };
 
   const handleTabChange = (selectedTabIndex) => {
     setSelected(selectedTabIndex);
@@ -169,20 +250,53 @@ export default function SpeedInsights() {
             <BlockStack gap="200">
               <Card>
                 <InlineStack align="space-between">
-                  <InlineStack gap="200">
+                  <InlineStack blockAlign="center" gap="200">
                     <Text as="h2" variant="headingMd">
                       Speed Up effect
                     </Text>
                     <Badge tone="success">Basic Plan</Badge>
                   </InlineStack>
-                  <Button size="medium" icon={LightbulbIcon}>
-                    Speed up Now
-                  </Button>
+                  {!showDropdown ? (
+                    <Button
+                      variant="primary"
+                      size="large"
+                      icon={LightbulbIcon}
+                      onClick={handleSpeedupButtonClick}
+                    >
+                      Speed up Now
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="primary"
+                      size="large"
+                      icon={StopCircleIcon}
+                      onClick={handleStopButtonClick}
+                    >
+                      Stop
+                    </Button>
+                  )}
                 </InlineStack>
 
-                <Text as="h4" variant="headingSm">
+                <Text as="h4" variant="bodySm">
                   Performance
                 </Text>
+
+                {showDropdown && (
+                  <Box paddingBlock={"150"}>
+                    <BlockStack gap={"200"}>
+                      <Divider borderWidth="050" />
+                      <Text variant="bodySm">
+                        Speed up process {compleatedTask}/{taskCount} tasks
+                      </Text>
+                      <ProgressBar
+                        animated
+                        progress={progress}
+                        size="small"
+                        tone="primary"
+                      />
+                    </BlockStack>
+                  </Box>
+                )}
               </Card>
 
               <SpeedFeatureCard
@@ -191,47 +305,71 @@ export default function SpeedInsights() {
                 badgeType="basic"
                 description="instant.page preloads pages 65ms into a hover to speed up likely clicks"
                 isPro={false}
-                isEnabled={true}
+                isEnabled={instantPage}
+                featureName={"instantPage"}
+                handler={() => {
+                  setInstantPage((prev) => !prev);
+                }}
               />
               <SpeedFeatureCard
                 title="Lazy-loading"
                 badgeText="Pro plan"
                 badgeType="pro"
                 description="instant.page preloads pages 65ms into a hover to speed up likely clicks"
-                isPro={true}
-                isEnabled={true}
+                isPro={false}
+                isEnabled={lazyLoading}
+                featureName={"lazyLoading"}
+                handler={() => {
+                  setLazyLoading((prev) => !prev);
+                }}
               />
               <SpeedFeatureCard
                 title="Streamlined Loading"
                 badgeText="Pro plan"
                 badgeType="pro"
                 description="instant.page preloads pages 65ms into a hover to speed up likely clicks"
-                isPro={true}
-                isEnabled={true}
+                isPro={false}
+                isEnabled={streamlinedLoading}
+                featureName={"streamlinedLoading"}
+                handler={() => {
+                  setStreamlinedLoading((prev) => !prev);
+                }}
               />
               <SpeedFeatureCard
                 title="Optimized Loading"
                 badgeText="Pro plan"
                 badgeType="pro"
                 description="instant.page preloads pages 65ms into a hover to speed up likely clicks"
-                isPro={true}
-                isEnabled={true}
+                isPro={false}
+                isEnabled={optimizedLoading}
+                featureName={"optimizedLoading"}
+                handler={() => {
+                  setOptimizedLoading((prev) => !prev);
+                }}
               />
               <SpeedFeatureCard
                 title="Asset File Optimization"
                 badgeText="Pro plan"
                 badgeType="pro"
                 description="instant.page preloads pages 65ms into a hover to speed up likely clicks"
-                isPro={true}
-                isEnabled={true}
+                isPro={false}
+                isEnabled={assetFileOptimization}
+                featureName={"assetFileOptimization"}
+                handler={() => {
+                  setAssetFileOptimization((prev) => !prev);
+                }}
               />
               <SpeedFeatureCard
                 title="Streamline Code"
                 badgeText="Pro plan"
                 badgeType="pro"
                 description="instant.page preloads pages 65ms into a hover to speed up likely clicks"
-                isPro={true}
-                isEnabled={true}
+                isPro={false}
+                isEnabled={streamlineCode}
+                featureName={"streamlineCode"}
+                handler={() => {
+                  setStreamlineCode((prev) => !prev);
+                }}
               />
             </BlockStack>
           </Box>

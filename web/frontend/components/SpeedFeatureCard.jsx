@@ -1,4 +1,3 @@
-import React, { useState } from "react";
 import {
   Card,
   Text,
@@ -18,11 +17,13 @@ export function SpeedFeatureCard({
   description,
   isPro = false,
   isEnabled = false,
+  featureName,
+  handler = () => {},
 }) {
   return (
     <Card sectioned>
       <InlineStack wrap={false} align="space-between">
-        <InlineStack gap="200">
+        <InlineStack align="center" gap="200">
           <Text as="h3" variant="headingMd">
             {title}
           </Text>
@@ -36,7 +37,11 @@ export function SpeedFeatureCard({
         {isPro ? (
           <Button size="slim">Upgrade to Turn on</Button>
         ) : (
-          <Toggle checked={isEnabled} onChange={() => {}} />
+          <Toggle
+            isOn={isEnabled}
+            handleToggle={handler}
+            featureName={featureName}
+          />
         )}
       </InlineStack>
       <Box paddingBlockStart="2">

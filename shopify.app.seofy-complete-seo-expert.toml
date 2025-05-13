@@ -3,7 +3,7 @@
 client_id = "695da14ec05f37f6cdd63a2b3c20b444"
 name = "SEOfy - Complete SEO Expert"
 handle = "seofy-complete-seo-expert"
-application_url = "https://7448-103-95-99-147.ngrok-free.app"
+application_url = "https://saw-donate-jamie-childrens.trycloudflare.com"
 embedded = true
 
 [build]
@@ -16,16 +16,16 @@ scopes = "read_content,read_customers,read_products,read_themes,write_content,wr
 
 [auth]
 redirect_urls = [
-  "https://7448-103-95-99-147.ngrok-free.app/auth/callback",
-  "https://7448-103-95-99-147.ngrok-free.app/auth/shopify/callback",
-  "https://7448-103-95-99-147.ngrok-free.app/api/auth/callback"
+  "https://saw-donate-jamie-childrens.trycloudflare.com/auth/callback",
+  "https://saw-donate-jamie-childrens.trycloudflare.com/auth/shopify/callback",
+  "https://saw-donate-jamie-childrens.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
 api_version = "2024-10"
 
 [app_proxy]
-url = "https://7448-103-95-99-147.ngrok-free.app/api"
+url = "https://saw-donate-jamie-childrens.trycloudflare.com/api"
 subpath = "error-insights"
 prefix = "apps"
 

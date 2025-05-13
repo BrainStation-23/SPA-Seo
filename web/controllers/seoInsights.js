@@ -79,7 +79,7 @@ export const getSeoInsightsController = async (req, res, next) => {
 
 export const toggleInstantPages = async (req, res, next) => {
   try {
-    const addInstantPage = req.query.activate === "true";
+    const addInstantPage = req.body.activate === "true";
     const checkInstantPagesScriptRegex =
       /<script\b[^>]*\bsrc=(['"])\/\/instant\.page\/[^'"]+\1[^>]*><\/script>/i;
     const instantPagesScript = `<script src="//instant.page/5.2.0" type="module" integrity="sha384-jnZyxPjiipYXnSU0ygqeac2q7CVYMbh84q0uHVRRxEtvFPiQYbXWUorga2aqZJ0z"></script>`;
@@ -99,9 +99,7 @@ export const toggleInstantPages = async (req, res, next) => {
     const alreadyActivatedInstantPages =
       checkInstantPagesScriptRegex.test(themeFileText);
 
-    console.log(themeId);
-
-    let responseMessage = "N/A";
+    let responseMessage = "Not applied anything";
     if (addInstantPage && !alreadyActivatedInstantPages) {
       const updatedThemeFile = themeFileText.replace(
         `</body>`,

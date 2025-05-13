@@ -7,6 +7,6 @@ import {
 const router = express.Router();
 
 router.get("/insights", getSeoInsightsController);
-router.get("/instant-pages", toggleInstantPages);
+router.post("/instant-pages", toggleInstantPages);
 
 export default router;
