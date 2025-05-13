@@ -138,7 +138,6 @@ export const speedInsightsController = async (req, res, next) => {
 
 // Get all theme files with pagination
 async function getAllThemeFiles(client) {
-  // Get theme ID first
   const themeIdResponse = await client.request(`
     query GetThemeId {
       themes(first: 1, roles: MAIN) {
@@ -197,9 +196,7 @@ async function getAllThemeFiles(client) {
     }
   }
   
-  // Add themeId to the array so we can use it later
   allThemeFiles.themeId = themeId;
-  
   return allThemeFiles;
 }
 
@@ -214,8 +211,8 @@ async function analyzeAndOptimizeFiles(themeFiles, client) {
   
   // Check if lazy loading script already exists
   for (const fileEdge of themeFiles) {
-    if (fileEdge.node.filename === 'assets/lazy-load.js' || 
-        fileEdge.node.filename === 'assets/js/lazy-load.js') {
+    if (fileEdge.node.filename === 'assets/lazy-load-SEOfy.js' || 
+        fileEdge.node.filename === 'assets/js/lazy-load-SEOfy.js') {
       hasLazyScript = true;
     }
     
@@ -310,28 +307,43 @@ async function optimizeFileContent(content, filename) {
     return content || '';
   }
 
-  // Don't lazy load critical above-the-fold content
-  if (filename.includes('header') || 
-      filename.includes('hero')) {
-    return content;
-  }
-
   let optimizedContent = content;
 
   try {
-    // 1. Add lazy loading to images - right after the <img tag
+    // Add lazy loading to images with a solid color placeholder that only shows during loading
     optimizedContent = optimizedContent.replace(
-      /<img(?!\s+loading=)/g,
-      '<img loading="lazy"'
+      /<img(?!\s+loading=)([^>]*?)>/g,
+      (match, attributes) => {
+        const loadingAttr = 'loading="lazy"';
+        let onloadAttr = ' onload="this.style.backgroundColor=\'transparent\'"';
+        
+        // Handle images with existing style attribute
+        if (attributes.includes('style=')) {
+          // Find the style attribute and add background-color
+          return attributes.replace(
+            /style=["']([^"']*)["']/g, 
+            (styleMatch, styleContent) => {
+              // Add background-color to existing style if not present
+              if (!styleContent.includes('background-color')) {
+                return `style="${styleContent}; background-color: #f0f0f0;"${onloadAttr}`;
+              }
+              return styleMatch;
+            }
+          ).replace('<img', `<img ${loadingAttr}`);
+        }
+        
+        // Add loading="lazy", background placeholder, and onload handler for images without style
+        return `<img ${loadingAttr} style="background-color: #f0f0f0;"${onloadAttr}${attributes}>`;
+      }
     );
 
-    // 2. Add lazy loading to iframes - convert src to data-src for JavaScript handling
+    // Add lazy loading to iframes
     optimizedContent = optimizedContent.replace(
       /<iframe(?!\s+data-src)([^>]*?)\s+src="([^"]+)"/g,
       '<iframe$1 data-src="$2" class="lazy-iframe"'
     );
 
-    // 3. Add lazy loading to videos - handle existing preload attributes
+    // Add lazy loading to videos - handle existing preload attributes
     // First, replace videos that already have a preload attribute
     optimizedContent = optimizedContent.replace(
       /<video([^>]*?)preload=["'](?:auto|metadata)["']([^>]*?)>/g,
@@ -345,7 +357,7 @@ async function optimizeFileContent(content, filename) {
     );
   } catch (error) {
     console.error(`Error processing file ${filename}:`, error);
-    return content; 
+    return content; // Return original content on error
   }
 
   return optimizedContent;
