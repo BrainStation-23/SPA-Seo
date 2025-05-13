@@ -30,8 +30,8 @@ export default function SpeedInsights() {
     dependency: [],
   });
 
-  const { appBilling } = useUI();
-  console.log("🚀 ~ SpeedInsights ~ appBilling:", appBilling);
+  const { appBilling, speedInsights } = useUI();
+  console.log("🚀 ~ SpeedInsights ~ appBilling:", appBilling, speedInsights);
 
   const handleTabChange = (selectedTabIndex) => {
     setSelected(selectedTabIndex);

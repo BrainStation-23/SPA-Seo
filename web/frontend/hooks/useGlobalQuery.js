@@ -21,7 +21,7 @@ const useFetchQuery = ({ apiEndpoint, apiKey, dependency, fetchInit = {} }) => {
       ) {
         setStoreInfo({
           billing: data?.activeSubscription,
-          speedInsights: data?.speedInsights || "HI",
+          speedInsights: data?.speedInsights,
         });
       }
     },
