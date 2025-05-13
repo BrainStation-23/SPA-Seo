@@ -107,7 +107,7 @@ export const updateSpeedEffects = async (req, res) => {
 
 export const toggleInstantPages = async (req, res, next) => {
   try {
-    const addInstantPage = req.body.activate === "true";
+    const addInstantPage = req.body.activate;
     const checkInstantPagesScriptRegex =
       /<script\b[^>]*\bsrc=(['"])\/\/instant\.page\/[^'"]+\1[^>]*><\/script>/i;
     const instantPagesScript = `<script src="//instant.page/5.2.0" type="module" integrity="sha384-jnZyxPjiipYXnSU0ygqeac2q7CVYMbh84q0uHVRRxEtvFPiQYbXWUorga2aqZJ0z"></script>`;

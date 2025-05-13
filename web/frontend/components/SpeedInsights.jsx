@@ -58,7 +58,8 @@ export default function SpeedInsights() {
   const [showDropdown, setShowDropdown] = useState(false);
 
   const { mutate: callInstantPage } = useFetchMutation(
-    "/api/seo/instant-pages"
+    "/api/seo/instant-pages",
+    "activateInstantPage"
   );
   const handleSpeedupButtonClick = () => {
     let currentTaskCount = taskCount,
