@@ -260,31 +260,23 @@ async function optimizeFileContent(content, filename) {
   let optimizedContent = content;
 
   try {
-    // Add lazy loading to images with a solid color placeholder that only shows during loading
+    // First pass: Fix duplicate loading="lazy" attributes
     optimizedContent = optimizedContent.replace(
-      /<img(?!\s+loading=)([^>]*?)>/g,
-      (match, attributes) => {
-        const loadingAttr = 'loading="lazy"';
-        let onloadAttr = ' onload="this.style.backgroundColor=\'transparent\'"';
-        
-        // Handle images with existing style attribute
-        if (attributes.includes('style=')) {
-          // Find the style attribute and add background-color
-          return attributes.replace(
-            /style=["']([^"']*)["']/g, 
-            (styleMatch, styleContent) => {
-              // Add background-color to existing style if not present
-              if (!styleContent.includes('background-color')) {
-                return `style="${styleContent}; background-color: #f0f0f0;"${onloadAttr}`;
-              }
-              return styleMatch;
-            }
-          ).replace('<img', `<img ${loadingAttr}`);
-        }
-        
-        // Add loading="lazy", background placeholder, and onload handler for images without style
-        return `<img ${loadingAttr} style="background-color: #f0f0f0;"${onloadAttr}${attributes}>`;
-      }
+      /loading=["']lazy["']([^>]*?)loading=["']lazy["']/g,
+      'loading="lazy"$1'
+    );
+    
+    // Add lazy loading to images without the attribute
+    optimizedContent = optimizedContent.replace(
+      /<img(?![^>]*?loading=["']lazy["'])([^>]*?)>/g,
+      '<img loading="lazy"$1>'
+    );
+    
+    // Second pass: Add background-color style to all images
+    // This applies to all images regardless of whether they have loading="lazy" or not
+    optimizedContent = optimizedContent.replace(
+      /<img([^>]*?)>/g,
+      '<img$1 style="background-color: #f0f0f0;" onload="this.style.backgroundColor=\'transparent\'">'
     );
 
     // Add lazy loading to iframes
