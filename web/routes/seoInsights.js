@@ -3,6 +3,7 @@ import {
   getSeoInsightsController,
   toggleInstantPages,
   updateSpeedEffects,
+  speedInsightsController,
 } from "../controllers/seoInsights.js";
 
 const router = express.Router();
@@ -10,5 +11,6 @@ const router = express.Router();
 router.get("/insights", getSeoInsightsController);
 router.post("/instant-pages", toggleInstantPages);
 router.post("/speed-effect", updateSpeedEffects);
+router.post("/lazy-loading", speedInsightsController);
 
 export default router;

@@ -1,10 +1,11 @@
 import React from "react";
-import { useSeoInsightsQuery } from "../hooks/useShopQuery";
-import { SkeletonBodyText } from "@shopify/polaris";
+import { useSeoInsightsQuery, useSeoLeazyLoaddingQuery } from "../hooks/useShopQuery";
+import { SkeletonBodyText, Button } from "@shopify/polaris";
 
 export function PageSpeedInsights() {
   const { data, isLoading } = useSeoInsightsQuery({ url: "api/seo/insights" });
 
+  console.log("🚀 ~ lazyLoadingData:", lazyLoadingData);
   return (
     <div className="app__seo_score_container">
       <>
@@ -12,11 +13,11 @@ export function PageSpeedInsights() {
           <div>
             <div className="seo_score_page_title">SEO Insights</div>
             <p className="seo_score_page_description">
-              SEO Insights is a powerful tool designed to optimize website
-              performance, providing a detailed assessment of your site based on
-              Google's key evaluation criteria
+              SEO Insights is a powerful tool designed to optimize website performance, providing a detailed assessment
+              of your site based on Google's key evaluation criteria
             </p>
           </div>
+         
         </div>
         {isLoading ? (
           <SkeletonBodyText lines={20} />
@@ -24,17 +25,10 @@ export function PageSpeedInsights() {
           <div className="seo_score_container_grid">
             {data?.map((seoInfo, index) => (
               <div className="seo_score_container" key={index}>
-                <div className="seo_score_title">
-                  {seoInfo?.page} SEO Performance Score
-                </div>
+                <div className="seo_score_title">{seoInfo?.page} SEO Performance Score</div>
                 <div
                   style={{
-                    backgroundColor:
-                      seoInfo?.seoScore >= 90
-                        ? "#0c6"
-                        : seoInfo?.seoScore >= 50
-                        ? "#fa3"
-                        : "#f33",
+                    backgroundColor: seoInfo?.seoScore >= 90 ? "#0c6" : seoInfo?.seoScore >= 50 ? "#fa3" : "#f33",
                   }}
                   className="seo_score_result_container"
                 >

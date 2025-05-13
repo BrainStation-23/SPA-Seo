@@ -55,3 +55,28 @@ export const useSeoInsightsQuery = ({
     // enabled: Object.keys(shop).length === 0,
   });
 };
+export const useSeoLeazyLoaddingQuery = ({
+  url,
+  fetchInit = {},
+  reactQueryOptions,
+}) => {
+  const authenticatedFetch = useAuthenticatedFetch();
+  const fetch = useMemo(() => {
+    return async () => {
+      const response = await authenticatedFetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        ...fetchInit
+      });
+      return response.json();
+    };
+  }, [url, JSON.stringify(fetchInit)]);
+
+  return useQuery("seoInsightLazyLoading", fetch, {
+    ...reactQueryOptions,
+    onSuccess: (data) => {},
+    refetchOnWindowFocus: false,
+  });
+};

@@ -778,10 +778,22 @@
     "@shopify/cli-kit" "3.46.0"
     "@shopify/ngrok" "4.3.2"
 
+"@shopify/polaris-icons@^8.11.1":
+  version "8.11.1"
+  resolved "https://registry.npmjs.org/@shopify/polaris-icons/-/polaris-icons-8.11.1.tgz"
+  integrity sha512-2HLzvJWMejKIwS5P2bs7k5CAjBKwPnD/iy9ncPzcgqRjmFInBXLtUXFQhPWDw6JwXzb1ZjNQK/ssTctcfz87Sw==
+
 "@shopify/polaris-icons@^9.3.1":
   version "9.3.1"
   resolved "https://registry.npmjs.org/@shopify/polaris-icons/-/polaris-icons-9.3.1.tgz"
   integrity sha512-16BIFAT93LJ8X4YRXz5cR9ZPHeErMg3DYS0gyTPNPkd0E5IBPoTxPINjn2b4Mr9Sc1x4RfI4AqPcV8ut0D1J5w==
+
+"@shopify/polaris-tokens@^8.10.0":
+  version "8.10.0"
+  resolved "https://registry.npmjs.org/@shopify/polaris-tokens/-/polaris-tokens-8.10.0.tgz"
+  integrity sha512-y4PDtRbFKGHwA6Lu7a3L4N9SDP6gZv4tw6u0viumtcXcbF0T2j1xPmyuJZNc9c7vmhNSARCg27NGQFpPgxuaEg==
+  dependencies:
+    deepmerge "^4.3.1"
 
 "@shopify/polaris-tokens@^9.4.2":
   version "9.4.2"
@@ -789,6 +801,19 @@
   integrity sha512-WNoDWLYFj38Cj0FolbNsLaY54JbjuYoO0qsLCj6yBb3Bkg4BEdAjOHji9AktL9IZGPsNhTcMp2/8CfzKtSHg2A==
   dependencies:
     deepmerge "^4.3.1"
+
+"@shopify/polaris@^12.27.0":
+  version "12.27.0"
+  resolved "https://registry.npmjs.org/@shopify/polaris/-/polaris-12.27.0.tgz"
+  integrity sha512-Y8yus6iEjcfW2ZtEJtlqxbWeDJqTX3S/MOLH4GWRvU5gFYJQhlaHaETs0+OimbhEpO95mXbY8qB+KnIJaVBHwA==
+  dependencies:
+    "@shopify/polaris-icons" "^8.11.1"
+    "@shopify/polaris-tokens" "^8.10.0"
+    "@types/react" "*"
+    "@types/react-dom" "*"
+    "@types/react-transition-group" "^4.4.2"
+    react-fast-compare "^3.2.0"
+    react-transition-group "^4.4.2"
 
 "@shopify/polaris@^13.9.5":
   version "13.9.5"
