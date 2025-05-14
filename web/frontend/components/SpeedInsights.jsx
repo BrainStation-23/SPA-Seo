@@ -28,7 +28,7 @@ import useFetchMutation from "../hooks/useGlobalMutation";
 import { fetchWithProgess } from "../utils/fetchWithProgress";
 
 export default function SpeedInsights() {
-    const { data: lazyLoadingData, isLoading: lazyLoadingLoading } = useSeoLeazyLoaddingQuery({ url: "api/seo/lazy-loading" });
+    const { data: lazyLoadingData, isLoading: lazyLoadingLoading } = useSeoLeazyLoaddingQuery({ url: "api/seo/minification-defer" });
    console.log('data',lazyLoadingData)
   const [selected, setSelected] = useState(0);
   const { isLoading, data } = useFetchQuery({

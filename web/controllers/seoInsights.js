@@ -1,5 +1,5 @@
 import shopify from "../shopify.js";
-import { GetThemeFile, UpdateThemeFiles } from "../graphql/theme.js";
+import { GetThemeFile, UpdateThemeFiles, GetAllThemeFiles } from "../graphql/theme.js";
 import SpeedInsights from "../models/speedInsights.js";
 
 export const getSeoInsightsController = async (req, res, next) => {
@@ -265,6 +265,62 @@ export const speedInsightsController = async (req, res, next) => {
       success: false,
       message: "Failed to optimize theme files",
       error: error.message,
+    });
+  }
+};
+
+export const minificationDeferController = async (req, res, next) => {
+  try {
+    const session = res.locals.shopify.session;
+    const client = new shopify.api.clients.Graphql({
+      apiVersion: "2025-01",
+      session,
+    });
+    
+    const allThemeFiles = [];
+    let hasNextPage = true;
+    let cursor = null;
+    const PER_PAGE = 250;  
+    let themeId;
+
+    while (hasNextPage) {
+      const getAllThemeFilesResponse = await client.request(GetAllThemeFiles, {
+        variables: {
+          count: PER_PAGE,
+          after: cursor
+        },
+      });
+      
+      // Store the theme ID from the first response
+      if (!themeId && getAllThemeFilesResponse.data.themes.edges.length > 0) {
+        themeId = getAllThemeFilesResponse.data.themes.edges[0].node.id;
+      }
+
+      const themeFiles = getAllThemeFilesResponse.data.themes.edges[0].node.files;
+      const fileEdges = themeFiles.edges;
+      allThemeFiles.push(...fileEdges.map(edge => edge.node));
+
+      const pageInfo = themeFiles.pageInfo;
+      hasNextPage = pageInfo.hasNextPage;
+
+      if (hasNextPage) {
+        cursor = pageInfo.endCursor;
+      }
+    }
+    console.log("theme id", themeId);
+    console.log('allThemeFiles size', allThemeFiles.length);
+    
+    return res.status(200).json({
+      success: true,
+      message: "Theme files retrieved successfully",
+    });
+    
+  } catch (error) {
+    console.error("Error in minificationDeferController:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to retrieve theme files",
+      error: error.message
     });
   }
 };
