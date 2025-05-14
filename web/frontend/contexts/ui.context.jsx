@@ -82,6 +82,16 @@ function uiReducer(state, action) {
         speedInsights: action?.payload?.speedInsights,
       };
     }
+
+    case "UPDATE_SPEED_INSIGHTS": {
+      return {
+        ...state,
+        speedInsights: {
+          ...state?.speedInsights,
+          ...action?.payload,
+        },
+      };
+    }
   }
 }
 
@@ -99,6 +109,8 @@ export const UIProvider = (props) => {
 
   const setStoreInfo = (payload) =>
     dispatch({ type: "SET_STORE_INFO", payload });
+  const setSpeedInsights = (payload) =>
+    dispatch({ type: "UPDATE_SPEED_INSIGHTS", payload });
 
   const value = React.useMemo(
     () => ({
@@ -109,6 +121,7 @@ export const UIProvider = (props) => {
       setToggleToast,
       setToggleAIButton,
       setStoreInfo,
+      setSpeedInsights,
     }),
     [state]
   );

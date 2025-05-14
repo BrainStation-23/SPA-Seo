@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   Tabs,
@@ -19,40 +19,17 @@ import {
   InfoIcon,
   LightbulbIcon,
   StopCircleIcon,
+  StatusActiveIcon,
 } from "@shopify/polaris-icons";
 import { SpeedFeatureCard } from "./SpeedFeatureCard";
-import { useSeoLeazyLoaddingQuery } from "../hooks/useShopQuery";
 import { useUI } from "../contexts/ui.context";
-import useFetchQuery from "../hooks/useGlobalQuery";
-import useFetchMutation from "../hooks/useGlobalMutation";
-import { fetchWithProgess } from "../utils/fetchWithProgress";
-import { useAuthenticatedFetch } from "../hooks/useAuthenticatedFetch";
+import { useSpeedUpWithProgress } from "../hooks/useSpeedUpWithProgress";
 
 export default function SpeedInsights() {
-  const { data: lazyLoadingData, isLoading: lazyLoadingLoading } =
-    useSeoLeazyLoaddingQuery({ url: "api/seo/lazy-loading" });
-  console.log("data", lazyLoadingData);
   const [selected, setSelected] = useState(0);
-  const { isLoading, data } = useFetchQuery({
-    apiEndpoint: "/api/billing/get-store-info",
-    apiKey: "getActiveSubscription",
-    dependency: [],
-  });
-
-  const { appBilling, speedInsights } = useUI();
+  const { appBilling, speedInsights, setSpeedInsights } = useUI();
   console.log("🚀 ~ SpeedInsights ~ appBilling:", appBilling, speedInsights);
 
-  const [progress, setProgress] = useState(0);
-  const [compleatedTask, setCompleatedTask] = useState(0);
-  const [taskCount, setTaskCount] = useState(0);
-  const [siteSpeedUpState, setSiteSpeedUpState] = useState({
-    instantPage: false,
-    lazyLoading: false,
-    streamlinedLoading: false,
-    optimizedLoading: false,
-    assetFileOptimization: false,
-    streamlineCode: false,
-  });
   const [instantPage, setInstantPage] = useState(false);
   const [lazyLoading, setLazyLoading] = useState(false);
   const [streamlinedLoading, setStreamlinedLoading] = useState(false);
@@ -61,53 +38,45 @@ export default function SpeedInsights() {
   const [streamlineCode, setStreamlineCode] = useState(false);
 
   const [showDropdown, setShowDropdown] = useState(false);
+  const { taskCount, compleatedTask, progress, startTaks, resetProgress } =
+    useSpeedUpWithProgress();
 
-  // Ami choto amake marben na
-  // ami asolei choto marben na plz
-  const fetcher = useAuthenticatedFetch();
   const handleSpeedupButtonClick = () => {
     let currentTaskCount = taskCount,
       taskQueue = {};
 
-    if (instantPage !== siteSpeedUpState.instantPage) {
-      taskQueue["instantPage"] = instantPage;
+    if (instantPage !== speedInsights.isInstantPage) {
+      taskQueue["isInstantPage"] = instantPage;
       currentTaskCount++;
     }
-    if (lazyLoading !== siteSpeedUpState.lazyLoading) {
-      taskQueue["lazyLoading"] = lazyLoading;
+    if (lazyLoading !== speedInsights.isLazyLoading) {
+      taskQueue["isLazyLoading"] = lazyLoading;
       currentTaskCount++;
     }
-    if (streamlinedLoading !== siteSpeedUpState.streamlinedLoading) {
-      taskQueue["streamlinedLoading"] = streamlinedLoading;
+    if (streamlinedLoading !== speedInsights.isStreamLineLoading) {
+      taskQueue["isStreamLineLoading"] = streamlinedLoading;
       currentTaskCount++;
     }
-    if (optimizedLoading !== siteSpeedUpState.optimizedLoading) {
-      taskQueue["optimizedLoading"] = optimizedLoading;
+    if (optimizedLoading !== speedInsights.isOptimizedLoading) {
+      taskQueue["isOptimizedLoading"] = optimizedLoading;
       currentTaskCount++;
     }
-    if (assetFileOptimization !== siteSpeedUpState.assetFileOptimization) {
-      taskQueue["assetFileOptimization"] = assetFileOptimization;
+    if (assetFileOptimization !== speedInsights.isAssetFileOptimization) {
+      taskQueue["isAssetFileOptimization"] = assetFileOptimization;
       currentTaskCount++;
     }
-    if (streamlineCode !== siteSpeedUpState.streamlineCode) {
-      taskQueue["streamlineCode"] = streamlineCode;
+    if (streamlineCode !== speedInsights.isStreamlineCode) {
+      taskQueue["isStreamlineCode"] = streamlineCode;
       currentTaskCount++;
     }
 
-    fetchWithProgess(
-      taskQueue,
-      fetcher,
-      setProgress,
-      setCompleatedTask,
-      setSiteSpeedUpState
-    );
-    setTaskCount(currentTaskCount);
+    if (currentTaskCount === 0) return;
+
+    startTaks(taskQueue, currentTaskCount);
     setShowDropdown(true);
   };
   const handleStopButtonClick = () => {
-    setProgress(0);
-    setTaskCount(0);
-    setCompleatedTask(0);
+    resetProgress();
     setShowDropdown(false);
   };
 
@@ -135,6 +104,15 @@ export default function SpeedInsights() {
       panelID: "amp-content",
     },
   ];
+
+  useEffect(() => {
+    setInstantPage(speedInsights.isInstantPage);
+    setLazyLoading(speedInsights.isLazyLoading);
+    setStreamlineCode(speedInsights.isStreamlineCode);
+    setOptimizedLoading(speedInsights.isOptimizedLoading);
+    setStreamlinedLoading(speedInsights.isStreamLineLoading);
+    setAssetFileOptimization(speedInsights.isAssetFileOptimization);
+  }, [speedInsights]);
 
   return (
     <>
@@ -265,11 +243,12 @@ export default function SpeedInsights() {
                   ) : (
                     <Button
                       variant="primary"
+                      tone={progress < 100 ? "critical" : "success"}
                       size="large"
-                      icon={StopCircleIcon}
+                      icon={progress < 100 ? StopCircleIcon : StatusActiveIcon}
                       onClick={handleStopButtonClick}
                     >
-                      Stop
+                      {progress < 100 ? "Stop" : "Done"}
                     </Button>
                   )}
                 </InlineStack>
