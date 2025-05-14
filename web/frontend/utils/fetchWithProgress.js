@@ -19,8 +19,6 @@ export const fetchWithProgess = async (
           },
         });
       } else if (key === "lazyLoading") {
-        const mutate = val.mutate;
-        mutate({});
         await fetcher("/api/seo/lazy-loading", {
           method: "POST",
           body: JSON.stringify({}),

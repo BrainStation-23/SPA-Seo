@@ -62,7 +62,7 @@ export default function SpeedInsights() {
 
   const [showDropdown, setShowDropdown] = useState(false);
 
-  // Ami choto amake marben
+  // Ami choto amake marben na
   // ami asolei choto marben na plz
   const fetcher = useAuthenticatedFetch();
   const handleSpeedupButtonClick = () => {
