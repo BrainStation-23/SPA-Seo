@@ -20,15 +20,31 @@ import {
 import { SpeedFeatureCard } from "./SpeedFeatureCard";
 import { useUI } from "../contexts/ui.context";
 import useFetchQuery from "../hooks/useGlobalQuery";
+import {
+  getColorFromScore,
+  getToneFromCLS,
+  getToneFromFCP,
+  getToneFromLCP,
+  getToneFromSpeedIndex,
+  getToneFromTBT,
+} from "../utils/speedCalculations";
 
 export default function SpeedInsights() {
   const [selected, setSelected] = useState(0);
+  const [device, setDevice] = useState("desktop");
   const [instantPageEnabled, setInstantPageEnabled] = useState(true);
   const { isLoading, data } = useFetchQuery({
     apiEndpoint: "/api/billing/get-store-info",
     apiKey: "getActiveSubscription",
     dependency: [],
   });
+
+  const { isLoading: isInsightsLoading, data: insightsData } = useFetchQuery({
+    apiEndpoint: `/api/seo/insights?device=${device}`,
+    apiKey: "seoInsights",
+    dependency: [device],
+  });
+  console.log("🚀 ~ SpeedInsights ~ insightsData:", insightsData);
 
   const { appBilling, speedInsights } = useUI();
   console.log("🚀 ~ SpeedInsights ~ appBilling:", appBilling, speedInsights);
@@ -73,93 +89,72 @@ export default function SpeedInsights() {
                     SEO Score
                   </Text>
                   <ButtonGroup segmented>
-                    <Button icon={MobileIcon} />
-                    <Button icon={DesktopIcon} variant="primary" />
+                    <Button
+                      icon={MobileIcon}
+                      onClick={() => setDevice("mobile")}
+                    />
+                    <Button
+                      icon={DesktopIcon}
+                      variant="primary"
+                      onClick={() => setDevice("desktop")}
+                    />
                   </ButtonGroup>
                 </InlineStack>
 
-                <Box paddingBlock="4" textAlign="center">
-                  <div
-                    style={{
-                      position: "relative",
-                      width: "160px",
-                      height: "160px",
-                      margin: "0 auto",
-                      borderRadius: "50%",
-                      background: "#FFF9E8",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: 0,
-                        left: 0,
-                        width: "160px",
-                        height: "160px",
-                      }}
-                    >
-                      <svg width="160" height="160" viewBox="0 0 160 160">
-                        <circle
-                          cx="80"
-                          cy="80"
-                          r="70"
-                          fill="none"
-                          stroke="#FFC046"
-                          strokeWidth="14"
-                          strokeDasharray="440"
-                          strokeDashoffset="140"
-                          transform="rotate(-90, 80, 80)"
-                        />
-                      </svg>
-                    </div>
-                    <Text as="p" variant="heading3xl">
-                      62
-                    </Text>
-                  </div>
-                </Box>
+                <SeoScore score={insightsData?.score || 0} />
+                <InlineStack wrap={true} gap="200">
+                  <Text as="h3" variant="headingMd">
+                    Performance
+                  </Text>
 
-                <Text as="h3" variant="headingMd">
-                  Performance
-                </Text>
-
-                <InlineStack wrap={true} gap="400">
-                  <Box width="45%">
-                    <MetricItem
-                      label="Speed Index"
-                      value="3.9 s"
-                      color="critical"
-                    />
-                  </Box>
-                  <Box width="45%">
-                    <MetricItem
-                      label="Total Blocking Time"
-                      value="3.9 s"
-                      color="critical"
-                    />
-                  </Box>
-                  <Box width="45%">
-                    <MetricItem
-                      label="First Contentful Paint"
-                      value="3.9 s"
-                      color="critical"
-                    />
-                  </Box>
-                  <Box width="45%">
-                    <MetricItem
-                      label="Largest Contentful Paint"
-                      value="3.9 s"
-                      color="critical"
-                    />
-                  </Box>
+                  <InlineStack wrap={true} gap="200">
+                    <Box width="45%">
+                      <MetricItem
+                        label="Speed Index"
+                        value={insightsData?.performance?.speedIndex}
+                        color={getToneFromSpeedIndex(
+                          insightsData?.performance?.speedIndex
+                        )}
+                      />
+                    </Box>
+                    <Box width="45%">
+                      <MetricItem
+                        label="Total Blocking Time"
+                        value={insightsData?.performance?.totalBlockingTime}
+                        color={getToneFromTBT(
+                          insightsData?.performance?.totalBlockingTime
+                        )}
+                      />
+                    </Box>
+                    <Box width="45%">
+                      <MetricItem
+                        label="First Contentful Paint"
+                        value={insightsData?.performance?.firstContentfulPaint}
+                        color={getToneFromFCP(
+                          insightsData?.performance?.firstContentfulPaint
+                        )}
+                      />
+                    </Box>
+                    <Box width="45%">
+                      <MetricItem
+                        label="Largest Contentful Paint"
+                        value={
+                          insightsData?.performance?.largestContentfulPaint
+                        }
+                        color={getToneFromLCP(
+                          insightsData?.performance?.largestContentfulPaint
+                        )}
+                      />
+                    </Box>
+                  </InlineStack>
+                  <MetricItem
+                    label="Cumulative Layout Shift"
+                    value={insightsData?.performance?.cumulativeLayoutShift}
+                    color={getToneFromCLS(
+                      insightsData?.performance?.cumulativeLayoutShift
+                    )}
+                  />
                 </InlineStack>
-                <MetricItem
-                  label="Cumulative Layout Shift"
-                  value="3.9 s"
-                  color="critical"
-                />
               </BlockStack>
             </Card>
           </Box>
@@ -247,9 +242,70 @@ export function MetricItem({ label, value, color }) {
       <Text as="p" variant="bodyMd">
         {label}
       </Text>
-      <Text as="p" variant="heading2xl" color={color}>
+      <div
+        className="matrix_results-value"
+        style={{
+          color: color,
+        }}
+      >
         {value}
-      </Text>
+      </div>
+    </Box>
+  );
+}
+
+function SeoScore({ score }) {
+  // Circle constants
+  const radius = 70;
+  const strokeWidth = 14;
+  const circumference = 2 * Math.PI * radius;
+
+  // Calculate stroke offset
+  const progress = Math.min(Math.max(score, 0), 100); // clamp between 0-100
+  const strokeDashoffset = circumference - (progress / 100) * circumference;
+  return (
+    <Box paddingBlock="4" textAlign="center">
+      <div
+        style={{
+          position: "relative",
+          width: "160px",
+          height: "160px",
+          margin: "0 auto",
+          borderRadius: "50%",
+          background: "#FFF9E8",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "160px",
+            height: "160px",
+          }}
+        >
+          <svg width="160" height="160" viewBox="0 0 160 160">
+            <circle
+              cx="80"
+              cy="80"
+              r={radius}
+              fill="none"
+              stroke={getColorFromScore(score)}
+              strokeWidth={strokeWidth}
+              strokeDasharray={circumference}
+              strokeDashoffset={strokeDashoffset}
+              transform="rotate(-90, 80, 80)"
+              strokeLinecap="round"
+            />
+          </svg>
+        </div>
+        <Text as="p" variant="heading3xl">
+          {score}
+        </Text>
+      </div>
     </Box>
   );
 }
