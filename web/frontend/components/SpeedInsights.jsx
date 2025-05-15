@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   Tabs,
@@ -19,38 +19,19 @@ import {
   InfoIcon,
   LightbulbIcon,
   StopCircleIcon,
+  StatusActiveIcon,
 } from "@shopify/polaris-icons";
 import { SpeedFeatureCard } from "./SpeedFeatureCard";
-import { useSeoLeazyLoaddingQuery } from "../hooks/useShopQuery";
 import { useUI } from "../contexts/ui.context";
-import useFetchQuery from "../hooks/useGlobalQuery";
-import useFetchMutation from "../hooks/useGlobalMutation";
-import { fetchWithProgess } from "../utils/fetchWithProgress";
+import { useSpeedUpWithProgress } from "../hooks/useSpeedUpWithProgress";
 
 export default function SpeedInsights() {
     const { data: lazyLoadingData, isLoading: lazyLoadingLoading } = useSeoLeazyLoaddingQuery({ url: "api/seo/minification-defer" });
    console.log('data',lazyLoadingData)
   const [selected, setSelected] = useState(0);
-  const { isLoading, data } = useFetchQuery({
-    apiEndpoint: "/api/billing/get-store-info",
-    apiKey: "getActiveSubscription",
-    dependency: [],
-  });
-
   const { appBilling, speedInsights } = useUI();
   console.log("🚀 ~ SpeedInsights ~ appBilling:", appBilling, speedInsights);
 
-  const [progress, setProgress] = useState(0);
-  const [compleatedTask, setCompleatedTask] = useState(0);
-  const [taskCount, setTaskCount] = useState(0);
-  const [siteSpeedUpState, setSiteSpeedUpState] = useState({
-    instantPage: false,
-    lazyLoading: false,
-    streamlinedLoading: false,
-    optimizedLoading: false,
-    assetFileOptimization: false,
-    streamlineCode: false,
-  });
   const [instantPage, setInstantPage] = useState(false);
   const [lazyLoading, setLazyLoading] = useState(false);
   const [streamlinedLoading, setStreamlinedLoading] = useState(false);
@@ -59,62 +40,45 @@ export default function SpeedInsights() {
   const [streamlineCode, setStreamlineCode] = useState(false);
 
   const [showDropdown, setShowDropdown] = useState(false);
+  const { taskCount, compleatedTask, progress, startTaks, resetProgress } =
+    useSpeedUpWithProgress();
 
-  const { mutate: callInstantPage } = useFetchMutation(
-    "/api/seo/instant-pages",
-    "activateInstantPage"
-  );
   const handleSpeedupButtonClick = () => {
     let currentTaskCount = taskCount,
       taskQueue = {};
 
-    if (instantPage !== siteSpeedUpState.instantPage) {
-      taskQueue["instantPage"] = { flag: instantPage, mutate: callInstantPage };
+    if (instantPage !== speedInsights.isInstantPage) {
+      taskQueue["isInstantPage"] = instantPage;
       currentTaskCount++;
     }
-    if (lazyLoading !== siteSpeedUpState.lazyLoading) {
-      taskQueue["lazyLoading"] = { flag: lazyLoading, mutate: () => {} };
+    if (lazyLoading !== speedInsights.isLazyLoading) {
+      taskQueue["isLazyLoading"] = lazyLoading;
       currentTaskCount++;
     }
-    if (streamlinedLoading !== siteSpeedUpState.streamlinedLoading) {
-      taskQueue["streamlinedLoading"] = {
-        flag: streamlinedLoading,
-        mutate: () => {},
-      };
+    if (streamlinedLoading !== speedInsights.isStreamLineLoading) {
+      taskQueue["isStreamLineLoading"] = streamlinedLoading;
       currentTaskCount++;
     }
-    if (optimizedLoading !== siteSpeedUpState.optimizedLoading) {
-      taskQueue["optimizedLoading"] = {
-        flag: optimizedLoading,
-        mutate: () => {},
-      };
+    if (optimizedLoading !== speedInsights.isOptimizedLoading) {
+      taskQueue["isOptimizedLoading"] = optimizedLoading;
       currentTaskCount++;
     }
-    if (assetFileOptimization !== siteSpeedUpState.assetFileOptimization) {
-      taskQueue["assetFileOptimization"] = {
-        flag: assetFileOptimization,
-        mutate: () => {},
-      };
+    if (assetFileOptimization !== speedInsights.isAssetFileOptimization) {
+      taskQueue["isAssetFileOptimization"] = assetFileOptimization;
       currentTaskCount++;
     }
-    if (streamlineCode !== siteSpeedUpState.streamlineCode) {
-      taskQueue["streamlineCode"] = { flag: streamlineCode, mutate: () => {} };
+    if (streamlineCode !== speedInsights.isStreamlineCode) {
+      taskQueue["isStreamlineCode"] = streamlineCode;
       currentTaskCount++;
     }
 
-    fetchWithProgess(
-      taskQueue,
-      setProgress,
-      setCompleatedTask,
-      setSiteSpeedUpState
-    );
-    setTaskCount(currentTaskCount);
+    if (currentTaskCount === 0) return;
+
+    startTaks(taskQueue, currentTaskCount);
     setShowDropdown(true);
   };
   const handleStopButtonClick = () => {
-    setProgress(0);
-    setTaskCount(0);
-    setCompleatedTask(0);
+    resetProgress();
     setShowDropdown(false);
   };
 
@@ -142,6 +106,22 @@ export default function SpeedInsights() {
       panelID: "amp-content",
     },
   ];
+
+  useEffect(() => {
+    setInstantPage(speedInsights.isInstantPage);
+    setLazyLoading(speedInsights.isLazyLoading);
+    setStreamlineCode(speedInsights.isStreamlineCode);
+    setOptimizedLoading(speedInsights.isOptimizedLoading);
+    setStreamlinedLoading(speedInsights.isStreamLineLoading);
+    setAssetFileOptimization(speedInsights.isAssetFileOptimization);
+  }, [speedInsights]);
+
+  useEffect(() => {
+    console.log(
+      appBilling?.status === "ACTIVE" &&
+        (appBilling?.name === "Pro" || appBilling?.name === "Plus")
+    );
+  }, [appBilling]);
 
   return (
     <>
@@ -272,11 +252,12 @@ export default function SpeedInsights() {
                   ) : (
                     <Button
                       variant="primary"
+                      tone={progress < 100 ? "critical" : "success"}
                       size="large"
-                      icon={StopCircleIcon}
+                      icon={progress < 100 ? StopCircleIcon : StatusActiveIcon}
                       onClick={handleStopButtonClick}
                     >
-                      Stop
+                      {progress < 100 ? "Stop" : "Done"}
                     </Button>
                   )}
                 </InlineStack>
@@ -308,7 +289,7 @@ export default function SpeedInsights() {
                 badgeText="On"
                 badgeType="basic"
                 description="instant.page preloads pages 65ms into a hover to speed up likely clicks"
-                isPro={false}
+                isPro={true}
                 isEnabled={instantPage}
                 featureName={"instantPage"}
                 handler={() => {
@@ -320,7 +301,10 @@ export default function SpeedInsights() {
                 badgeText="Pro plan"
                 badgeType="pro"
                 description="instant.page preloads pages 65ms into a hover to speed up likely clicks"
-                isPro={false}
+                isPro={
+                  appBilling?.status === "ACTIVE" &&
+                  (appBilling?.name === "Pro" || appBilling?.name === "Plus")
+                }
                 isEnabled={lazyLoading}
                 featureName={"lazyLoading"}
                 handler={() => {
@@ -332,7 +316,10 @@ export default function SpeedInsights() {
                 badgeText="Pro plan"
                 badgeType="pro"
                 description="instant.page preloads pages 65ms into a hover to speed up likely clicks"
-                isPro={false}
+                isPro={
+                  appBilling?.status === "ACTIVE" &&
+                  (appBilling?.name === "Pro" || appBilling?.name === "Plus")
+                }
                 isEnabled={streamlinedLoading}
                 featureName={"streamlinedLoading"}
                 handler={() => {
@@ -344,7 +331,10 @@ export default function SpeedInsights() {
                 badgeText="Pro plan"
                 badgeType="pro"
                 description="instant.page preloads pages 65ms into a hover to speed up likely clicks"
-                isPro={false}
+                isPro={
+                  appBilling?.status === "ACTIVE" &&
+                  (appBilling?.name === "Pro" || appBilling?.name === "Plus")
+                }
                 isEnabled={optimizedLoading}
                 featureName={"optimizedLoading"}
                 handler={() => {
@@ -356,7 +346,10 @@ export default function SpeedInsights() {
                 badgeText="Pro plan"
                 badgeType="pro"
                 description="instant.page preloads pages 65ms into a hover to speed up likely clicks"
-                isPro={false}
+                isPro={
+                  appBilling?.status === "ACTIVE" &&
+                  (appBilling?.name === "Pro" || appBilling?.name === "Plus")
+                }
                 isEnabled={assetFileOptimization}
                 featureName={"assetFileOptimization"}
                 handler={() => {
@@ -368,7 +361,10 @@ export default function SpeedInsights() {
                 badgeText="Pro plan"
                 badgeType="pro"
                 description="instant.page preloads pages 65ms into a hover to speed up likely clicks"
-                isPro={false}
+                isPro={
+                  appBilling?.status === "ACTIVE" &&
+                  (appBilling?.name === "Pro" || appBilling?.name === "Plus")
+                }
                 isEnabled={streamlineCode}
                 featureName={"streamlineCode"}
                 handler={() => {

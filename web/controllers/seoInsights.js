@@ -1,6 +1,7 @@
 import shopify from "../shopify.js";
-import { GetThemeFile, UpdateThemeFiles, GetAllThemeFiles } from "../graphql/theme.js";
 import SpeedInsights from "../models/speedInsights.js";
+import { GetThemeFile, UpdateThemeFiles ,GetAllThemeFiles} from "../graphql/theme.js";
+import { queryDataWithVariables } from "../utils/getQueryData.js";
 
 export const getSeoInsightsController = async (req, res, next) => {
   try {
@@ -111,14 +112,12 @@ export const toggleInstantPages = async (req, res, next) => {
     const checkInstantPagesScriptRegex =
       /<script\b[^>]*\bsrc=(['"])\/\/instant\.page\/[^'"]+\1[^>]*><\/script>/i;
     const instantPagesScript = `<script src="//instant.page/5.2.0" type="module" integrity="sha384-jnZyxPjiipYXnSU0ygqeac2q7CVYMbh84q0uHVRRxEtvFPiQYbXWUorga2aqZJ0z"></script>`;
-    const client = new shopify.api.clients.Graphql({
-      apiVersion: "2025-01",
-      session: res.locals.shopify.session,
-    });
 
-    const getThemeFileResponse = await client.request(GetThemeFile, {
-      variables: { count: 1, role: "MAIN", filename: "layout/theme.liquid" },
-    });
+    const getThemeFileResponse = await queryDataWithVariables(
+      res,
+      GetThemeFile,
+      { count: 1, role: "MAIN", filename: "layout/theme.liquid" }
+    );
     const themeId = getThemeFileResponse.data.themes.edges[0].node.id;
     const themeFileText =
       getThemeFileResponse.data.themes.edges[0].node.files.edges[0].node.body
@@ -133,19 +132,17 @@ export const toggleInstantPages = async (req, res, next) => {
         `</body>`,
         `${instantPagesScript} </body>`
       );
-      await client.request(UpdateThemeFiles, {
-        variables: {
-          themeId,
-          files: [
-            {
-              filename: "layout/theme.liquid",
-              body: {
-                type: "TEXT",
-                value: updatedThemeFile,
-              },
+      await queryDataWithVariables(res, UpdateThemeFiles, {
+        themeId,
+        files: [
+          {
+            filename: "layout/theme.liquid",
+            body: {
+              type: "TEXT",
+              value: updatedThemeFile,
             },
-          ],
-        },
+          },
+        ],
       });
       responseMessage = "added";
     }
@@ -154,44 +151,38 @@ export const toggleInstantPages = async (req, res, next) => {
         checkInstantPagesScriptRegex,
         ""
       );
-      await client.request(UpdateThemeFiles, {
-        variables: {
-          themeId,
-          files: [
-            {
-              filename: "layout/theme.liquid",
-              body: {
-                type: "TEXT",
-                value: updatedThemeFile,
-              },
+      await queryDataWithVariables(res, UpdateThemeFiles, {
+        themeId,
+        files: [
+          {
+            filename: "layout/theme.liquid",
+            body: {
+              type: "TEXT",
+              value: updatedThemeFile,
             },
-          ],
-        },
+          },
+        ],
       });
       responseMessage = "removed";
     }
 
     res.status(200).json(responseMessage);
   } catch (error) {
-    throw error;
+    return res.status(500).json({
+      success: false,
+      message: "Failed to optimize theme files",
+      error: error.message,
+    });
   }
 };
 
 export const speedInsightsController = async (req, res, next) => {
   try {
-    const session = res.locals.shopify.session;
-    const client = new shopify.api.clients.Graphql({
-      apiVersion: "2025-01",
-      session,
-    });
-
     // Get theme.liquid file using the GET_THEME_FILE query
-    const themeFileResponse = await client.request(GetThemeFile, {
-      variables: {
-        count: 1,
-        role: "MAIN",
-        filename: "layout/theme.liquid",
-      },
+    const themeFileResponse = await queryDataWithVariables(res, GetThemeFile, {
+      count: 1,
+      role: "MAIN",
+      filename: "layout/theme.liquid",
     });
 
     const themeId = themeFileResponse.data.themes.edges[0].node.id;
@@ -206,14 +197,14 @@ export const speedInsightsController = async (req, res, next) => {
 
     const themeLiquidFile = themeFiles[0].node;
     const originalContent = themeLiquidFile.body.content;
-    
-    if (originalContent.includes('seofy-lazy-script')) {
+
+    if (originalContent.includes("seofy-lazy-script")) {
       return res.status(200).json({
         success: true,
         message: "Lazy loading is already applied",
       });
     }
-    
+
     const styleTag = `
   <style id="seofy-lazy-styles">
     .seofy-img-lazy-bg {
@@ -224,31 +215,29 @@ export const speedInsightsController = async (req, res, next) => {
       background-color: transparent;
     }
   </style>`;
-    
-  const scriptTag = `
+
+    const scriptTag = `
   <script id="seofy-lazy-script">
     document.addEventListener("DOMContentLoaded",(function(){if(document.querySelectorAll('img:not([loading="lazy"])').forEach((function(t){t.setAttribute("loading","lazy")})),document.querySelectorAll("img").forEach((function(t){t.classList.add("seofy-img-lazy-bg"),t.addEventListener("load",(function(){this.classList.add("seofy-img-loaded")})),t.complete&&t.classList.add("seofy-img-loaded")})),document.querySelectorAll("iframe").forEach((function(t){if(!t.hasAttribute("data-src")){var e=t.getAttribute("src");e&&(t.setAttribute("data-src",e),t.removeAttribute("src"),t.classList.add("lazy-iframe"))}})),document.querySelectorAll("video").forEach((function(t){t.classList.contains("lazy-video")||(t.setAttribute("preload","none"),t.classList.add("lazy-video"))})),"IntersectionObserver"in window){var t={rootMargin:"50px 0px",threshold:0},e=new IntersectionObserver((function(t,e){t.forEach((function(t){if(t.isIntersecting){var r=t.target,o=r.getAttribute("data-src");o&&(r.setAttribute("src",o),r.removeAttribute("data-src"),e.unobserve(r))}}))}),t),r=new IntersectionObserver((function(t,e){t.forEach((function(t){if(t.isIntersecting){var r=t.target;"none"===r.getAttribute("preload")&&(r.setAttribute("preload","metadata"),r.hasAttribute("autoplay")&&r.play().catch((function(){})),e.unobserve(r))}}))}),t);document.querySelectorAll(".lazy-iframe").forEach((function(t){e.observe(t)})),document.querySelectorAll(".lazy-video").forEach((function(t){r.observe(t)}))}else setTimeout((function(){document.querySelectorAll(".lazy-iframe").forEach((function(t){var e=t.getAttribute("data-src");e&&(t.setAttribute("src",e),t.removeAttribute("data-src"))})),document.querySelectorAll(".lazy-video").forEach((function(t){"none"===t.getAttribute("preload")&&t.setAttribute("preload","metadata")}))}),2e3)}));
   </script>`;
-    
+
     const updatedContent = originalContent.replace(
       "</head>",
       `${styleTag}\n${scriptTag}\n</head>`
     );
 
     // Save the updated file
-    const updateResponse = await client.request(UpdateThemeFiles, {
-      variables: {
-        themeId,
-        files: [
-          {
-            filename: themeLiquidFile.filename,
-            body: {
-              type: "TEXT",
-              value: updatedContent,
-            },
+    const updateResponse = await queryDataWithVariables(res, UpdateThemeFiles, {
+      themeId,
+      files: [
+        {
+          filename: themeLiquidFile.filename,
+          body: {
+            type: "TEXT",
+            value: updatedContent,
           },
-        ],
-      },
+        },
+      ],
     });
 
     if (updateResponse.data.themeFilesUpsert.userErrors.length > 0) {

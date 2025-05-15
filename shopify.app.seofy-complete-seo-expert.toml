@@ -3,7 +3,11 @@
 client_id = "695da14ec05f37f6cdd63a2b3c20b444"
 name = "SEOfy - Complete SEO Expert"
 handle = "seofy-complete-seo-expert"
+<<<<<<< HEAD
 application_url = "https://mercy-depth-pdt-participant.trycloudflare.com"
+=======
+application_url = "https://dcfd-103-197-207-34.ngrok-free.app"
+>>>>>>> b677ec11264eb8d9752dc7084bc64d961ea1f15d
 embedded = true
 
 [build]
@@ -16,16 +20,26 @@ scopes = "read_content,read_customers,read_products,read_themes,write_content,wr
 
 [auth]
 redirect_urls = [
+<<<<<<< HEAD
   "https://mercy-depth-pdt-participant.trycloudflare.com/auth/callback",
   "https://mercy-depth-pdt-participant.trycloudflare.com/auth/shopify/callback",
   "https://mercy-depth-pdt-participant.trycloudflare.com/api/auth/callback"
+=======
+  "https://dcfd-103-197-207-34.ngrok-free.app/auth/callback",
+  "https://dcfd-103-197-207-34.ngrok-free.app/auth/shopify/callback",
+  "https://dcfd-103-197-207-34.ngrok-free.app/api/auth/callback"
+>>>>>>> b677ec11264eb8d9752dc7084bc64d961ea1f15d
 ]
 
 [webhooks]
 api_version = "2024-10"
 
 [app_proxy]
+<<<<<<< HEAD
 url = "https://mercy-depth-pdt-participant.trycloudflare.com/api"
+=======
+url = "https://dcfd-103-197-207-34.ngrok-free.app/api"
+>>>>>>> b677ec11264eb8d9752dc7084bc64d961ea1f15d
 subpath = "error-insights"
 prefix = "apps"
 

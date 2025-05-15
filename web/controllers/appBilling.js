@@ -15,7 +15,7 @@ export const getActiveSubscription = async (req, res) => {
     if (!speedData) {
       speedData = {
         platformStoreURL: res.locals.shopify.session?.shop,
-        isInstantPage: true,
+        isInstantPage: false,
         isLazyLoading: false,
         isStreamLineLoading: false,
         isOptimizedLoading: false,

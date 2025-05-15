@@ -1,22 +1,34 @@
 export const fetchWithProgess = async (
   taskQueue,
+  fetcher,
   setProgress,
-  setCompleatedTask,
-  updateSiteSpeedUpState
+  setCompleatedTask
 ) => {
   try {
     let compleated = 0;
     const totalTaskCount = Object.entries(taskQueue).length;
     for (const [key, val] of Object.entries(taskQueue)) {
       // call api
-      if (key === "instantPage") {
-        const mutate = val.mutate;
-        mutate({ activate: val.flag });
-      } else if (key === "lazyLoading") {
-      } else if (key === "streamlinedLoadin1g") {
-      } else if (key === "optimizedLoading") {
-      } else if (key === "assetFileOptimization") {
-      } else if (key === "streamlineCode") {
+      if (key === "isInstantPage") {
+        await fetcher("/api/seo/instant-pages", {
+          method: "POST",
+          body: JSON.stringify({ activate: val }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+      } else if (key === "isLazyLoading") {
+        await fetcher("/api/seo/lazy-loading", {
+          method: "POST",
+          body: JSON.stringify({}),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+      } else if (key === "isStreamLineLoading") {
+      } else if (key === "isOptimizedLoading") {
+      } else if (key === "isAssetFileOptimization") {
+      } else if (key === "isStreamlineCode") {
       } else {
         await new Promise((resolve) =>
           setTimeout(() => {
@@ -30,13 +42,6 @@ export const fetchWithProgess = async (
       setCompleatedTask(compleated);
       setProgress((compleated / totalTaskCount) * 100);
     }
-
-    updateSiteSpeedUpState((prev) => {
-      return {
-        ...prev,
-        ...taskQueue,
-      };
-    });
   } catch (error) {
     console.log(error);
   }
