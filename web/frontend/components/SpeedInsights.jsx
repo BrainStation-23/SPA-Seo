@@ -24,6 +24,7 @@ import {
 import { SpeedFeatureCard } from "./SpeedFeatureCard";
 import { useUI } from "../contexts/ui.context";
 import { useSpeedUpWithProgress } from "../hooks/useSpeedUpWithProgress";
+import { useSeoLeazyLoaddingQuery } from "../hooks/useShopQuery";
 
 export default function SpeedInsights() {
     const { data: lazyLoadingData, isLoading: lazyLoadingLoading } = useSeoLeazyLoaddingQuery({ url: "api/seo/minification-defer" });

@@ -260,12 +260,6 @@ export const speedInsightsController = async (req, res, next) => {
 
 export const minificationDeferController = async (req, res, next) => {
   try {
-    const session = res.locals.shopify.session;
-    const client = new shopify.api.clients.Graphql({
-      apiVersion: "2025-01",
-      session,
-    });
-    
     const allThemeFiles = [];
     let hasNextPage = true;
     let cursor = null;
@@ -273,11 +267,9 @@ export const minificationDeferController = async (req, res, next) => {
     let themeId;
 
     while (hasNextPage) {
-      const getAllThemeFilesResponse = await client.request(GetAllThemeFiles, {
-        variables: {
-          count: PER_PAGE,
-          after: cursor
-        },
+      const getAllThemeFilesResponse = await queryDataWithVariables(res, GetAllThemeFiles, {
+        count: PER_PAGE,
+        after: cursor
       });
       
       // Store the theme ID from the first response
