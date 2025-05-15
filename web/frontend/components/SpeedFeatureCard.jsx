@@ -34,7 +34,7 @@ export function SpeedFeatureCard({
           )}
           <Icon source={InfoIcon} color="subdued" />
         </InlineStack>
-        {isPro ? (
+        {!isPro ? (
           <Button size="slim">Upgrade to Turn on</Button>
         ) : (
           <Toggle

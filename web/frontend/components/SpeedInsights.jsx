@@ -27,7 +27,7 @@ import { useSpeedUpWithProgress } from "../hooks/useSpeedUpWithProgress";
 
 export default function SpeedInsights() {
   const [selected, setSelected] = useState(0);
-  const { appBilling, speedInsights, setSpeedInsights } = useUI();
+  const { appBilling, speedInsights } = useUI();
   console.log("🚀 ~ SpeedInsights ~ appBilling:", appBilling, speedInsights);
 
   const [instantPage, setInstantPage] = useState(false);
@@ -113,6 +113,13 @@ export default function SpeedInsights() {
     setStreamlinedLoading(speedInsights.isStreamLineLoading);
     setAssetFileOptimization(speedInsights.isAssetFileOptimization);
   }, [speedInsights]);
+
+  useEffect(() => {
+    console.log(
+      appBilling?.status === "ACTIVE" &&
+        (appBilling?.name === "Pro" || appBilling?.name === "Plus")
+    );
+  }, [appBilling]);
 
   return (
     <>
@@ -280,7 +287,7 @@ export default function SpeedInsights() {
                 badgeText="On"
                 badgeType="basic"
                 description="instant.page preloads pages 65ms into a hover to speed up likely clicks"
-                isPro={false}
+                isPro={true}
                 isEnabled={instantPage}
                 featureName={"instantPage"}
                 handler={() => {
@@ -292,7 +299,10 @@ export default function SpeedInsights() {
                 badgeText="Pro plan"
                 badgeType="pro"
                 description="instant.page preloads pages 65ms into a hover to speed up likely clicks"
-                isPro={false}
+                isPro={
+                  appBilling?.status === "ACTIVE" &&
+                  (appBilling?.name === "Pro" || appBilling?.name === "Plus")
+                }
                 isEnabled={lazyLoading}
                 featureName={"lazyLoading"}
                 handler={() => {
@@ -304,7 +314,10 @@ export default function SpeedInsights() {
                 badgeText="Pro plan"
                 badgeType="pro"
                 description="instant.page preloads pages 65ms into a hover to speed up likely clicks"
-                isPro={false}
+                isPro={
+                  appBilling?.status === "ACTIVE" &&
+                  (appBilling?.name === "Pro" || appBilling?.name === "Plus")
+                }
                 isEnabled={streamlinedLoading}
                 featureName={"streamlinedLoading"}
                 handler={() => {
@@ -316,7 +329,10 @@ export default function SpeedInsights() {
                 badgeText="Pro plan"
                 badgeType="pro"
                 description="instant.page preloads pages 65ms into a hover to speed up likely clicks"
-                isPro={false}
+                isPro={
+                  appBilling?.status === "ACTIVE" &&
+                  (appBilling?.name === "Pro" || appBilling?.name === "Plus")
+                }
                 isEnabled={optimizedLoading}
                 featureName={"optimizedLoading"}
                 handler={() => {
@@ -328,7 +344,10 @@ export default function SpeedInsights() {
                 badgeText="Pro plan"
                 badgeType="pro"
                 description="instant.page preloads pages 65ms into a hover to speed up likely clicks"
-                isPro={false}
+                isPro={
+                  appBilling?.status === "ACTIVE" &&
+                  (appBilling?.name === "Pro" || appBilling?.name === "Plus")
+                }
                 isEnabled={assetFileOptimization}
                 featureName={"assetFileOptimization"}
                 handler={() => {
@@ -340,7 +359,10 @@ export default function SpeedInsights() {
                 badgeText="Pro plan"
                 badgeType="pro"
                 description="instant.page preloads pages 65ms into a hover to speed up likely clicks"
-                isPro={false}
+                isPro={
+                  appBilling?.status === "ACTIVE" &&
+                  (appBilling?.name === "Pro" || appBilling?.name === "Plus")
+                }
                 isEnabled={streamlineCode}
                 featureName={"streamlineCode"}
                 handler={() => {
