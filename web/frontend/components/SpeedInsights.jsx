@@ -114,13 +114,6 @@ export default function SpeedInsights() {
     setAssetFileOptimization(speedInsights.isAssetFileOptimization);
   }, [speedInsights]);
 
-  useEffect(() => {
-    console.log(
-      appBilling?.status === "ACTIVE" &&
-        (appBilling?.name === "Pro" || appBilling?.name === "Plus")
-    );
-  }, [appBilling]);
-
   return (
     <>
       <BlockStack gap="500">
