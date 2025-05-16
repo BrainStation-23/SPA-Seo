@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   Tabs,
@@ -10,6 +10,8 @@ import {
   BlockStack,
   InlineStack,
   ButtonGroup,
+  Divider,
+  ProgressBar,
   SkeletonBodyText,
 } from "@shopify/polaris";
 import {
@@ -17,6 +19,8 @@ import {
   DesktopIcon,
   InfoIcon,
   LightbulbIcon,
+  StopCircleIcon,
+  StatusActiveIcon,
 } from "@shopify/polaris-icons";
 import { SpeedFeatureCard } from "./SpeedFeatureCard";
 import { useUI } from "../contexts/ui.context";
@@ -29,11 +33,12 @@ import {
   getToneFromSpeedIndex,
   getToneFromTBT,
 } from "../utils/speedCalculations";
+import { useSpeedUpWithProgress } from "../hooks/useSpeedUpWithProgress";
+import { useFeatureToggle } from "../hooks/useFeatureToggle";
 
 export default function SpeedInsights() {
   const [selected, setSelected] = useState(0);
   const [device, setDevice] = useState("desktop");
-  const [instantPageEnabled, setInstantPageEnabled] = useState(true);
   const { isLoading, data } = useFetchQuery({
     apiEndpoint: "/api/billing/get-store-info",
     apiKey: "getActiveSubscription",
@@ -47,8 +52,73 @@ export default function SpeedInsights() {
   });
   console.log("🚀 ~ SpeedInsights ~ insightsData:", insightsData);
 
-  const { appBilling, speedInsights } = useUI();
+  const { appBilling, speedInsights, setSpeedInsights } = useUI();
   console.log("🚀 ~ SpeedInsights ~ appBilling:", appBilling, speedInsights);
+
+  const [showDropdown, setShowDropdown] = useState(false);
+  const { toogleFeature } = useFeatureToggle();
+  const { taskCount, compleatedTask, progress, startTaks, resetProgress } =
+    useSpeedUpWithProgress();
+
+  const handleSpeedupButtonClick = () => {
+    let currentTaskCount = taskCount,
+      taskQueue = {};
+
+    if (speedInsights.isInstantPage) {
+      taskQueue["isInstantPage"] = speedInsights.isInstantPage;
+      currentTaskCount++;
+    }
+    if (
+      speedInsights.isLazyLoading &&
+      appBilling?.status === "ACTIVE" &&
+      (appBilling?.name === "Pro" || appBilling?.name === "Plus")
+    ) {
+      taskQueue["isLazyLoading"] = speedInsights.isLazyLoading;
+      currentTaskCount++;
+    }
+    if (
+      speedInsights.isStreamLineLoading &&
+      appBilling?.status === "ACTIVE" &&
+      (appBilling?.name === "Pro" || appBilling?.name === "Plus")
+    ) {
+      taskQueue["isStreamLineLoading"] = speedInsights.isStreamLineLoading;
+      currentTaskCount++;
+    }
+    if (
+      speedInsights.isOptimizedLoading &&
+      appBilling?.status === "ACTIVE" &&
+      (appBilling?.name === "Pro" || appBilling?.name === "Plus")
+    ) {
+      taskQueue["isOptimizedLoading"] = speedInsights.isOptimizedLoading;
+      currentTaskCount++;
+    }
+    if (
+      speedInsights.isAssetFileOptimization &&
+      appBilling?.status === "ACTIVE" &&
+      (appBilling?.name === "Pro" || appBilling?.name === "Plus")
+    ) {
+      taskQueue["isAssetFileOptimization"] =
+        speedInsights.isAssetFileOptimization;
+      currentTaskCount++;
+    }
+    if (
+      speedInsights.isStreamlineCode &&
+      appBilling?.status === "ACTIVE" &&
+      (appBilling?.name === "Pro" || appBilling?.name === "Plus")
+    ) {
+      taskQueue["isStreamlineCode"] = speedInsights.isStreamlineCode;
+      currentTaskCount++;
+    }
+
+    if (currentTaskCount === 0) return;
+
+    startTaks(taskQueue, currentTaskCount);
+    setShowDropdown(true);
+  };
+  const handleStopButtonClick = () => {
+    resetProgress();
+    setShowDropdown(false);
+  };
 
   const handleTabChange = (selectedTabIndex) => {
     setSelected(selectedTabIndex);
@@ -173,20 +243,54 @@ export default function SpeedInsights() {
             <BlockStack gap="200">
               <Card>
                 <InlineStack align="space-between">
-                  <InlineStack gap="200">
+                  <InlineStack blockAlign="center" gap="200">
                     <Text as="h2" variant="headingMd">
                       Speed Up effect
                     </Text>
                     <Badge tone="success">Basic Plan</Badge>
                   </InlineStack>
-                  <Button size="medium" icon={LightbulbIcon}>
-                    Speed up Now
-                  </Button>
+                  {!showDropdown ? (
+                    <Button
+                      variant="primary"
+                      size="large"
+                      icon={LightbulbIcon}
+                      onClick={handleSpeedupButtonClick}
+                    >
+                      Speed up Now
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="primary"
+                      tone={progress < 100 ? "critical" : "success"}
+                      size="large"
+                      icon={progress < 100 ? StopCircleIcon : StatusActiveIcon}
+                      onClick={handleStopButtonClick}
+                    >
+                      {progress < 100 ? "Stop" : "Done"}
+                    </Button>
+                  )}
                 </InlineStack>
 
-                <Text as="h4" variant="headingSm">
+                <Text as="h4" variant="bodySm">
                   Performance
                 </Text>
+
+                {showDropdown && (
+                  <Box paddingBlock={"150"}>
+                    <BlockStack gap={"200"}>
+                      <Divider borderWidth="050" />
+                      <Text variant="bodySm">
+                        Speed up process {compleatedTask}/{taskCount} tasks
+                      </Text>
+                      <ProgressBar
+                        animated
+                        progress={progress}
+                        size="small"
+                        tone="primary"
+                      />
+                    </BlockStack>
+                  </Box>
+                )}
               </Card>
 
               <SpeedFeatureCard
@@ -194,48 +298,100 @@ export default function SpeedInsights() {
                 badgeText="On"
                 badgeType="basic"
                 description="instant.page preloads pages 65ms into a hover to speed up likely clicks"
-                isPro={false}
-                isEnabled={true}
+                isPro={true}
+                isEnabled={speedInsights.isInstantPage}
+                featureName={"instantPage"}
+                handler={() => {
+                  toogleFeature({
+                    isInstantPage: !speedInsights.isInstantPage,
+                  });
+                }}
               />
               <SpeedFeatureCard
                 title="Lazy-loading"
                 badgeText="Pro plan"
                 badgeType="pro"
                 description="instant.page preloads pages 65ms into a hover to speed up likely clicks"
-                isPro={true}
-                isEnabled={true}
+                isPro={
+                  appBilling?.status === "ACTIVE" &&
+                  (appBilling?.name === "Pro" || appBilling?.name === "Plus")
+                }
+                isEnabled={speedInsights.isLazyLoading}
+                featureName={"lazyLoading"}
+                handler={() => {
+                  toogleFeature({
+                    isLazyLoading: !speedInsights.isLazyLoading,
+                  });
+                }}
               />
               <SpeedFeatureCard
                 title="Streamlined Loading"
                 badgeText="Pro plan"
                 badgeType="pro"
                 description="instant.page preloads pages 65ms into a hover to speed up likely clicks"
-                isPro={true}
-                isEnabled={true}
+                isPro={
+                  appBilling?.status === "ACTIVE" &&
+                  (appBilling?.name === "Pro" || appBilling?.name === "Plus")
+                }
+                isEnabled={speedInsights.isStreamLineLoading}
+                featureName={"streamlinedLoading"}
+                handler={() => {
+                  toogleFeature({
+                    isStreamLineLoading: !speedInsights.isStreamLineLoading,
+                  });
+                }}
               />
               <SpeedFeatureCard
                 title="Optimized Loading"
                 badgeText="Pro plan"
                 badgeType="pro"
                 description="instant.page preloads pages 65ms into a hover to speed up likely clicks"
-                isPro={true}
-                isEnabled={true}
+                isPro={
+                  appBilling?.status === "ACTIVE" &&
+                  (appBilling?.name === "Pro" || appBilling?.name === "Plus")
+                }
+                isEnabled={speedInsights.isOptimizedLoading}
+                featureName={"optimizedLoading"}
+                handler={() => {
+                  toogleFeature({
+                    isOptimizedLoading: !speedInsights.isOptimizedLoading,
+                  });
+                }}
               />
               <SpeedFeatureCard
                 title="Asset File Optimization"
                 badgeText="Pro plan"
                 badgeType="pro"
                 description="instant.page preloads pages 65ms into a hover to speed up likely clicks"
-                isPro={true}
-                isEnabled={true}
+                isPro={
+                  appBilling?.status === "ACTIVE" &&
+                  (appBilling?.name === "Pro" || appBilling?.name === "Plus")
+                }
+                isEnabled={speedInsights.isAssetFileOptimization}
+                featureName={"assetFileOptimization"}
+                handler={() => {
+                  toogleFeature({
+                    isAssetFileOptimization:
+                      !speedInsights.isAssetFileOptimization,
+                  });
+                }}
               />
               <SpeedFeatureCard
                 title="Streamline Code"
                 badgeText="Pro plan"
                 badgeType="pro"
                 description="instant.page preloads pages 65ms into a hover to speed up likely clicks"
-                isPro={true}
-                isEnabled={true}
+                isPro={
+                  appBilling?.status === "ACTIVE" &&
+                  (appBilling?.name === "Pro" || appBilling?.name === "Plus")
+                }
+                isEnabled={speedInsights.isStreamlineCode}
+                featureName={"streamlineCode"}
+                handler={() => {
+                  toogleFeature({
+                    isStreamlineCode: !speedInsights.isStreamlineCode,
+                  });
+                }}
               />
             </BlockStack>
           </Box>

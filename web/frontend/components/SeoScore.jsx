@@ -1,10 +1,11 @@
 import React from "react";
 import { useSeoInsightsQuery } from "../hooks/useShopQuery";
-import { SkeletonBodyText } from "@shopify/polaris";
+import { SkeletonBodyText, Button } from "@shopify/polaris";
 
 export function PageSpeedInsights() {
   const { data, isLoading } = useSeoInsightsQuery({ url: "api/seo/insights" });
 
+  console.log("🚀 ~ lazyLoadingData:", lazyLoadingData);
   return (
     <div className="app__seo_score_container">
       <>
