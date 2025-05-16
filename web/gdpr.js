@@ -10,7 +10,6 @@ export default {
     callback: async (topic, shop, body, webhookId) => {
       try {
         const payload = JSON.parse(body);
-        console.log(payload);
       } catch (error) {
         console.error("Error handling CUSTOMERS_DATA_REQUEST:", error);
       }
