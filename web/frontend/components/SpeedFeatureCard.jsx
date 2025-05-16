@@ -13,7 +13,6 @@ import { Toggle } from "./commonUI/toggle/Toggle";
 export function SpeedFeatureCard({
   title,
   badgeText,
-  badgeType,
   description,
   isPro = false,
   isEnabled = false,
