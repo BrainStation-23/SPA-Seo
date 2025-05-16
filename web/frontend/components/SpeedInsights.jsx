@@ -10,6 +10,7 @@ import {
   BlockStack,
   InlineStack,
   ButtonGroup,
+  SkeletonBodyText,
 } from "@shopify/polaris";
 import {
   MobileIcon,
@@ -91,70 +92,78 @@ export default function SpeedInsights() {
                   <ButtonGroup segmented>
                     <Button
                       icon={MobileIcon}
+                      variant={device === "mobile" ? "primary" : "secondary"}
                       onClick={() => setDevice("mobile")}
                     />
                     <Button
                       icon={DesktopIcon}
-                      variant="primary"
+                      variant={device === "desktop" ? "primary" : "secondary"}
                       onClick={() => setDevice("desktop")}
                     />
                   </ButtonGroup>
                 </InlineStack>
+                {isInsightsLoading ? (
+                  <SkeletonBodyText lines={20} />
+                ) : (
+                  <>
+                    <SeoScore score={insightsData?.score || 0} />
+                    <InlineStack wrap={true} gap="200">
+                      <Text as="h3" variant="headingMd">
+                        Performance
+                      </Text>
 
-                <SeoScore score={insightsData?.score || 0} />
-                <InlineStack wrap={true} gap="200">
-                  <Text as="h3" variant="headingMd">
-                    Performance
-                  </Text>
-
-                  <InlineStack wrap={true} gap="200">
-                    <Box width="45%">
+                      <InlineStack wrap={true} gap="200">
+                        <Box width="45%">
+                          <MetricItem
+                            label="Speed Index"
+                            value={insightsData?.performance?.speedIndex}
+                            color={getToneFromSpeedIndex(
+                              insightsData?.performance?.speedIndex
+                            )}
+                          />
+                        </Box>
+                        <Box width="45%">
+                          <MetricItem
+                            label="Total Blocking Time"
+                            value={insightsData?.performance?.totalBlockingTime}
+                            color={getToneFromTBT(
+                              insightsData?.performance?.totalBlockingTime
+                            )}
+                          />
+                        </Box>
+                        <Box width="45%">
+                          <MetricItem
+                            label="First Contentful Paint"
+                            value={
+                              insightsData?.performance?.firstContentfulPaint
+                            }
+                            color={getToneFromFCP(
+                              insightsData?.performance?.firstContentfulPaint
+                            )}
+                          />
+                        </Box>
+                        <Box width="45%">
+                          <MetricItem
+                            label="Largest Contentful Paint"
+                            value={
+                              insightsData?.performance?.largestContentfulPaint
+                            }
+                            color={getToneFromLCP(
+                              insightsData?.performance?.largestContentfulPaint
+                            )}
+                          />
+                        </Box>
+                      </InlineStack>
                       <MetricItem
-                        label="Speed Index"
-                        value={insightsData?.performance?.speedIndex}
-                        color={getToneFromSpeedIndex(
-                          insightsData?.performance?.speedIndex
+                        label="Cumulative Layout Shift"
+                        value={insightsData?.performance?.cumulativeLayoutShift}
+                        color={getToneFromCLS(
+                          insightsData?.performance?.cumulativeLayoutShift
                         )}
                       />
-                    </Box>
-                    <Box width="45%">
-                      <MetricItem
-                        label="Total Blocking Time"
-                        value={insightsData?.performance?.totalBlockingTime}
-                        color={getToneFromTBT(
-                          insightsData?.performance?.totalBlockingTime
-                        )}
-                      />
-                    </Box>
-                    <Box width="45%">
-                      <MetricItem
-                        label="First Contentful Paint"
-                        value={insightsData?.performance?.firstContentfulPaint}
-                        color={getToneFromFCP(
-                          insightsData?.performance?.firstContentfulPaint
-                        )}
-                      />
-                    </Box>
-                    <Box width="45%">
-                      <MetricItem
-                        label="Largest Contentful Paint"
-                        value={
-                          insightsData?.performance?.largestContentfulPaint
-                        }
-                        color={getToneFromLCP(
-                          insightsData?.performance?.largestContentfulPaint
-                        )}
-                      />
-                    </Box>
-                  </InlineStack>
-                  <MetricItem
-                    label="Cumulative Layout Shift"
-                    value={insightsData?.performance?.cumulativeLayoutShift}
-                    color={getToneFromCLS(
-                      insightsData?.performance?.cumulativeLayoutShift
-                    )}
-                  />
-                </InlineStack>
+                    </InlineStack>
+                  </>
+                )}
               </BlockStack>
             </Card>
           </Box>
