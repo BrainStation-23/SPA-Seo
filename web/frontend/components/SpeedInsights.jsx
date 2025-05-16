@@ -69,27 +69,47 @@ export default function SpeedInsights() {
     let currentTaskCount = taskCount,
       taskQueue = {};
 
-    if (instantPage !== speedInsights.isInstantPage) {
+    if (instantPage) {
       taskQueue["isInstantPage"] = instantPage;
       currentTaskCount++;
     }
-    if (lazyLoading) {
+    if (
+      lazyLoading &&
+      appBilling?.status === "ACTIVE" &&
+      (appBilling?.name === "Pro" || appBilling?.name === "Plus")
+    ) {
       taskQueue["isLazyLoading"] = lazyLoading;
       currentTaskCount++;
     }
-    if (streamlinedLoading) {
+    if (
+      streamlinedLoading &&
+      appBilling?.status === "ACTIVE" &&
+      (appBilling?.name === "Pro" || appBilling?.name === "Plus")
+    ) {
       taskQueue["isStreamLineLoading"] = streamlinedLoading;
       currentTaskCount++;
     }
-    if (optimizedLoading) {
+    if (
+      optimizedLoading &&
+      appBilling?.status === "ACTIVE" &&
+      (appBilling?.name === "Pro" || appBilling?.name === "Plus")
+    ) {
       taskQueue["isOptimizedLoading"] = optimizedLoading;
       currentTaskCount++;
     }
-    if (assetFileOptimization) {
+    if (
+      assetFileOptimization &&
+      appBilling?.status === "ACTIVE" &&
+      (appBilling?.name === "Pro" || appBilling?.name === "Plus")
+    ) {
       taskQueue["isAssetFileOptimization"] = assetFileOptimization;
       currentTaskCount++;
     }
-    if (streamlineCode) {
+    if (
+      streamlineCode &&
+      appBilling?.status === "ACTIVE" &&
+      (appBilling?.name === "Pro" || appBilling?.name === "Plus")
+    ) {
       taskQueue["isStreamlineCode"] = streamlineCode;
       currentTaskCount++;
     }
