@@ -1,3 +1,31 @@
+export const GetThemeFilesPaginated = `#graphql
+query GetThemeFilesPaginated($count: Int!, $role: ThemeRole!, $filename: String!, $after: String) {
+  themes(first: 1, roles: [$role]) {
+    edges {
+      node {
+        id
+        files(filenames: [$filename], first: $count, after: $after) {
+          edges {
+            node {
+              filename
+              size
+              createdAt
+              updatedAt
+              checksumMd5
+              contentType
+              body {
+                ... on OnlineStoreThemeFileBodyText {
+                  content
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}`;
+
 export const GetThemeFile = `#graphql
 query GetThemeFile($count: Int!, $role: ThemeRole!, $filename: String!) {
   themes(first: $count, roles: [$role]) {
