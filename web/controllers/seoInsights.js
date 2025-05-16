@@ -4,81 +4,53 @@ import { GetThemeFile, UpdateThemeFiles } from "../graphql/theme.js";
 import { queryDataWithVariables } from "../utils/getQueryData.js";
 
 export const getSeoInsightsController = async (req, res, next) => {
+  const { device = "desktop" } = req.query;
+  const url = `https://${res.locals.shopify.session?.shop}`;
+
+  if (!["desktop", "mobile"].includes(device)) {
+    return res
+      .status(400)
+      .json({ error: 'Device must be "desktop" or "mobile"' });
+  }
+
   try {
-    const apikey = "AIzaSyAEu1z7QmLwZBGCvyoU6n3Nin8iTfqan-A";
-
-    const shop = await shopify.api.rest.Shop.all({
-      session: res.locals.shopify.session,
-      fields: "id,name,myshopify_domain,domain",
-    });
-
-    const product = await shopify.api.rest.Product.all({
-      session: res.locals.shopify.session,
-      limit: 1,
-      status: "active",
-      fields: "id,handle,title",
-    });
-
-    const collection = await shopify.api.rest.CustomCollection.all({
-      session: res.locals.shopify.session,
-      fields: "id,title,handle",
-      limit: 1,
-    });
-
-    const homeUrl = `https://${shop?.data?.[0]?.domain}`;
-    const productURl = `${homeUrl}/product/${product?.data?.[0]?.handle}`;
-    const collectionURl = `${homeUrl}/collection/${collection?.data?.[0]?.handle}`;
-
-    // Run all requests in parallel
-    const [homeResponse, productResponse, collectionResponse] =
-      await Promise.all([
-        fetch(
-          `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(
-            homeUrl
-          )}&category=SEO&key=${apikey}`
-        ),
-        fetch(
-          `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(
-            productURl
-          )}&category=SEO&key=${apikey}`
-        ),
-        fetch(
-          `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(
-            collectionURl
-          )}&category=SEO&key=${apikey}`
-        ),
-      ]);
-
-    const homeResult = await homeResponse.json();
-    const productResult = await productResponse.json();
-    const collectionResult = await collectionResponse.json();
-
-    const results = [
-      {
-        url: homeUrl,
-        seoScore: homeResult?.lighthouseResult?.categories?.seo?.score * 100,
-        page: "Home Page",
-      },
-      {
-        url: productURl,
-        seoScore: productResult?.lighthouseResult?.categories?.seo?.score * 100,
-        page: "Product Page",
-      },
-      {
-        url: collectionURl,
-        seoScore:
-          collectionResult?.lighthouseResult?.categories?.seo?.score * 100,
-        page: "Collection Page",
-      },
-    ];
-
-    return res.status(200).json(results);
-  } catch (err) {
-    console.log("🚀 ~ getSeoInsightsController ~ Error:", err);
-    res.status(400).json({ error: err.message });
+    const result = await fetchPageSpeedData(url, device);
+    res.json(result);
+  } catch (error) {
+    console.error(
+      "PageSpeed API Error:",
+      error?.response?.data || error.message
+    );
+    res.status(500).json({ error: "Failed to fetch SEO score" });
   }
 };
 
+// Utility to fetch PageSpeed data
+async function fetchPageSpeedData(url, strategy = "desktop") {
+  const apiUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(
+    url
+  )}&key=${process.env.GOOGLE_API_KEY}&strategy=${strategy}`;
+
+  const response = await fetch(apiUrl);
+  const data = await response.json();
+
+  const lighthouse = data?.lighthouseResult;
+  const audits = lighthouse?.audits;
+
+  return {
+    device: strategy,
+    score: Math.round(lighthouse.categories.performance.score * 100),
+    performance: {
+      speedIndex: audits["speed-index"].displayValue,
+      firstContentfulPaint: audits["first-contentful-paint"].displayValue,
+      largestContentfulPaint: audits["largest-contentful-paint"].displayValue,
+      cumulativeLayoutShift: audits["cumulative-layout-shift"].displayValue,
+      totalBlockingTime: audits["total-blocking-time"].displayValue,
+    },
+  };
+}
+
+// UPDATE SpeedInsights by platformStoreURL
 export const updateSpeedEffects = async (req, res) => {
   try {
     const platformStoreURL = res.locals.shopify.session?.shop;
