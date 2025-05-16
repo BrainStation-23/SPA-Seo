@@ -28,7 +28,6 @@ import { useSeoLeazyLoaddingQuery } from "../hooks/useShopQuery";
 
 export default function SpeedInsights() {
     const { data: lazyLoadingData, isLoading: lazyLoadingLoading } = useSeoLeazyLoaddingQuery({ url: "api/seo/minification-defer" });
-   console.log('data',lazyLoadingData)
   const [selected, setSelected] = useState(0);
   const { appBilling, speedInsights } = useUI();
   console.log("🚀 ~ SpeedInsights ~ appBilling:", appBilling, speedInsights);
