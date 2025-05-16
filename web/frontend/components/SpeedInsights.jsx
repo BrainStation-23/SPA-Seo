@@ -38,7 +38,6 @@ import { useSpeedUpWithProgress } from "../hooks/useSpeedUpWithProgress";
 export default function SpeedInsights() {
   const [selected, setSelected] = useState(0);
   const [device, setDevice] = useState("desktop");
-  const [instantPageEnabled, setInstantPageEnabled] = useState(true);
   const { isLoading, data } = useFetchQuery({
     apiEndpoint: "/api/billing/get-store-info",
     apiKey: "getActiveSubscription",
@@ -74,23 +73,23 @@ export default function SpeedInsights() {
       taskQueue["isInstantPage"] = instantPage;
       currentTaskCount++;
     }
-    if (lazyLoading !== speedInsights.isLazyLoading) {
+    if (lazyLoading) {
       taskQueue["isLazyLoading"] = lazyLoading;
       currentTaskCount++;
     }
-    if (streamlinedLoading !== speedInsights.isStreamLineLoading) {
+    if (streamlinedLoading) {
       taskQueue["isStreamLineLoading"] = streamlinedLoading;
       currentTaskCount++;
     }
-    if (optimizedLoading !== speedInsights.isOptimizedLoading) {
+    if (optimizedLoading) {
       taskQueue["isOptimizedLoading"] = optimizedLoading;
       currentTaskCount++;
     }
-    if (assetFileOptimization !== speedInsights.isAssetFileOptimization) {
+    if (assetFileOptimization) {
       taskQueue["isAssetFileOptimization"] = assetFileOptimization;
       currentTaskCount++;
     }
-    if (streamlineCode !== speedInsights.isStreamlineCode) {
+    if (streamlineCode) {
       taskQueue["isStreamlineCode"] = streamlineCode;
       currentTaskCount++;
     }
