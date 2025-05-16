@@ -12,6 +12,7 @@ import {
   ButtonGroup,
   Divider,
   ProgressBar,
+  SkeletonBodyText,
 } from "@shopify/polaris";
 import {
   MobileIcon,
@@ -23,23 +24,39 @@ import {
 } from "@shopify/polaris-icons";
 import { SpeedFeatureCard } from "./SpeedFeatureCard";
 import { useUI } from "../contexts/ui.context";
+import useFetchQuery from "../hooks/useGlobalQuery";
+import {
+  getColorFromScore,
+  getToneFromCLS,
+  getToneFromFCP,
+  getToneFromLCP,
+  getToneFromSpeedIndex,
+  getToneFromTBT,
+} from "../utils/speedCalculations";
 import { useSpeedUpWithProgress } from "../hooks/useSpeedUpWithProgress";
-import { useSeoLeazyLoaddingQuery } from "../hooks/useShopQuery";
+import { useFeatureToggle } from "../hooks/useFeatureToggle";
 
 export default function SpeedInsights() {
-    const { data: lazyLoadingData, isLoading: lazyLoadingLoading } = useSeoLeazyLoaddingQuery({ url: "api/seo/minification-defer" });
   const [selected, setSelected] = useState(0);
-  const { appBilling, speedInsights } = useUI();
+  const [device, setDevice] = useState("desktop");
+  const { isLoading, data } = useFetchQuery({
+    apiEndpoint: "/api/billing/get-store-info",
+    apiKey: "getActiveSubscription",
+    dependency: [],
+  });
+
+  const { isLoading: isInsightsLoading, data: insightsData } = useFetchQuery({
+    apiEndpoint: `/api/seo/insights?device=${device}`,
+    apiKey: "seoInsights",
+    dependency: [device],
+  });
+  console.log("🚀 ~ SpeedInsights ~ insightsData:", insightsData);
+
+  const { appBilling, speedInsights, setSpeedInsights } = useUI();
   console.log("🚀 ~ SpeedInsights ~ appBilling:", appBilling, speedInsights);
 
-  const [instantPage, setInstantPage] = useState(false);
-  const [lazyLoading, setLazyLoading] = useState(false);
-  const [streamlinedLoading, setStreamlinedLoading] = useState(false);
-  const [optimizedLoading, setOptimizedLoading] = useState(false);
-  const [assetFileOptimization, setAssetFileOptimization] = useState(false);
-  const [streamlineCode, setStreamlineCode] = useState(false);
-
   const [showDropdown, setShowDropdown] = useState(false);
+  const { toogleFeature } = useFeatureToggle();
   const { taskCount, compleatedTask, progress, startTaks, resetProgress } =
     useSpeedUpWithProgress();
 
@@ -47,28 +64,49 @@ export default function SpeedInsights() {
     let currentTaskCount = taskCount,
       taskQueue = {};
 
-    if (instantPage !== speedInsights.isInstantPage) {
-      taskQueue["isInstantPage"] = instantPage;
+    if (speedInsights.isInstantPage) {
+      taskQueue["isInstantPage"] = speedInsights.isInstantPage;
       currentTaskCount++;
     }
-    if (lazyLoading !== speedInsights.isLazyLoading) {
-      taskQueue["isLazyLoading"] = lazyLoading;
+    if (
+      speedInsights.isLazyLoading &&
+      appBilling?.status === "ACTIVE" &&
+      (appBilling?.name === "Pro" || appBilling?.name === "Plus")
+    ) {
+      taskQueue["isLazyLoading"] = speedInsights.isLazyLoading;
       currentTaskCount++;
     }
-    if (streamlinedLoading !== speedInsights.isStreamLineLoading) {
-      taskQueue["isStreamLineLoading"] = streamlinedLoading;
+    if (
+      speedInsights.isStreamLineLoading &&
+      appBilling?.status === "ACTIVE" &&
+      (appBilling?.name === "Pro" || appBilling?.name === "Plus")
+    ) {
+      taskQueue["isStreamLineLoading"] = speedInsights.isStreamLineLoading;
       currentTaskCount++;
     }
-    if (optimizedLoading !== speedInsights.isOptimizedLoading) {
-      taskQueue["isOptimizedLoading"] = optimizedLoading;
+    if (
+      speedInsights.isOptimizedLoading &&
+      appBilling?.status === "ACTIVE" &&
+      (appBilling?.name === "Pro" || appBilling?.name === "Plus")
+    ) {
+      taskQueue["isOptimizedLoading"] = speedInsights.isOptimizedLoading;
       currentTaskCount++;
     }
-    if (assetFileOptimization !== speedInsights.isAssetFileOptimization) {
-      taskQueue["isAssetFileOptimization"] = assetFileOptimization;
+    if (
+      speedInsights.isAssetFileOptimization &&
+      appBilling?.status === "ACTIVE" &&
+      (appBilling?.name === "Pro" || appBilling?.name === "Plus")
+    ) {
+      taskQueue["isAssetFileOptimization"] =
+        speedInsights.isAssetFileOptimization;
       currentTaskCount++;
     }
-    if (streamlineCode !== speedInsights.isStreamlineCode) {
-      taskQueue["isStreamlineCode"] = streamlineCode;
+    if (
+      speedInsights.isStreamlineCode &&
+      appBilling?.status === "ACTIVE" &&
+      (appBilling?.name === "Pro" || appBilling?.name === "Plus")
+    ) {
+      taskQueue["isStreamlineCode"] = speedInsights.isStreamlineCode;
       currentTaskCount++;
     }
 
@@ -107,15 +145,6 @@ export default function SpeedInsights() {
     },
   ];
 
-  useEffect(() => {
-    setInstantPage(speedInsights.isInstantPage);
-    setLazyLoading(speedInsights.isLazyLoading);
-    setStreamlineCode(speedInsights.isStreamlineCode);
-    setOptimizedLoading(speedInsights.isOptimizedLoading);
-    setStreamlinedLoading(speedInsights.isStreamLineLoading);
-    setAssetFileOptimization(speedInsights.isAssetFileOptimization);
-  }, [speedInsights]);
-
   return (
     <>
       <BlockStack gap="500">
@@ -131,93 +160,80 @@ export default function SpeedInsights() {
                     SEO Score
                   </Text>
                   <ButtonGroup segmented>
-                    <Button icon={MobileIcon} />
-                    <Button icon={DesktopIcon} variant="primary" />
+                    <Button
+                      icon={MobileIcon}
+                      variant={device === "mobile" ? "primary" : "secondary"}
+                      onClick={() => setDevice("mobile")}
+                    />
+                    <Button
+                      icon={DesktopIcon}
+                      variant={device === "desktop" ? "primary" : "secondary"}
+                      onClick={() => setDevice("desktop")}
+                    />
                   </ButtonGroup>
                 </InlineStack>
+                {isInsightsLoading ? (
+                  <SkeletonBodyText lines={20} />
+                ) : (
+                  <>
+                    <SeoScore score={insightsData?.score || 0} />
+                    <InlineStack wrap={true} gap="200">
+                      <Text as="h3" variant="headingMd">
+                        Performance
+                      </Text>
 
-                <Box paddingBlock="4" textAlign="center">
-                  <div
-                    style={{
-                      position: "relative",
-                      width: "160px",
-                      height: "160px",
-                      margin: "0 auto",
-                      borderRadius: "50%",
-                      background: "#FFF9E8",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: 0,
-                        left: 0,
-                        width: "160px",
-                        height: "160px",
-                      }}
-                    >
-                      <svg width="160" height="160" viewBox="0 0 160 160">
-                        <circle
-                          cx="80"
-                          cy="80"
-                          r="70"
-                          fill="none"
-                          stroke="#FFC046"
-                          strokeWidth="14"
-                          strokeDasharray="440"
-                          strokeDashoffset="140"
-                          transform="rotate(-90, 80, 80)"
-                        />
-                      </svg>
-                    </div>
-                    <Text as="p" variant="heading3xl">
-                      62
-                    </Text>
-                  </div>
-                </Box>
-
-                <Text as="h3" variant="headingMd">
-                  Performance
-                </Text>
-
-                <InlineStack wrap={true} gap="400">
-                  <Box width="45%">
-                    <MetricItem
-                      label="Speed Index"
-                      value="3.9 s"
-                      color="critical"
-                    />
-                  </Box>
-                  <Box width="45%">
-                    <MetricItem
-                      label="Total Blocking Time"
-                      value="3.9 s"
-                      color="critical"
-                    />
-                  </Box>
-                  <Box width="45%">
-                    <MetricItem
-                      label="First Contentful Paint"
-                      value="3.9 s"
-                      color="critical"
-                    />
-                  </Box>
-                  <Box width="45%">
-                    <MetricItem
-                      label="Largest Contentful Paint"
-                      value="3.9 s"
-                      color="critical"
-                    />
-                  </Box>
-                </InlineStack>
-                <MetricItem
-                  label="Cumulative Layout Shift"
-                  value="3.9 s"
-                  color="critical"
-                />
+                      <InlineStack wrap={true} gap="200">
+                        <Box width="45%">
+                          <MetricItem
+                            label="Speed Index"
+                            value={insightsData?.performance?.speedIndex}
+                            color={getToneFromSpeedIndex(
+                              insightsData?.performance?.speedIndex
+                            )}
+                          />
+                        </Box>
+                        <Box width="45%">
+                          <MetricItem
+                            label="Total Blocking Time"
+                            value={insightsData?.performance?.totalBlockingTime}
+                            color={getToneFromTBT(
+                              insightsData?.performance?.totalBlockingTime
+                            )}
+                          />
+                        </Box>
+                        <Box width="45%">
+                          <MetricItem
+                            label="First Contentful Paint"
+                            value={
+                              insightsData?.performance?.firstContentfulPaint
+                            }
+                            color={getToneFromFCP(
+                              insightsData?.performance?.firstContentfulPaint
+                            )}
+                          />
+                        </Box>
+                        <Box width="45%">
+                          <MetricItem
+                            label="Largest Contentful Paint"
+                            value={
+                              insightsData?.performance?.largestContentfulPaint
+                            }
+                            color={getToneFromLCP(
+                              insightsData?.performance?.largestContentfulPaint
+                            )}
+                          />
+                        </Box>
+                      </InlineStack>
+                      <MetricItem
+                        label="Cumulative Layout Shift"
+                        value={insightsData?.performance?.cumulativeLayoutShift}
+                        color={getToneFromCLS(
+                          insightsData?.performance?.cumulativeLayoutShift
+                        )}
+                      />
+                    </InlineStack>
+                  </>
+                )}
               </BlockStack>
             </Card>
           </Box>
@@ -283,10 +299,12 @@ export default function SpeedInsights() {
                 badgeType="basic"
                 description="instant.page preloads pages 65ms into a hover to speed up likely clicks"
                 isPro={true}
-                isEnabled={instantPage}
+                isEnabled={speedInsights.isInstantPage}
                 featureName={"instantPage"}
                 handler={() => {
-                  setInstantPage((prev) => !prev);
+                  toogleFeature({
+                    isInstantPage: !speedInsights.isInstantPage,
+                  });
                 }}
               />
               <SpeedFeatureCard
@@ -298,10 +316,12 @@ export default function SpeedInsights() {
                   appBilling?.status === "ACTIVE" &&
                   (appBilling?.name === "Pro" || appBilling?.name === "Plus")
                 }
-                isEnabled={lazyLoading}
+                isEnabled={speedInsights.isLazyLoading}
                 featureName={"lazyLoading"}
                 handler={() => {
-                  setLazyLoading((prev) => !prev);
+                  toogleFeature({
+                    isLazyLoading: !speedInsights.isLazyLoading,
+                  });
                 }}
               />
               <SpeedFeatureCard
@@ -313,10 +333,12 @@ export default function SpeedInsights() {
                   appBilling?.status === "ACTIVE" &&
                   (appBilling?.name === "Pro" || appBilling?.name === "Plus")
                 }
-                isEnabled={streamlinedLoading}
+                isEnabled={speedInsights.isStreamLineLoading}
                 featureName={"streamlinedLoading"}
                 handler={() => {
-                  setStreamlinedLoading((prev) => !prev);
+                  toogleFeature({
+                    isStreamLineLoading: !speedInsights.isStreamLineLoading,
+                  });
                 }}
               />
               <SpeedFeatureCard
@@ -328,10 +350,12 @@ export default function SpeedInsights() {
                   appBilling?.status === "ACTIVE" &&
                   (appBilling?.name === "Pro" || appBilling?.name === "Plus")
                 }
-                isEnabled={optimizedLoading}
+                isEnabled={speedInsights.isOptimizedLoading}
                 featureName={"optimizedLoading"}
                 handler={() => {
-                  setOptimizedLoading((prev) => !prev);
+                  toogleFeature({
+                    isOptimizedLoading: !speedInsights.isOptimizedLoading,
+                  });
                 }}
               />
               <SpeedFeatureCard
@@ -343,10 +367,13 @@ export default function SpeedInsights() {
                   appBilling?.status === "ACTIVE" &&
                   (appBilling?.name === "Pro" || appBilling?.name === "Plus")
                 }
-                isEnabled={assetFileOptimization}
+                isEnabled={speedInsights.isAssetFileOptimization}
                 featureName={"assetFileOptimization"}
                 handler={() => {
-                  setAssetFileOptimization((prev) => !prev);
+                  toogleFeature({
+                    isAssetFileOptimization:
+                      !speedInsights.isAssetFileOptimization,
+                  });
                 }}
               />
               <SpeedFeatureCard
@@ -358,10 +385,12 @@ export default function SpeedInsights() {
                   appBilling?.status === "ACTIVE" &&
                   (appBilling?.name === "Pro" || appBilling?.name === "Plus")
                 }
-                isEnabled={streamlineCode}
+                isEnabled={speedInsights.isStreamlineCode}
                 featureName={"streamlineCode"}
                 handler={() => {
-                  setStreamlineCode((prev) => !prev);
+                  toogleFeature({
+                    isStreamlineCode: !speedInsights.isStreamlineCode,
+                  });
                 }}
               />
             </BlockStack>
@@ -378,9 +407,70 @@ export function MetricItem({ label, value, color }) {
       <Text as="p" variant="bodyMd">
         {label}
       </Text>
-      <Text as="p" variant="heading2xl" color={color}>
+      <div
+        className="matrix_results-value"
+        style={{
+          color: color,
+        }}
+      >
         {value}
-      </Text>
+      </div>
+    </Box>
+  );
+}
+
+function SeoScore({ score }) {
+  // Circle constants
+  const radius = 70;
+  const strokeWidth = 14;
+  const circumference = 2 * Math.PI * radius;
+
+  // Calculate stroke offset
+  const progress = Math.min(Math.max(score, 0), 100); // clamp between 0-100
+  const strokeDashoffset = circumference - (progress / 100) * circumference;
+  return (
+    <Box paddingBlock="4" textAlign="center">
+      <div
+        style={{
+          position: "relative",
+          width: "160px",
+          height: "160px",
+          margin: "0 auto",
+          borderRadius: "50%",
+          background: "#FFF9E8",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "160px",
+            height: "160px",
+          }}
+        >
+          <svg width="160" height="160" viewBox="0 0 160 160">
+            <circle
+              cx="80"
+              cy="80"
+              r={radius}
+              fill="none"
+              stroke={getColorFromScore(score)}
+              strokeWidth={strokeWidth}
+              strokeDasharray={circumference}
+              strokeDashoffset={strokeDashoffset}
+              transform="rotate(-90, 80, 80)"
+              strokeLinecap="round"
+            />
+          </svg>
+        </div>
+        <Text as="p" variant="heading3xl">
+          {score}
+        </Text>
+      </div>
     </Box>
   );
 }

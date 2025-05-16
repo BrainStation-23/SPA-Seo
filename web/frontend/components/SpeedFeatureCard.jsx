@@ -13,7 +13,6 @@ import { Toggle } from "./commonUI/toggle/Toggle";
 export function SpeedFeatureCard({
   title,
   badgeText,
-  badgeType,
   description,
   isPro = false,
   isEnabled = false,
@@ -28,8 +27,8 @@ export function SpeedFeatureCard({
             {title}
           </Text>
           {badgeText && (
-            <Badge tone={badgeType === "basic" ? "success" : ""}>
-              {badgeText}
+            <Badge tone={isPro && isEnabled ? "success" : ""}>
+              {isPro ? (isEnabled ? "On" : "Off") : "Pro plan"}
             </Badge>
           )}
           <Icon source={InfoIcon} color="subdued" />

@@ -14,7 +14,6 @@
   "dependencies": {
     "@shopify/app": "3.46.0",
     "@shopify/cli": "3.46.0",
-    "@shopify/polaris": "^12.27.0",
     "@shopify/shopify-app-session-storage": "^3.0.17"
   },
   "author": "bs830",

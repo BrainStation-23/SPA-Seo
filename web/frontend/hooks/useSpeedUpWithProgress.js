@@ -10,9 +10,6 @@ export const useSpeedUpWithProgress = () => {
   const [compleatedTask, setCompleatedTask] = useState(0);
   const { appBilling, speedInsights, setSpeedInsights } = useUI();
 
-  // Agei sorry bole nitesi
-  // Ami choto amake marben na
-  // ami asolei choto marben na plz
   const fetcher = useAuthenticatedFetch();
   const { mutate } = useFetchMutation(
     "/api/seo/speed-effect",
