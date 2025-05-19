@@ -34,6 +34,7 @@ import {
   getToneFromTBT,
 } from "../utils/speedCalculations";
 import { useSpeedUpWithProgress } from "../hooks/useSpeedUpWithProgress";
+import { useFeatureToggle } from "../hooks/useFeatureToggle";
 
 export default function SpeedInsights() {
   const [selected, setSelected] = useState(0);
@@ -51,17 +52,11 @@ export default function SpeedInsights() {
   });
   console.log("🚀 ~ SpeedInsights ~ insightsData:", insightsData);
 
-  const { appBilling, speedInsights } = useUI();
+  const { appBilling, speedInsights, setSpeedInsights } = useUI();
   console.log("🚀 ~ SpeedInsights ~ appBilling:", appBilling, speedInsights);
 
-  const [instantPage, setInstantPage] = useState(false);
-  const [lazyLoading, setLazyLoading] = useState(false);
-  const [streamlinedLoading, setStreamlinedLoading] = useState(false);
-  const [optimizedLoading, setOptimizedLoading] = useState(false);
-  const [assetFileOptimization, setAssetFileOptimization] = useState(false);
-  const [streamlineCode, setStreamlineCode] = useState(false);
-
   const [showDropdown, setShowDropdown] = useState(false);
+  const { toogleFeature } = useFeatureToggle();
   const { taskCount, compleatedTask, progress, startTaks, resetProgress } =
     useSpeedUpWithProgress();
 
@@ -69,48 +64,49 @@ export default function SpeedInsights() {
     let currentTaskCount = taskCount,
       taskQueue = {};
 
-    if (instantPage) {
-      taskQueue["isInstantPage"] = instantPage;
+    if (speedInsights.isInstantPage) {
+      taskQueue["isInstantPage"] = speedInsights.isInstantPage;
       currentTaskCount++;
     }
     if (
-      lazyLoading &&
+      speedInsights.isLazyLoading &&
       appBilling?.status === "ACTIVE" &&
       (appBilling?.name === "Pro" || appBilling?.name === "Plus")
     ) {
-      taskQueue["isLazyLoading"] = lazyLoading;
+      taskQueue["isLazyLoading"] = speedInsights.isLazyLoading;
       currentTaskCount++;
     }
     if (
-      streamlinedLoading &&
+      speedInsights.isStreamLineLoading &&
       appBilling?.status === "ACTIVE" &&
       (appBilling?.name === "Pro" || appBilling?.name === "Plus")
     ) {
-      taskQueue["isStreamLineLoading"] = streamlinedLoading;
+      taskQueue["isStreamLineLoading"] = speedInsights.isStreamLineLoading;
       currentTaskCount++;
     }
     if (
-      optimizedLoading &&
+      speedInsights.isOptimizedLoading &&
       appBilling?.status === "ACTIVE" &&
       (appBilling?.name === "Pro" || appBilling?.name === "Plus")
     ) {
-      taskQueue["isOptimizedLoading"] = optimizedLoading;
+      taskQueue["isOptimizedLoading"] = speedInsights.isOptimizedLoading;
       currentTaskCount++;
     }
     if (
-      assetFileOptimization &&
+      speedInsights.isAssetFileOptimization &&
       appBilling?.status === "ACTIVE" &&
       (appBilling?.name === "Pro" || appBilling?.name === "Plus")
     ) {
-      taskQueue["isAssetFileOptimization"] = assetFileOptimization;
+      taskQueue["isAssetFileOptimization"] =
+        speedInsights.isAssetFileOptimization;
       currentTaskCount++;
     }
     if (
-      streamlineCode &&
+      speedInsights.isStreamlineCode &&
       appBilling?.status === "ACTIVE" &&
       (appBilling?.name === "Pro" || appBilling?.name === "Plus")
     ) {
-      taskQueue["isStreamlineCode"] = streamlineCode;
+      taskQueue["isStreamlineCode"] = speedInsights.isStreamlineCode;
       currentTaskCount++;
     }
 
@@ -148,15 +144,6 @@ export default function SpeedInsights() {
       panelID: "amp-content",
     },
   ];
-
-  useEffect(() => {
-    setInstantPage(speedInsights.isInstantPage);
-    setLazyLoading(speedInsights.isLazyLoading);
-    setStreamlineCode(speedInsights.isStreamlineCode);
-    setOptimizedLoading(speedInsights.isOptimizedLoading);
-    setStreamlinedLoading(speedInsights.isStreamLineLoading);
-    setAssetFileOptimization(speedInsights.isAssetFileOptimization);
-  }, [speedInsights]);
 
   return (
     <>
@@ -312,10 +299,12 @@ export default function SpeedInsights() {
                 badgeType="basic"
                 description="instant.page preloads pages 65ms into a hover to speed up likely clicks"
                 isPro={true}
-                isEnabled={instantPage}
+                isEnabled={speedInsights.isInstantPage}
                 featureName={"instantPage"}
                 handler={() => {
-                  setInstantPage((prev) => !prev);
+                  toogleFeature({
+                    isInstantPage: !speedInsights.isInstantPage,
+                  });
                 }}
               />
               <SpeedFeatureCard
@@ -327,10 +316,12 @@ export default function SpeedInsights() {
                   appBilling?.status === "ACTIVE" &&
                   (appBilling?.name === "Pro" || appBilling?.name === "Plus")
                 }
-                isEnabled={lazyLoading}
+                isEnabled={speedInsights.isLazyLoading}
                 featureName={"lazyLoading"}
                 handler={() => {
-                  setLazyLoading((prev) => !prev);
+                  toogleFeature({
+                    isLazyLoading: !speedInsights.isLazyLoading,
+                  });
                 }}
               />
               <SpeedFeatureCard
@@ -342,10 +333,12 @@ export default function SpeedInsights() {
                   appBilling?.status === "ACTIVE" &&
                   (appBilling?.name === "Pro" || appBilling?.name === "Plus")
                 }
-                isEnabled={streamlinedLoading}
+                isEnabled={speedInsights.isStreamLineLoading}
                 featureName={"streamlinedLoading"}
                 handler={() => {
-                  setStreamlinedLoading((prev) => !prev);
+                  toogleFeature({
+                    isStreamLineLoading: !speedInsights.isStreamLineLoading,
+                  });
                 }}
               />
               <SpeedFeatureCard
@@ -357,10 +350,12 @@ export default function SpeedInsights() {
                   appBilling?.status === "ACTIVE" &&
                   (appBilling?.name === "Pro" || appBilling?.name === "Plus")
                 }
-                isEnabled={optimizedLoading}
+                isEnabled={speedInsights.isOptimizedLoading}
                 featureName={"optimizedLoading"}
                 handler={() => {
-                  setOptimizedLoading((prev) => !prev);
+                  toogleFeature({
+                    isOptimizedLoading: !speedInsights.isOptimizedLoading,
+                  });
                 }}
               />
               <SpeedFeatureCard
@@ -372,10 +367,13 @@ export default function SpeedInsights() {
                   appBilling?.status === "ACTIVE" &&
                   (appBilling?.name === "Pro" || appBilling?.name === "Plus")
                 }
-                isEnabled={assetFileOptimization}
+                isEnabled={speedInsights.isAssetFileOptimization}
                 featureName={"assetFileOptimization"}
                 handler={() => {
-                  setAssetFileOptimization((prev) => !prev);
+                  toogleFeature({
+                    isAssetFileOptimization:
+                      !speedInsights.isAssetFileOptimization,
+                  });
                 }}
               />
               <SpeedFeatureCard
@@ -387,10 +385,12 @@ export default function SpeedInsights() {
                   appBilling?.status === "ACTIVE" &&
                   (appBilling?.name === "Pro" || appBilling?.name === "Plus")
                 }
-                isEnabled={streamlineCode}
+                isEnabled={speedInsights.isStreamlineCode}
                 featureName={"streamlineCode"}
                 handler={() => {
-                  setStreamlineCode((prev) => !prev);
+                  toogleFeature({
+                    isStreamlineCode: !speedInsights.isStreamlineCode,
+                  });
                 }}
               />
             </BlockStack>
