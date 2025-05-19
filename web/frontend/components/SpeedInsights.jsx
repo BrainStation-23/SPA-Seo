@@ -35,7 +35,6 @@ import {
 } from "../utils/speedCalculations";
 import { useSpeedUpWithProgress } from "../hooks/useSpeedUpWithProgress";
 import { useFeatureToggle } from "../hooks/useFeatureToggle";
-
 export default function SpeedInsights() {
   const [selected, setSelected] = useState(0);
   const [device, setDevice] = useState("desktop");
