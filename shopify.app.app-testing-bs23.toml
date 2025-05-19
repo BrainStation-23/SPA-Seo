@@ -3,7 +3,7 @@
 client_id = "4a8105f24e04b6b1e217541b65cb7b16"
 name = "app-testing-bs23"
 handle = "app-testing-bs23"
-application_url = "https://ringtones-pt-impressive-reserve.trycloudflare.com"
+application_url = "https://camping-ask-wake-surplus.trycloudflare.com"
 embedded = true
 
 [build]
@@ -16,9 +16,9 @@ scopes = "read_content,read_customers,read_products,read_themes,write_content,wr
 
 [auth]
 redirect_urls = [
-  "https://ringtones-pt-impressive-reserve.trycloudflare.com/auth/callback",
-  "https://ringtones-pt-impressive-reserve.trycloudflare.com/auth/shopify/callback",
-  "https://ringtones-pt-impressive-reserve.trycloudflare.com/api/auth/callback"
+  "https://camping-ask-wake-surplus.trycloudflare.com/auth/callback",
+  "https://camping-ask-wake-surplus.trycloudflare.com/auth/shopify/callback",
+  "https://camping-ask-wake-surplus.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]

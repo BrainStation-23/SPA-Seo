@@ -3,7 +3,7 @@
 client_id = "695da14ec05f37f6cdd63a2b3c20b444"
 name = "SEOfy - Complete SEO Expert"
 handle = "seofy-complete-seo-expert"
-application_url = "https://6b82-103-197-207-34.ngrok-free.app"
+application_url = "https://331f-103-197-207-34.ngrok-free.app"
 embedded = true
 
 [build]
@@ -16,16 +16,16 @@ scopes = "read_content,read_customers,read_products,read_themes,write_content,wr
 
 [auth]
 redirect_urls = [
-  "https://6b82-103-197-207-34.ngrok-free.app/auth/callback",
-  "https://6b82-103-197-207-34.ngrok-free.app/auth/shopify/callback",
-  "https://6b82-103-197-207-34.ngrok-free.app/api/auth/callback"
+  "https://331f-103-197-207-34.ngrok-free.app/auth/callback",
+  "https://331f-103-197-207-34.ngrok-free.app/auth/shopify/callback",
+  "https://331f-103-197-207-34.ngrok-free.app/api/auth/callback"
 ]
 
 [webhooks]
 api_version = "2024-10"
 
 [app_proxy]
-url = "https://6b82-103-197-207-34.ngrok-free.app/api"
+url = "https://331f-103-197-207-34.ngrok-free.app/api"
 subpath = "error-insights"
 prefix = "apps"
 

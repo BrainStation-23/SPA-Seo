@@ -2,6 +2,7 @@ import shopify from "../shopify.js";
 import SpeedInsights from "../models/speedInsights.js";
 import { GetThemeFile, UpdateThemeFiles } from "../graphql/theme.js";
 import { queryDataWithVariables } from "../utils/getQueryData.js";
+import { removeUnusedCSS } from "../services/optimizeCss.js";
 
 // import {}
 
@@ -234,6 +235,7 @@ export const speedInsightsController = async (req, res, next) => {
 
 export const optimizeCssForLiveTheme = async (req, res, next) => {
   try {
+    removeUnusedCSS(res);
     return res.status(200).json({
       success: true,
       message: "Optimized CSS for live theme files successfully",

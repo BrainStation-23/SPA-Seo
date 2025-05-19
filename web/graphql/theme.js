@@ -1,5 +1,9 @@
 export const GetThemeFilesPaginated = `#graphql
 query GetThemeFilesPaginated($count: Int!, $role: ThemeRole!, $filename: String!, $after: String) {
+  shop {
+    id
+    url
+  }
   themes(first: 1, roles: [$role]) {
     edges {
       node {
