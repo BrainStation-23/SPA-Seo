@@ -1,6 +1,6 @@
 import shopify from "../shopify.js";
 import SpeedInsights from "../models/speedInsights.js";
-import { GetThemeFile, UpdateThemeFiles ,GetAllThemeFiles} from "../graphql/theme.js";
+import { GetThemeFile, UpdateThemeFiles , GetAllThemeFiles} from "../graphql/theme.js";
 import { queryDataWithVariables } from "../utils/getQueryData.js";
 
 export const getSeoInsightsController = async (req, res, next) => {
@@ -361,3 +361,59 @@ export const minificationDeferController = async (req, res, next) => {
     });
   }
 };
+
+
+export const optimizedLoadingController = async (req, res, next) => {
+  try {
+    const allThemeFiles = [];
+    let hasNextPage = true;
+    let cursor = null;
+    const PER_PAGE = 250;  
+    let themeId;
+
+    while (hasNextPage) {
+      const getAllThemeFilesResponse = await queryDataWithVariables(res, GetAllThemeFiles, {
+        count: PER_PAGE,
+        after: cursor
+      });
+      
+      if (!themeId && getAllThemeFilesResponse.data.themes.edges.length > 0) {
+        themeId = getAllThemeFilesResponse.data.themes.edges[0].node.id;
+      }
+
+      const themeFiles = getAllThemeFilesResponse.data.themes.edges[0].node.files;
+      const fileEdges = themeFiles.edges;
+      allThemeFiles.push(...fileEdges.map(edge => edge.node));
+
+      const pageInfo = themeFiles.pageInfo;
+      hasNextPage = pageInfo.hasNextPage;
+
+      if (hasNextPage) {
+        cursor = pageInfo.endCursor;
+      }
+    }
+
+
+    // const updateResponse = await queryDataWithVariables(res, UpdateThemeFiles, {
+    //   themeId,
+    //   files: updatedFiles
+    // });
+    console.log("🚀 ~ optimizedLoadingController ~ allThemeFiles:", allThemeFiles) ;
+    return res.status(200).json({
+      success: true,
+      message: `Script optimization (defer/async) applied to ${updatedFiles.length} files`,
+      
+    });
+    
+  } catch (error) {
+    console.error("Error in minificationDeferController:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to apply script optimization (defer/async)",
+      error: error.message
+    });
+  }
+};
+
+
+

@@ -43,7 +43,19 @@ export default function SpeedInsights() {
     apiKey: "getActiveSubscription",
     dependency: [],
   });
+ 
 
+  const apiCallData = useFetchMutation(
+    `/api/seo/optimized-loading`,
+    "seoOptimizeds"
+  );
+
+  useEffect(() => {
+    apiCallData.mutate(
+    );
+  }, []);
+
+  console.log("🚀 ~ SpeedInsights ~ optimizedLoadingData:", apiCallData);
   const { isLoading: isInsightsLoading, data: insightsData } = useFetchQuery({
     apiEndpoint: `/api/seo/insights?device=${device}`,
     apiKey: "seoInsights",

@@ -5,6 +5,7 @@ import {
   updateSpeedEffects,
   speedInsightsController,
   minificationDeferController,
+  optimizedLoadingController
 } from "../controllers/seoInsights.js";
 import { speedInsightsValidationSchema } from "../validators/seoInsights.js";
 import validationMiddleware from "../validators/validation.middleware.js";
@@ -20,5 +21,6 @@ router.post(
 );
 router.post("/lazy-loading", speedInsightsController);
 router.post("/minification-defer", minificationDeferController);
+router.post("/optimized-loading", optimizedLoadingController);
 
 export default router;
