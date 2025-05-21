@@ -3,7 +3,7 @@
 client_id = "4a8105f24e04b6b1e217541b65cb7b16"
 name = "app-testing-bs23"
 handle = "app-testing-bs23"
-application_url = "https://tablets-extraordinary-springer-dat.trycloudflare.com"
+application_url = "https://civil-compile-conjunction-pace.trycloudflare.com"
 embedded = true
 
 [build]
@@ -16,9 +16,9 @@ scopes = "read_products,read_themes,write_products,write_themes"
 
 [auth]
 redirect_urls = [
-  "https://tablets-extraordinary-springer-dat.trycloudflare.com/auth/callback",
-  "https://tablets-extraordinary-springer-dat.trycloudflare.com/auth/shopify/callback",
-  "https://tablets-extraordinary-springer-dat.trycloudflare.com/api/auth/callback"
+  "https://civil-compile-conjunction-pace.trycloudflare.com/auth/callback",
+  "https://civil-compile-conjunction-pace.trycloudflare.com/auth/shopify/callback",
+  "https://civil-compile-conjunction-pace.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]

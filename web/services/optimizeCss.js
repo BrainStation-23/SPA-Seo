@@ -222,26 +222,6 @@ export const removeUnusedCSS = async (res) => {
       `Found ${cssFiles.length} CSS files and ${liquidFiles.length} Liquid files.`
     );
 
-    // Option 1: Process CSS files individually matched with their liquid files
-    // Uncomment this block to use the import map approach
-    /*
-    const importMap = createCSSImportMap(cssFiles, liquidFiles);
-    const results = [];
-    
-    console.log(`Created import map with ${importMap.size} CSS-to-Liquid mappings.`);
-    
-    for (const [cssFileName, relevantLiquidFiles] of importMap.entries()) {
-      const cssFile = cssFiles.find(({ filename }) => filename.includes(cssFileName));
-      if (cssFile) {
-        console.log(`Processing ${cssFile.filename} with ${relevantLiquidFiles.length} relevant Liquid files...`);
-        const purgeCssResult = await runPurgeCSS(cssFile, relevantLiquidFiles);
-        results.push(purgeCssResult);
-      }
-    }
-    
-    return results;
-    */
-
     // Option 2: Process all CSS files against all Liquid files
     // This is your current approach, but with the improved extractor
     console.log("Processing all CSS files against all Liquid files...");
