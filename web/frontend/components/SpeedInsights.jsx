@@ -25,6 +25,7 @@ import {
 import { SpeedFeatureCard } from "./SpeedFeatureCard";
 import { useUI } from "../contexts/ui.context";
 import useFetchQuery from "../hooks/useGlobalQuery";
+import useFetchMutation from "../hooks/useGlobalMutation";
 import {
   getColorFromScore,
   getToneFromCLS,
@@ -51,6 +52,12 @@ export default function SpeedInsights() {
     dependency: [device],
   });
   console.log("🚀 ~ SpeedInsights ~ insightsData:", insightsData);
+
+  // testing api hit part
+  const { mutate: callSomething } = useFetchMutation(
+    "/api/seo/optimize-css",
+    "testgg"
+  );
 
   const { appBilling, speedInsights, setSpeedInsights } = useUI();
   console.log("🚀 ~ SpeedInsights ~ appBilling:", appBilling, speedInsights);
@@ -119,7 +126,6 @@ export default function SpeedInsights() {
     resetProgress();
     setShowDropdown(false);
   };
-
   const handleTabChange = (selectedTabIndex) => {
     setSelected(selectedTabIndex);
   };
@@ -394,6 +400,13 @@ export default function SpeedInsights() {
                 }}
               />
             </BlockStack>
+            <Button
+              onClick={() => {
+                callSomething();
+              }}
+            >
+              Test
+            </Button>
           </Box>
         </InlineStack>
       </BlockStack>

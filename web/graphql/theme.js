@@ -24,6 +24,10 @@ query GetThemeFilesPaginated($count: Int!, $role: ThemeRole!, $filename: String!
               }
             }
           }
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
         }
       }
     }
