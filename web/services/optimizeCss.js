@@ -1,6 +1,6 @@
 import { PurgeCSS } from "purgecss";
 
-import { GetThemeFilesPaginated } from "../graphql/theme.js";
+import { GetThemeFilesPaginated, UpdateThemeFiles } from "../graphql/theme.js";
 import { queryDataWithVariables } from "../utils/getQueryData.js";
 
 const getAllCssFilesForLiveTheme = async (res) => {
@@ -63,26 +63,167 @@ const getAllCssFilesForLiveTheme = async (res) => {
   };
 };
 
-const createCSSImportMap = (cssFiles, liquidFiles) => {
-  const importMap = new Map();
-  const cssImportRegex =
-    /["']([^"']+\.css)["']\s*\|\s*asset_url(?:\s*\|\s*stylesheet_tag)?/g;
+/**
+ * Updates the Shopify theme with purged CSS files
+ * Takes the purgeCSS results and updates each file in the theme
+ * @param {Object} res - Response object for GraphQL mutations
+ * @param {Array} purgeCSSResults - Results from the PurgeCSS operation
+ * @param {string} themeId - ID of the theme to update
+ * @returns {Promise<Array>} Array of updated files with status
+ */
+export const updateThemeWithPurgedCSS = async (
+  res,
+  purgeCSSResults,
+  themeId
+) => {
+  try {
+    console.log("Starting theme update with purged CSS...");
+    const updateResults = [];
 
-  liquidFiles.forEach(({ filename: liquidFileName, content }) => {
-    let match;
-    while ((match = cssImportRegex.exec(content)) !== null) {
-      const cssFilePath = match[1]; // e.g., 'styles.css' or 'assets/styles.css'
-      const cssFileName = cssFilePath.split("/").pop(); // get just 'styles.css'
+    // Process each purged CSS file
+    for (const result of purgeCSSResults) {
+      try {
+        console.log(`Updating ${result.file}...`);
 
-      if (!importMap.has(cssFileName)) {
-        importMap.set(cssFileName, []);
+        // Execute the theme asset update mutation
+        const updateResponse = await queryDataWithVariables(
+          res,
+          UpdateThemeFiles,
+          {
+            themeId,
+            files: [
+              {
+                filename: result.file,
+                body: {
+                  type: "TEXT",
+                  value: result.css,
+                },
+              },
+            ],
+          }
+        );
+
+        if (updateResponse.errors) {
+          throw new Error(
+            `Error updating ${result.file}: ${JSON.stringify(
+              updateResponse.errors
+            )}`
+          );
+        }
+
+        const updateResult = updateResponse.data.themeFilesUpsert;
+        if (updateResult.userErrors && updateResult.userErrors.length > 0) {
+          throw new Error(
+            `User errors updating ${result.file}: ${JSON.stringify(
+              updateResult.userErrors
+            )}`
+          );
+        }
+
+        // Calculate stats for logging
+        const originalSize = result.originalSize || "unknown";
+        const newSize = result.css.length;
+        const reduction =
+          typeof originalSize === "number" && originalSize > 0
+            ? (((originalSize - newSize) / originalSize) * 100).toFixed(2)
+            : "unknown";
+
+        // Add to results
+        updateResults.push({
+          file: result.file,
+          status: "success",
+          originalSize,
+          newSize,
+          reduction: reduction !== "unknown" ? `${reduction}%` : reduction,
+        });
+
+        console.log(`Successfully updated ${result.file}`);
+      } catch (error) {
+        console.error(`Failed to update ${result.file}:`, error);
+        updateResults.push({
+          file: result.file,
+          status: "error",
+          error: error.message,
+        });
       }
-
-      importMap.get(cssFileName).push({ filename: liquidFileName, content });
     }
-  });
 
-  return importMap;
+    console.log("Theme update with purged CSS completed.");
+    return updateResults;
+  } catch (error) {
+    console.error("Theme update with purged CSS failed:", error);
+    throw error;
+  }
+};
+
+/**
+ * Enhanced JS extractor function that captures classes used in JavaScript
+ */
+const jsExtractor = (content) => {
+  const selectors = new Set();
+
+  // Match classes in common JS patterns
+  let match;
+
+  // querySelector/querySelectorAll with class selectors
+  const querySelectorRegex = /querySelector(?:All)?\(['"]([^'"]+)['"]\)/g;
+  while ((match = querySelectorRegex.exec(content)) !== null) {
+    const selector = match[1];
+    // Extract class names from selectors (handle .class-name patterns)
+    const classMatches = selector.match(/\.[a-zA-Z0-9_-]+/g);
+    if (classMatches) {
+      classMatches.forEach((cls) => selectors.add(cls.substring(1)));
+    }
+  }
+
+  // classList operations
+  const classListRegex =
+    /classList\.(?:add|remove|toggle|contains)\(['"]([^'"]+)['"]\)/g;
+  while ((match = classListRegex.exec(content)) !== null) {
+    match[1].split(" ").forEach((cls) => selectors.add(cls.trim()));
+  }
+
+  // className assignments with string literals
+  const classNameRegex = /className\s*=\s*['"]([^'"]+)['"]/g;
+  while ((match = classNameRegex.exec(content)) !== null) {
+    match[1].split(" ").forEach((cls) => selectors.add(cls.trim()));
+  }
+
+  // class= assignments (for inline templates)
+  const classAttrRegex = /class\s*=\s*['"]([^'"]+)['"]/g;
+  while ((match = classAttrRegex.exec(content)) !== null) {
+    match[1].split(" ").forEach((cls) => selectors.add(cls.trim()));
+  }
+
+  // Template literals for class/className
+  const templateLiteralRegex = /(?:class|className)\s*=\s*`([^`]*)`/g;
+  while ((match = templateLiteralRegex.exec(content)) !== null) {
+    // Extract static parts from template literals
+    const staticParts = match[1]
+      .replace(/\${[^}]*}/g, " ")
+      .split(" ")
+      .filter(Boolean);
+    staticParts.forEach((cls) => selectors.add(cls.trim()));
+  }
+
+  // jQuery class operations
+  const jQueryClassRegex =
+    /\$\([^)]*\)\.(?:addClass|removeClass|toggleClass|hasClass)\(['"]([^'"]+)['"]\)/g;
+  while ((match = jQueryClassRegex.exec(content)) !== null) {
+    match[1].split(" ").forEach((cls) => selectors.add(cls.trim()));
+  }
+
+  // Check for special comments that explicitly list classes to keep
+  const keepClassesRegex =
+    /\/\*\s*purgecss:\s*keep-classes\s*\*\/\s*(?:\/\/\s*)?(?:Classes to keep:)?\s*([^\n]*)/g;
+  while ((match = keepClassesRegex.exec(content)) !== null) {
+    match[1]
+      .split(/\s+/)
+      .filter(Boolean)
+      .forEach((cls) => selectors.add(cls.trim()));
+  }
+
+  return Array.from(selectors);
 };
 
 /**
@@ -172,74 +313,60 @@ const liquidExtractor = (content) => {
 };
 
 /**
- * Purge unused CSS rules from a single CSS file based on a single Liquid file.
- *
- * @param {Object} cssFile - { filename, content } of the CSS file
- * @param {Object} liquidFiles - [{ filename, content }] array of the Liquid file
- * @returns {Promise<{ filename: string, purgedCSS: string }>}
+ * Combined content extractor that applies appropriate extraction method based on file type
+ * The extractor from PurgeCSS receives just the content - we can't rely on options.extension
  */
-const runPurgeCSS = async (cssFile, liquidFiles) => {
-  const purgeCSS = new PurgeCSS();
-  const result = await purgeCSS.purge({
-    content: liquidFiles.map((file) => ({
-      raw: file.content,
-      extension: "liquid",
-    })),
-    css: [
-      {
-        raw: cssFile.content,
-      },
-    ],
-    defaultExtractor: liquidExtractor,
-    // Add a safelist for common dynamic classes
-    safelist: {
-      standard: [
-        "active",
-        "selected",
-        "current",
-        "show",
-        "hide",
-        "open",
-        "visible",
-      ],
-      deep: [/^is-/, /^has-/, /^js-/],
-      greedy: [/-(active|selected|visible|show|hide)$/],
-    },
-  });
+const contentExtractor = (content) => {
+  // We need to determine the file type from the content itself since options might not be available
+  const selectors = new Set();
 
-  return {
-    filename: cssFile.filename,
-    purgedCSS: result[0].css,
-  };
+  // Run both extractors to be safe
+  liquidExtractor(content).forEach((selector) => selectors.add(selector));
+  jsExtractor(content).forEach((selector) => selectors.add(selector));
+
+  // Basic extraction for anything else
+  const classMatches = content.match(/\.[a-zA-Z0-9_-]+/g) || [];
+  classMatches.forEach((cls) => selectors.add(cls.substring(1)));
+
+  const idMatches = content.match(/#[a-zA-Z0-9_-]+/g) || [];
+  idMatches.forEach((id) => selectors.add(id));
+
+  return Array.from(selectors);
 };
 
 export const removeUnusedCSS = async (res) => {
   try {
     console.log("Starting PurgeCSS operation...");
-    const { cssFiles, liquidFiles, themeId, shopId } =
+    const { cssFiles, liquidFiles, jsFiles, themeId, shopId } =
       await getAllCssFilesForLiveTheme(res);
     console.log(
-      `Found ${cssFiles.length} CSS files and ${liquidFiles.length} Liquid files.`
+      `Found ${cssFiles.length} CSS files, ${liquidFiles.length} Liquid files, and ${jsFiles.length} JavaScript files.`
     );
 
-    // Option 2: Process all CSS files against all Liquid files
-    // This is your current approach, but with the improved extractor
-    console.log("Processing all CSS files against all Liquid files...");
+    // Option 2: Process all CSS files against all Liquid and JS files
+    console.log("Processing all CSS files against all Liquid and JS files...");
 
     const purgeCSS = new PurgeCSS();
     const result = await purgeCSS.purge({
-      content: liquidFiles.map((file) => ({
-        raw: file.content,
-        extension: "liquid",
-      })),
+      content: [
+        ...liquidFiles.map((file) => ({
+          raw: file.content,
+          extension: "liquid",
+        })),
+        ...jsFiles.map((file) => ({
+          raw: file.content,
+          extension: "js",
+        })),
+      ],
       css: cssFiles.map((file) => ({
         raw: file.content,
         name: file.filename,
       })),
-      defaultExtractor: liquidExtractor,
-      // Add a safelist for common dynamic classes
+      defaultExtractor: contentExtractor,
+      // Enhanced safelist for JavaScript-driven classes
       safelist: {
         standard: [
+          // Common state classes
           "active",
           "selected",
           "current",
@@ -247,9 +374,37 @@ export const removeUnusedCSS = async (res) => {
           "hide",
           "open",
           "visible",
+          "hidden",
+          "disabled",
+          "expanded",
+          "collapsed",
+          "loading",
+          // Common animation classes
+          "fade",
+          "slide",
+          "animate",
+          "transition",
         ],
-        deep: [/^is-/, /^has-/, /^js-/],
-        greedy: [/-(active|selected|visible|show|hide)$/],
+        deep: [
+          // Pattern prefixes
+          /^is-/,
+          /^has-/,
+          /^js-/,
+          /^state-/,
+          /^data-/,
+          // Component-specific patterns
+          /--active/,
+          /--open/,
+          /--visible/,
+        ],
+        greedy: [
+          // State suffixes
+          /-(active|selected|visible|show|hide|open|close|enabled|disabled)$/,
+          // Animation suffixes
+          /-(enter|leave|enter-active|leave-active|in|out|start|end)$/,
+          // Common utility patterns
+          /-(sm|md|lg|xl|2xl|hover|focus|active|disabled|first|last)$/,
+        ],
       },
     });
 
@@ -269,14 +424,18 @@ export const removeUnusedCSS = async (res) => {
       );
     });
 
-    return result;
+    const finalResult = await updateThemeWithPurgedCSS(res, result, themeId);
+
+    return finalResult;
   } catch (error) {
     console.error("PurgeCSS operation failed:", error);
     throw error;
   }
 };
 
-// Optional: Export the extractor for testing purposes
-export const testExtractor = (content) => {
-  return liquidExtractor(content);
+// Optional: Export the extractors for testing purposes
+export const testExtractors = {
+  liquid: liquidExtractor,
+  js: jsExtractor,
+  combined: contentExtractor,
 };
