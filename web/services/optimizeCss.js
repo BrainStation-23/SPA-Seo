@@ -73,78 +73,48 @@ const getAllCssFilesForLiveTheme = async (res) => {
 const updateThemeWithPurgedCSS = async (res, purgeCSSResults, themeId) => {
   try {
     console.log("Starting theme update with purged CSS...");
-    const updateResults = [];
 
     // Process each purged CSS file
     for (const result of purgeCSSResults) {
-      try {
-        console.log(`Updating ${result.file}...`);
+      console.log(`Updating ${result.file}...`);
 
-        // Execute the theme asset update mutation
-        const updateResponse = await queryDataWithVariables(
-          res,
-          UpdateThemeFiles,
-          {
-            themeId,
-            files: [
-              {
-                filename: result.file,
-                body: {
-                  type: "TEXT",
-                  value: result.css,
-                },
+      // Execute the theme asset update mutation
+      const updateResponse = await queryDataWithVariables(
+        res,
+        UpdateThemeFiles,
+        {
+          themeId,
+          files: [
+            {
+              filename: result.file,
+              body: {
+                type: "TEXT",
+                value: result.css,
               },
-            ],
-          }
+            },
+          ],
+        }
+      );
+
+      if (updateResponse.errors) {
+        throw new Error(
+          `Error updating ${result.file}: ${JSON.stringify(
+            updateResponse.errors
+          )}`
         );
-
-        if (updateResponse.errors) {
-          throw new Error(
-            `Error updating ${result.file}: ${JSON.stringify(
-              updateResponse.errors
-            )}`
-          );
-        }
-
-        const updateResult = updateResponse.data.themeFilesUpsert;
-        if (updateResult.userErrors && updateResult.userErrors.length > 0) {
-          throw new Error(
-            `User errors updating ${result.file}: ${JSON.stringify(
-              updateResult.userErrors
-            )}`
-          );
-        }
-
-        // Calculate stats for logging
-        const originalSize = result.originalSize || "unknown";
-        const newSize = result.css.length;
-        const reduction =
-          typeof originalSize === "number" && originalSize > 0
-            ? (((originalSize - newSize) / originalSize) * 100).toFixed(2)
-            : "unknown";
-
-        // Add to results
-        updateResults.push({
-          file: result.file,
-          status: "success",
-          originalSize,
-          newSize,
-          reduction: reduction !== "unknown" ? `${reduction}%` : reduction,
-        });
-
-        console.log(`Successfully updated ${result.file}`);
-      } catch (error) {
-        console.error(`Failed to update ${result.file}:`, error);
-        updateResults.push({
-          file: result.file,
-          status: "error",
-          error: error.message,
-        });
       }
-    }
 
+      const updateResult = updateResponse.data.themeFilesUpsert;
+      if (updateResult.userErrors && updateResult.userErrors.length > 0) {
+        throw new Error(
+          `User errors updating ${result.file}: ${JSON.stringify(
+            updateResult.userErrors
+          )}`
+        );
+      }
+      console.log(`Successfully updated ${result.file}`);
+    }
     console.log("Theme update with purged CSS completed.");
-    return updateResults;
   } catch (error) {
     console.error("Theme update with purged CSS failed:", error);
     throw error;
@@ -165,7 +135,8 @@ export const removeUnusedCSS = async (res) => {
     console.log(`PurgeCSS completed. Processed ${result.length} CSS files.`);
 
     // Filter results to only include files with non-zero reduction
-    const filteredResult = [];
+    const filteredResult = [],
+      bytesSavedArray = [];
 
     // Log stats and filter files with non-zero reduction
     result.forEach((item) => {
@@ -187,6 +158,11 @@ export const removeUnusedCSS = async (res) => {
         filteredResult.push({
           ...item,
           originalSize: originalSize,
+        });
+        bytesSavedArray.push({
+          filename: item.file,
+          bytesSaved: originalSize - newSize,
+          percentageReduced: parseFloat(reduction),
         });
       } else {
         console.log(`Skipping ${item.file} - no CSS reduction detected`);
