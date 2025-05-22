@@ -235,10 +235,10 @@ export const speedInsightsController = async (req, res, next) => {
 
 export const optimizeCssForLiveTheme = async (req, res, next) => {
   try {
-    const test = await removeUnusedCSS(res);
+    const bytesSaved = await removeUnusedCSS(res);
     return res.status(200).json({
       success: true,
-      test,
+      bytesSaved,
       message: "Optimized CSS for live theme files successfully",
     });
   } catch (error) {

@@ -68,7 +68,6 @@ const getAllCssFilesForLiveTheme = async (res) => {
  * @param {Object} res - Response object for GraphQL mutations
  * @param {Array} purgeCSSResults - Results from the PurgeCSS operation
  * @param {string} themeId - ID of the theme to update
- * @returns {Promise<Array>} Array of updated files with status
  */
 const updateThemeWithPurgedCSS = async (res, purgeCSSResults, themeId) => {
   try {
@@ -161,6 +160,8 @@ export const removeUnusedCSS = async (res) => {
         });
         bytesSavedArray.push({
           filename: item.file,
+          originalSize,
+          newSize,
           bytesSaved: originalSize - newSize,
           percentageReduced: parseFloat(reduction),
         });
@@ -179,13 +180,9 @@ export const removeUnusedCSS = async (res) => {
       return [];
     }
 
-    const finalResult = await updateThemeWithPurgedCSS(
-      res,
-      filteredResult,
-      themeId
-    );
+    await updateThemeWithPurgedCSS(res, filteredResult, themeId);
 
-    return finalResult;
+    return bytesSavedArray;
   } catch (error) {
     console.error("PurgeCSS operation failed:", error);
     throw error;
