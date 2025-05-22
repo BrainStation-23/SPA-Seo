@@ -1,5 +1,5 @@
 export const GetThemeFilesPaginated = `#graphql
-query GetThemeFilesPaginated($count: Int!, $role: ThemeRole!, $filename: String!, $after: String) {
+query GetThemeFilesPaginated($count: Int!, $role: ThemeRole!, $filename: [String!], $after: String) {
   shop {
     id
     url
@@ -8,7 +8,7 @@ query GetThemeFilesPaginated($count: Int!, $role: ThemeRole!, $filename: String!
     edges {
       node {
         id
-        files(filenames: [$filename], first: $count, after: $after) {
+        files(filenames: $filename, first: $count, after: $after) {
           edges {
             node {
               filename

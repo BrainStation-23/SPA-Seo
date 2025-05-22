@@ -3,7 +3,7 @@
 client_id = "4a8105f24e04b6b1e217541b65cb7b16"
 name = "app-testing-bs23"
 handle = "app-testing-bs23"
-application_url = "https://hwy-gregory-anthropology-wt.trycloudflare.com"
+application_url = "https://cafe-rolling-transit-alarm.trycloudflare.com"
 embedded = true
 
 [build]
@@ -16,9 +16,9 @@ scopes = "read_products,read_themes,write_products,write_themes"
 
 [auth]
 redirect_urls = [
-  "https://hwy-gregory-anthropology-wt.trycloudflare.com/auth/callback",
-  "https://hwy-gregory-anthropology-wt.trycloudflare.com/auth/shopify/callback",
-  "https://hwy-gregory-anthropology-wt.trycloudflare.com/api/auth/callback"
+  "https://cafe-rolling-transit-alarm.trycloudflare.com/auth/callback",
+  "https://cafe-rolling-transit-alarm.trycloudflare.com/auth/shopify/callback",
+  "https://cafe-rolling-transit-alarm.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
