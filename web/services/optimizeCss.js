@@ -710,7 +710,6 @@ export const removeUnusedCSS = async (res) => {
       `Found ${cssFiles.length} CSS files, ${liquidFiles.length} Liquid files, and ${jsFiles.length} JavaScript files.`
     );
 
-    // Option 2: Process all CSS files against all Liquid and JS files
     console.log("Processing all CSS files against all Liquid and JS files...");
 
     const purgeCSS = new PurgeCSS();
@@ -736,7 +735,10 @@ export const removeUnusedCSS = async (res) => {
 
     console.log(`PurgeCSS completed. Processed ${result.length} CSS files.`);
 
-    // Log some stats about the purging operation
+    // Filter results to only include files with non-zero reduction
+    const filteredResult = [];
+
+    // Log stats and filter files with non-zero reduction
     result.forEach((item) => {
       const originalSize =
         cssFiles.find((f) => f.filename === item.file)?.content?.length || 0;
@@ -745,12 +747,38 @@ export const removeUnusedCSS = async (res) => {
         originalSize > 0
           ? (((originalSize - newSize) / originalSize) * 100).toFixed(2)
           : 0;
+
       console.log(
         `${item.file}: ${reduction}% reduction (${originalSize} → ${newSize} bytes)`
       );
+
+      // Only add to filteredResult if there's a meaningful reduction (> 0%)
+      if (parseFloat(reduction) > 0) {
+        // Add the original size to the item for use in updateThemeWithPurgedCSS
+        filteredResult.push({
+          ...item,
+          originalSize: originalSize,
+        });
+      } else {
+        console.log(`Skipping ${item.file} - no CSS reduction detected`);
+      }
     });
 
-    const finalResult = await updateThemeWithPurgedCSS(res, result, themeId);
+    console.log(
+      `${filteredResult.length} out of ${result.length} CSS files will be updated.`
+    );
+
+    // Only proceed with theme update if there are files to update
+    if (filteredResult.length === 0) {
+      console.log("No CSS files require updating. Theme update skipped.");
+      return [];
+    }
+
+    const finalResult = await updateThemeWithPurgedCSS(
+      res,
+      filteredResult,
+      themeId
+    );
 
     return finalResult;
   } catch (error) {
