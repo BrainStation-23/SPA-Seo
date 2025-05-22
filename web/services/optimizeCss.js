@@ -156,8 +156,264 @@ export const updateThemeWithPurgedCSS = async (
   }
 };
 
+// Fixed safelist configuration (replace the safelist part in your removeUnusedCSS function)
+const enhancedSafelist = {
+  // Standard safelist - direct class names that should always be preserved
+  standard: [
+    // Common state classes
+    "active",
+    "inactive",
+    "selected",
+    "current",
+    "show",
+    "hide",
+    "open",
+    "closed",
+    "visible",
+    "hidden",
+    "disabled",
+    "enabled",
+    "expanded",
+    "collapsed",
+    "loading",
+    "loaded",
+    "error",
+    "success",
+
+    // Common animation classes
+    "fade",
+    "slide",
+    "animate",
+    "transition",
+    "reveal",
+    "scroll",
+    "swipe",
+    "zoom",
+    "grow",
+    "shrink",
+
+    // Layout classes
+    "container",
+    "row",
+    "column",
+    "grid",
+    "flex",
+    "block",
+    "inline",
+    "relative",
+    "absolute",
+    "fixed",
+    "sticky",
+
+    // Common Shopify-specific layout classes
+    "page-width",
+    "grid__item",
+    "wrapper",
+    "site-header",
+    "site-footer",
+    "main-content",
+    "section",
+    "footer",
+    "header",
+    "sidebar",
+
+    // Navigation
+    "menu",
+    "submenu",
+    "dropdown",
+    "nav",
+    "navigation",
+    "navbar",
+    "site-nav",
+    "subnav",
+    "pagination",
+    "breadcrumb",
+
+    // Product/Collection related
+    "product",
+    "product-form",
+    "product-media",
+    "product-single",
+    "collection",
+    "collection-grid",
+    "variant-selector",
+
+    // Cart related
+    "cart",
+    "cart-item",
+    "cart-drawer",
+    "mini-cart",
+    "checkout",
+
+    // Form elements
+    "form",
+    "input",
+    "select",
+    "textarea",
+    "button",
+    "label",
+    "checkbox",
+    "radio",
+    "switch",
+    "fieldset",
+
+    // Utility classes (Bootstrap/Foundation style)
+    "text-center",
+    "text-left",
+    "text-right",
+    "text-justify",
+    "margin",
+    "padding",
+    "border",
+    "shadow",
+    "rounded",
+    "circle",
+
+    // Mobile/responsive classes
+    "mobile",
+    "desktop",
+    "tablet",
+    "hide-on-mobile",
+    "show-on-desktop",
+    "small-up",
+    "medium-up",
+    "large-up",
+    "small-only",
+    "medium-only",
+
+    // Media
+    "image",
+    "video",
+    "img",
+    "media",
+    "icon",
+    "thumbnail",
+    "avatar",
+    "lazyload",
+    "lazy",
+    "responsive-image",
+    "aspect-ratio",
+
+    // Common Shopify section/component classes
+    "announcement-bar",
+    "predictive-search",
+    "search-modal",
+    "featured-product",
+    "featured-collection",
+    "slideshow",
+    "testimonials",
+    "newsletter",
+    "rich-text",
+    "map",
+    "video-section",
+
+    // Modal/popup related
+    "modal",
+    "popup",
+    "drawer",
+    "overlay",
+    "dialog",
+    "tooltip",
+  ],
+
+  // Deep patterns - matches any class containing these patterns
+  deep: [
+    // Pattern prefixes
+    /^is-/,
+    /^has-/,
+    /^js-/,
+    /^data-/,
+    /^state-/,
+    /^u-/,
+    /^f-/,
+    /^l-/,
+    /^c-/,
+    /^o-/, // Common CSS naming conventions
+
+    // Component-specific patterns
+    /--active/,
+    /--open/,
+    /--visible/,
+    /--selected/,
+    /--hover/,
+    /--focus/,
+    /--disabled/,
+    /--error/,
+    /--success/,
+    /--warning/,
+
+    // Common Shopify patterns
+    /^shopify-/,
+    /^predictive-/,
+    /^product-/,
+    /^collection-/,
+    /^cart-/,
+    /^search-/,
+    /^customer-/,
+    /^site-/,
+    /^page-/,
+
+    // Tailwind-style utility classes
+    /^bg-/,
+    /^text-/,
+    /^border-/,
+    /^rounded-/,
+    /^shadow-/,
+    /^p-/,
+    /^m-/,
+    /^w-/,
+    /^h-/,
+    /^flex-/,
+    /^grid-/,
+    /^gap-/,
+
+    // Theme-specific patterns (add your own)
+    /^theme-/,
+    /^template-/,
+    /^section-/,
+
+    // Animation patterns
+    /^animate-/,
+    /^transition-/,
+    /^transform-/,
+
+    // State pattern suffixes for BEM
+    /__/,
+    /--/,
+  ],
+
+  // Greedy patterns - will keep any classes that match these patterns
+  greedy: [
+    // State suffixes
+    /-(active|inactive|selected|visible|hidden|show|hide|open|close|enabled|disabled|loading|loaded|error|success)$/,
+
+    // Animation suffixes
+    /-(enter|leave|enter-active|leave-active|in|out|start|end|animation|transition|transform)$/,
+
+    // Responsive suffixes
+    /-(xs|sm|md|lg|xl|2xl|mobile|tablet|desktop|small|medium|large)$/,
+    /-(only|up|down)$/,
+
+    // Common utility patterns
+    /-(hover|focus|active|disabled|first|last|odd|even)$/,
+
+    // Classes with numbers (e.g. grid-cols-3, col-span-2)
+    /-\d+$/,
+  ],
+
+  // Keyframes - retain keyframe animations
+  keyframes: true,
+
+  // Variables - retain CSS variables
+  variables: true,
+
+  // Fonts - retain @font-face rules
+  fonts: true,
+};
+
 /**
  * Enhanced JS extractor function that captures classes used in JavaScript
+ * This version includes more patterns and handling for template literals
  */
 const jsExtractor = (content) => {
   const selectors = new Set();
@@ -176,51 +432,162 @@ const jsExtractor = (content) => {
     }
   }
 
-  // classList operations
+  // classList operations - expanded to catch more patterns
   const classListRegex =
-    /classList\.(?:add|remove|toggle|contains)\(['"]([^'"]+)['"]\)/g;
+    /classList\.(?:add|remove|toggle|contains|replace)\(['"]([^'"]+)['"](?:,\s*['"]([^'"]+)['"])?\)/g;
   while ((match = classListRegex.exec(content)) !== null) {
-    match[1].split(" ").forEach((cls) => selectors.add(cls.trim()));
+    match[1].split(/\s+/).forEach((cls) => selectors.add(cls.trim()));
+    // For replace operations, capture the second parameter too
+    if (match[2]) {
+      match[2].split(/\s+/).forEach((cls) => selectors.add(cls.trim()));
+    }
   }
 
   // className assignments with string literals
-  const classNameRegex = /className\s*=\s*['"]([^'"]+)['"]/g;
+  const classNameRegex = /(?:className|class)\s*=\s*['"]([^'"]+)['"]/g;
   while ((match = classNameRegex.exec(content)) !== null) {
-    match[1].split(" ").forEach((cls) => selectors.add(cls.trim()));
+    match[1].split(/\s+/).forEach((cls) => selectors.add(cls.trim()));
   }
 
-  // class= assignments (for inline templates)
-  const classAttrRegex = /class\s*=\s*['"]([^'"]+)['"]/g;
-  while ((match = classAttrRegex.exec(content)) !== null) {
-    match[1].split(" ").forEach((cls) => selectors.add(cls.trim()));
-  }
-
-  // Template literals for class/className
-  const templateLiteralRegex = /(?:class|className)\s*=\s*`([^`]*)`/g;
+  // Template literals for className/class - more thorough pattern
+  const templateLiteralRegex = /(?:className|class)\s*=\s*`([^`]*)`/g;
   while ((match = templateLiteralRegex.exec(content)) !== null) {
+    // Process the template literal content, preserving all potential class names
+    const literalContent = match[1];
+
     // Extract static parts from template literals
-    const staticParts = match[1]
+    const staticParts = literalContent
       .replace(/\${[^}]*}/g, " ")
-      .split(" ")
+      .split(/\s+/)
       .filter(Boolean);
     staticParts.forEach((cls) => selectors.add(cls.trim()));
+
+    // Try to capture classes within template expressions
+    const expressionMatches = literalContent.match(/\${([^}]*)}/g) || [];
+    expressionMatches.forEach((expr) => {
+      // Extract potential class names from the expression
+      const cleaned = expr.replace(/\${|\}/g, "");
+      // Look for string literals within the expression that might be classes
+      const stringLiterals = cleaned.match(/['"]([^'"]+)['"]/g) || [];
+      stringLiterals.forEach((literal) => {
+        const classes = literal.replace(/['"]/g, "").split(/\s+/);
+        classes.forEach((cls) => selectors.add(cls.trim()));
+      });
+    });
   }
 
-  // jQuery class operations
+  // Event delegation with class selectors
+  const eventDelegationRegex = /\.on\(['"](?:\w+)['"]\s*,\s*['"]([^'"]+)['"]/g;
+  while ((match = eventDelegationRegex.exec(content)) !== null) {
+    const selector = match[1];
+    const classMatches = selector.match(/\.[a-zA-Z0-9_-]+/g);
+    if (classMatches) {
+      classMatches.forEach((cls) => selectors.add(cls.substring(1)));
+    }
+  }
+
+  // jQuery class operations - expanded patterns
   const jQueryClassRegex =
-    /\$\([^)]*\)\.(?:addClass|removeClass|toggleClass|hasClass)\(['"]([^'"]+)['"]\)/g;
+    /\$\([^)]*\)\.(?:addClass|removeClass|toggleClass|hasClass|is)\(['"]([^'"]+)['"]\)/g;
   while ((match = jQueryClassRegex.exec(content)) !== null) {
-    match[1].split(" ").forEach((cls) => selectors.add(cls.trim()));
+    match[1].split(/\s+/).forEach((cls) => selectors.add(cls.trim()));
+  }
+
+  // jQuery selectors with classes
+  const jQuerySelectorRegex = /\$\(['"]([^'"]+)['"]\)/g;
+  while ((match = jQuerySelectorRegex.exec(content)) !== null) {
+    const selector = match[1];
+    const classMatches = selector.match(/\.[a-zA-Z0-9_-]+/g);
+    if (classMatches) {
+      classMatches.forEach((cls) => selectors.add(cls.substring(1)));
+    }
+  }
+
+  // String concatenation for classes - commonly used in dynamic class generation
+  const stringConcatRegex =
+    /(?:class|className)\s*=\s*['"]([^'"]+)['"]\s*\+\s*['"]([^'"]+)['"]/g;
+  while ((match = stringConcatRegex.exec(content)) !== null) {
+    [match[1], match[2]].forEach((part) => {
+      part.split(/\s+/).forEach((cls) => selectors.add(cls.trim()));
+    });
+  }
+
+  // Vanilla JS element creation with classes
+  const createElementRegex =
+    /createElement\(['"]\w+['"](?:,\s*\{[^}]*class(?:Name)?:\s*['"]([^'"]+)['"])/g;
+  while ((match = createElementRegex.exec(content)) !== null) {
+    match[1].split(/\s+/).forEach((cls) => selectors.add(cls.trim()));
+  }
+
+  // Classes in object literals (often used in component props)
+  const objectLiteralRegex = /class(?:Name)?:\s*['"]([^'"]+)['"]/g;
+  while ((match = objectLiteralRegex.exec(content)) !== null) {
+    match[1].split(/\s+/).forEach((cls) => selectors.add(cls.trim()));
   }
 
   // Check for special comments that explicitly list classes to keep
   const keepClassesRegex =
-    /\/\*\s*purgecss:\s*keep-classes\s*\*\/\s*(?:\/\/\s*)?(?:Classes to keep:)?\s*([^\n]*)/g;
+    /\/[*\/]\s*purge(?:css)?:?\s*(?:ignore|keep)(?:-classes)?\s*(?:[*\/])?\s*(.+?)(?:\s*\*\/|\s*$)/g;
   while ((match = keepClassesRegex.exec(content)) !== null) {
     match[1]
-      .split(/\s+/)
+      .split(/[\s,]+/)
       .filter(Boolean)
       .forEach((cls) => selectors.add(cls.trim()));
+  }
+
+  // Shopify-specific class manipulations
+  const shopifyClassRegex =
+    /(?:section|block|theme)\.(?:settings|class|className|classList)\s*[\.\[]?\s*['"]([^'"]+)['"]/g;
+  while ((match = shopifyClassRegex.exec(content)) !== null) {
+    match[1].split(/\s+/).forEach((cls) => selectors.add(cls.trim()));
+  }
+
+  // Class manipulations in variables
+  const varClassRegex = /(?:const|let|var)\s+\w+\s*=\s*['"]([^'"]+)['"]/g;
+  while ((match = varClassRegex.exec(content)) !== null) {
+    // Only consider if it looks like a class name (avoid capturing all strings)
+    const potentialClasses = match[1].split(/\s+/);
+    potentialClasses.forEach((cls) => {
+      // Heuristic: class names often contain dashes or match BEM patterns
+      if (
+        cls.includes("-") ||
+        /^[a-z][a-z0-9]*(?:__[a-z0-9]+)?(?:--[a-z0-9]+)?$/.test(cls)
+      ) {
+        selectors.add(cls.trim());
+      }
+    });
+  }
+
+  // getAttribute and setAttribute for class
+  const getSetAttributeRegex =
+    /(?:get|set)Attribute\(['"]class['"],\s*['"]([^'"]+)['"]\)/g;
+  while ((match = getSetAttributeRegex.exec(content)) !== null) {
+    match[1].split(/\s+/).forEach((cls) => selectors.add(cls.trim()));
+  }
+
+  // CSS-in-JS style objects
+  const cssInJsRegex =
+    /(?:styled|css|className)\s*(?:=|\()\s*[`'"]([^`'"]*)[`'"]/g;
+  while ((match = cssInJsRegex.exec(content)) !== null) {
+    const cssContent = match[1];
+    const classMatches = cssContent.match(/\.[a-zA-Z0-9_-]+/g);
+    if (classMatches) {
+      classMatches.forEach((cls) => selectors.add(cls.substring(1)));
+    }
+  }
+
+  // Data attributes that might contain classes
+  const dataClassRegex =
+    /data-(?:class|toggle|target|parent)=['"]([^'"]+)['"]/g;
+  while ((match = dataClassRegex.exec(content)) !== null) {
+    match[1].split(/\s+/).forEach((cls) => selectors.add(cls.trim()));
+  }
+
+  // Animation/transition classes often added dynamically
+  const animationRegex =
+    /(?:add|remove)Class\(['"]([^'"]*(?:enter|leave|active|transition|animate|fade|slide)[^'"]*)['"]/g;
+  while ((match = animationRegex.exec(content)) !== null) {
+    match[1].split(/\s+/).forEach((cls) => selectors.add(cls.trim()));
   }
 
   return Array.from(selectors);
@@ -364,48 +731,7 @@ export const removeUnusedCSS = async (res) => {
       })),
       defaultExtractor: contentExtractor,
       // Enhanced safelist for JavaScript-driven classes
-      safelist: {
-        standard: [
-          // Common state classes
-          "active",
-          "selected",
-          "current",
-          "show",
-          "hide",
-          "open",
-          "visible",
-          "hidden",
-          "disabled",
-          "expanded",
-          "collapsed",
-          "loading",
-          // Common animation classes
-          "fade",
-          "slide",
-          "animate",
-          "transition",
-        ],
-        deep: [
-          // Pattern prefixes
-          /^is-/,
-          /^has-/,
-          /^js-/,
-          /^state-/,
-          /^data-/,
-          // Component-specific patterns
-          /--active/,
-          /--open/,
-          /--visible/,
-        ],
-        greedy: [
-          // State suffixes
-          /-(active|selected|visible|show|hide|open|close|enabled|disabled)$/,
-          // Animation suffixes
-          /-(enter|leave|enter-active|leave-active|in|out|start|end)$/,
-          // Common utility patterns
-          /-(sm|md|lg|xl|2xl|hover|focus|active|disabled|first|last)$/,
-        ],
-      },
+      safelist: enhancedSafelist,
     });
 
     console.log(`PurgeCSS completed. Processed ${result.length} CSS files.`);
