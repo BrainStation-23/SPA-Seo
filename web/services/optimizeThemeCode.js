@@ -1,6 +1,7 @@
 import { GetThemeFilesPaginated, UpdateThemeFiles } from "../graphql/theme.js";
 import { queryDataWithVariables } from "../utils/getQueryData.js";
 import { getOptimizedCss } from "../utils/purgeCssUtil.js";
+import { processJsFilesWithTerser } from "../utils/terserUtil.js";
 
 const getAllCssFilesForLiveTheme = async (res) => {
   const cssFiles = [],
@@ -66,16 +67,16 @@ const getAllCssFilesForLiveTheme = async (res) => {
  * Updates the Shopify theme with purged CSS files
  * Takes the purgeCSS results and updates each file in the theme
  * @param {Object} res - Response object for GraphQL mutations
- * @param {Array} purgeCSSResults - Results from the PurgeCSS operation
+ * @param {Array<{filename: string, content: string}>} results - Results from the optimization operation
  * @param {string} themeId - ID of the theme to update
  */
-const updateThemeWithPurgedCSS = async (res, purgeCSSResults, themeId) => {
+const updateThemeWithOptimizedResutls = async (res, results, themeId) => {
   try {
     console.log("Starting theme update with purged CSS...");
 
     // Process each purged CSS file
-    for (const result of purgeCSSResults) {
-      console.log(`Updating ${result.file}...`);
+    for (const result of results) {
+      console.log(`Updating ${result.filename}...`);
 
       // Execute the theme asset update mutation
       const updateResponse = await queryDataWithVariables(
@@ -85,10 +86,10 @@ const updateThemeWithPurgedCSS = async (res, purgeCSSResults, themeId) => {
           themeId,
           files: [
             {
-              filename: result.file,
+              filename: result.filename,
               body: {
                 type: "TEXT",
-                value: result.css,
+                value: result.content,
               },
             },
           ],
@@ -97,7 +98,7 @@ const updateThemeWithPurgedCSS = async (res, purgeCSSResults, themeId) => {
 
       if (updateResponse.errors) {
         throw new Error(
-          `Error updating ${result.file}: ${JSON.stringify(
+          `Error updating ${result.filename}: ${JSON.stringify(
             updateResponse.errors
           )}`
         );
@@ -106,12 +107,12 @@ const updateThemeWithPurgedCSS = async (res, purgeCSSResults, themeId) => {
       const updateResult = updateResponse.data.themeFilesUpsert;
       if (updateResult.userErrors && updateResult.userErrors.length > 0) {
         throw new Error(
-          `User errors updating ${result.file}: ${JSON.stringify(
+          `User errors updating ${result.filename}: ${JSON.stringify(
             updateResult.userErrors
           )}`
         );
       }
-      console.log(`Successfully updated ${result.file}`);
+      console.log(`Successfully updated ${result.filename}`);
     }
     console.log("Theme update with purged CSS completed.");
   } catch (error) {
@@ -120,7 +121,7 @@ const updateThemeWithPurgedCSS = async (res, purgeCSSResults, themeId) => {
   }
 };
 
-export const removeUnusedCSS = async (res) => {
+export const optimizeTheme = async (res) => {
   try {
     console.log("Starting PurgeCSS operation...");
     const { cssFiles, liquidFiles, jsFiles, themeId, shopId } =
@@ -131,11 +132,12 @@ export const removeUnusedCSS = async (res) => {
     console.log("Processing all CSS files against all Liquid and JS files...");
 
     const result = await getOptimizedCss(liquidFiles, jsFiles, cssFiles);
+    const removeJsResult = await processJsFilesWithTerser(jsFiles);
     console.log(`PurgeCSS completed. Processed ${result.length} CSS files.`);
 
     // Filter results to only include files with non-zero reduction
-    const filteredResult = [],
-      bytesSavedArray = [];
+    const bytesSavedArray = [],
+      updatedThemeFiles = [];
 
     // Log stats and filter files with non-zero reduction
     result.forEach((item) => {
@@ -154,10 +156,7 @@ export const removeUnusedCSS = async (res) => {
       // Only add to filteredResult if there's a meaningful reduction (> 0%)
       if (parseFloat(reduction) > 0) {
         // Add the original size to the item for use in updateThemeWithPurgedCSS
-        filteredResult.push({
-          ...item,
-          originalSize: originalSize,
-        });
+        updatedThemeFiles.push({ filename: item.file, content: item.css });
         bytesSavedArray.push({
           filename: item.file,
           originalSize,
@@ -170,17 +169,45 @@ export const removeUnusedCSS = async (res) => {
       }
     });
 
-    console.log(
-      `${filteredResult.length} out of ${result.length} CSS files will be updated.`
-    );
+    removeJsResult.forEach((item) => {
+      const {
+        actionsTakenLog,
+        filename,
+        finalSize,
+        hasChanged,
+        optimizedContent,
+        originalContent,
+        originalSize,
+      } = item;
+      const reduction =
+        originalSize > 0
+          ? (((originalSize - finalSize) / originalSize) * 100).toFixed(2)
+          : 0;
+
+      actionsTakenLog.forEach((str) => console.log(str));
+
+      if (hasChanged) {
+        updatedThemeFiles.push({
+          filename,
+          content: optimizedContent,
+        });
+        console.log(
+          `${filename}: ${reduction}% reduction (${originalSize} → ${finalSize} bytes)`
+        );
+      } else {
+        console.log(
+          `${filename}: ${reduction}% reduction (${originalSize} → ${finalSize} bytes)\nFile skipped`
+        );
+      }
+    });
 
     // Only proceed with theme update if there are files to update
-    if (filteredResult.length === 0) {
-      console.log("No CSS files require updating. Theme update skipped.");
+    if (updatedThemeFiles.length === 0) {
+      console.log("No files require updating. Theme update skipped.");
       return [];
     }
 
-    await updateThemeWithPurgedCSS(res, filteredResult, themeId);
+    await updateThemeWithOptimizedResutls(res, updatedThemeFiles, themeId);
 
     return bytesSavedArray;
   } catch (error) {

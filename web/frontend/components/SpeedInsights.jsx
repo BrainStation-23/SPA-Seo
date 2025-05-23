@@ -409,13 +409,6 @@ export default function SpeedInsights() {
                 }}
               />
             </BlockStack>
-            <Button
-              onClick={() => {
-                callSomething();
-              }}
-            >
-              Test
-            </Button>
           </Box>
         </InlineStack>
       </BlockStack>
