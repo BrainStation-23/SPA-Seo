@@ -1,18 +1,19 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   Tabs,
   Text,
   Box,
   Button,
-  Icon,
   Badge,
   BlockStack,
   InlineStack,
+  IndexTable,
   ButtonGroup,
   Divider,
   ProgressBar,
   SkeletonBodyText,
+  useBreakpoints,
 } from "@shopify/polaris";
 import {
   MobileIcon,
@@ -25,6 +26,7 @@ import {
 import { SpeedFeatureCard } from "./SpeedFeatureCard";
 import { useUI } from "../contexts/ui.context";
 import useFetchQuery from "../hooks/useGlobalQuery";
+import useFetchMutation from "../hooks/useGlobalMutation";
 import {
   getColorFromScore,
   getToneFromCLS,
@@ -51,6 +53,12 @@ export default function SpeedInsights() {
     dependency: [device],
   });
   console.log("🚀 ~ SpeedInsights ~ insightsData:", insightsData);
+
+  // testing api hit part
+  const { mutate: callSomething } = useFetchMutation(
+    "/api/seo/optimize-css",
+    "testgg"
+  );
 
   const { appBilling, speedInsights, setSpeedInsights } = useUI();
   console.log("🚀 ~ SpeedInsights ~ appBilling:", appBilling, speedInsights);
@@ -119,7 +127,6 @@ export default function SpeedInsights() {
     resetProgress();
     setShowDropdown(false);
   };
-
   const handleTabChange = (selectedTabIndex) => {
     setSelected(selectedTabIndex);
   };
@@ -288,6 +295,14 @@ export default function SpeedInsights() {
                         size="small"
                         tone="primary"
                       />
+
+                      {/* testing UI */}
+                      {false && <Divider borderWidth="050" />}
+                      {false && (
+                        <Card padding={"0"} paddingBlock={"150"}>
+                          <IndexTableWithoutCheckboxesExample />
+                        </Card>
+                      )}
                     </BlockStack>
                   </Box>
                 )}
@@ -471,6 +486,87 @@ function SeoScore({ score }) {
           {score}
         </Text>
       </div>
+    </Box>
+  );
+}
+
+function IndexTableWithoutCheckboxesExample() {
+  const orders = [
+    {
+      id: "1020",
+      order: "#1020",
+      date: "Jul 20 at 4:34pm",
+      customer: "Jaydon Stanton",
+      total: "$969.44",
+      paymentStatus: <Badge progress="complete">Paid</Badge>,
+      fulfillmentStatus: <Badge progress="incomplete">Unfulfilled</Badge>,
+    },
+    {
+      id: "1019",
+      order: "#1019",
+      date: "Jul 20 at 3:46pm",
+      customer: "Ruben Westerfelt",
+      total: "$701.19",
+      paymentStatus: <Badge progress="partiallyComplete">Partially paid</Badge>,
+      fulfillmentStatus: <Badge progress="incomplete">Unfulfilled</Badge>,
+    },
+    {
+      id: "1018",
+      order: "#1018",
+      date: "Jul 20 at 3.44pm",
+      customer: "Leo Carder",
+      total: "$798.24",
+      paymentStatus: <Badge progress="complete">Paid</Badge>,
+      fulfillmentStatus: <Badge progress="incomplete">Unfulfilled</Badge>,
+    },
+  ];
+  const resourceName = {
+    singular: "order",
+    plural: "orders",
+  };
+
+  const rowMarkup = orders.map(
+    (
+      { id, order, date, customer, total, paymentStatus, fulfillmentStatus },
+      index
+    ) => (
+      <IndexTable.Row id={id} key={id} position={index}>
+        <IndexTable.Cell>
+          <Text variant="bodyMd" fontWeight="bold" as="span">
+            {order}
+          </Text>
+        </IndexTable.Cell>
+        <IndexTable.Cell>{date}</IndexTable.Cell>
+        <IndexTable.Cell>{customer}</IndexTable.Cell>
+        <IndexTable.Cell>
+          <Text as="span" alignment="end" numeric>
+            {total}
+          </Text>
+        </IndexTable.Cell>
+        <IndexTable.Cell>{paymentStatus}</IndexTable.Cell>
+        <IndexTable.Cell>{fulfillmentStatus}</IndexTable.Cell>
+      </IndexTable.Row>
+    )
+  );
+
+  return (
+    <Box padding={"0"}>
+      <IndexTable
+        condensed={useBreakpoints().smDown}
+        resourceName={resourceName}
+        itemCount={orders.length}
+        headings={[
+          { title: "Order" },
+          { title: "Date" },
+          { title: "Customer" },
+          { title: "Total", alignment: "end" },
+          { title: "Payment status" },
+          { title: "Fulfillment status" },
+        ]}
+        selectable={false}
+      >
+        {rowMarkup}
+      </IndexTable>
     </Box>
   );
 }

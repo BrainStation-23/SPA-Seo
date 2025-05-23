@@ -28,6 +28,13 @@ export const fetchWithProgess = async (
       } else if (key === "isStreamLineLoading") {
       } else if (key === "isOptimizedLoading") {
       } else if (key === "isAssetFileOptimization") {
+        await fetcher("/api/seo/optimize-css", {
+          method: "POST",
+          body: JSON.stringify({}),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
       } else if (key === "isStreamlineCode") {
       } else {
         await new Promise((resolve) =>

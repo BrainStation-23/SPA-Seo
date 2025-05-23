@@ -27,8 +27,10 @@
     "joi": "^17.13.3",
     "mongoose": "^8.14.2",
     "multer": "^1.4.5-lts.2",
+    "purgecss": "^7.0.2",
     "serve-static": "^1.14.1",
-    "sharp": "^0.33.5"
+    "sharp": "^0.33.5",
+    "terser": "^5.39.2"
   },
   "devDependencies": {
     "nodemon": "^2.0.15",

@@ -1,7 +1,7 @@
-import shopify from "../shopify.js";
 import SpeedInsights from "../models/speedInsights.js";
 import { GetThemeFile, UpdateThemeFiles } from "../graphql/theme.js";
 import { queryDataWithVariables } from "../utils/getQueryData.js";
+import { optimizeTheme } from "../services/optimizeThemeCode.js";
 
 export const getSeoInsightsController = async (req, res, next) => {
   const { device = "desktop" } = req.query;
@@ -225,6 +225,24 @@ export const speedInsightsController = async (req, res, next) => {
     return res.status(500).json({
       success: false,
       message: "Failed to optimize theme files",
+      error: error.message,
+    });
+  }
+};
+
+export const optimizeCssForLiveTheme = async (req, res, next) => {
+  try {
+    const bytesSaved = await optimizeTheme(res);
+    return res.status(200).json({
+      success: true,
+      bytesSaved,
+      message: "Optimized CSS for live theme files successfully",
+    });
+  } catch (error) {
+    console.error("Optimize CSS Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to optimize css for theme files",
       error: error.message,
     });
   }
