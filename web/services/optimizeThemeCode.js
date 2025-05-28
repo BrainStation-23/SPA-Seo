@@ -131,7 +131,7 @@ export const optimizeTheme = async (res) => {
     );
     console.log("Processing all CSS files against all Liquid and JS files...");
 
-    const result = await getOptimizedCss(liquidFiles, jsFiles, cssFiles);
+    const result = await getOptimizedCss(cssFiles);
     const removeJsResult = await processJsFilesWithTerser(jsFiles);
     console.log(`PurgeCSS completed. Processed ${result.length} CSS files.`);
 

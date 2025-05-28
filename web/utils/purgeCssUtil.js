@@ -54,7 +54,7 @@ const cleanCssLightweight = (cssContent) => {
  * @returns {Promise<Array<{file: string, css: string}>>}
  * Array of objects, where `css` is the cleaned CSS content.
  */
-export const getOptimizedCss = async (liquidFiles, jsFiles, cssFiles) => {
+export const getOptimizedCss = async (cssFiles) => {
   console.log(
     "[CSSUtil] Starting lightweight CSS cleaning (comment and newline removal only)..."
   );
