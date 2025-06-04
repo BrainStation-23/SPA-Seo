@@ -42,3 +42,38 @@ mutation UpdateThemeFiles($files: [OnlineStoreThemeFilesUpsertFileInput!]!, $the
     }
   }
 }`;
+
+export const GetAllThemeFiles = `#graphql
+query GetAllThemeFiles($count: Int!, $after: String) {
+  themes(first: 1, roles: MAIN) {
+    edges {
+      node {
+        id
+        files(first: $count, after: $after) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          edges {
+            cursor
+            node {
+              filename
+              size
+              createdAt
+              updatedAt
+              checksumMd5
+              contentType
+              body {
+                ... on OnlineStoreThemeFileBodyText {
+                  content
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}`; 
+
+
