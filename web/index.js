@@ -22,6 +22,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import { connectDB } from "./utils/mongoDBConnection.js";
+import htmlCleanerRoute from "./routes/htmlCleanerRoutes.js";
 
 dotenv.config();
 
@@ -97,6 +98,7 @@ app.use("/api/image-compression", imageCompression);
 app.use("/api/products", productsRoute);
 app.use("/api/AI", AIRouter);
 app.use("/api/billing", appBilling);
+app.use("/api/html-cleaner", htmlCleanerRoute);
 
 app.use(shopify.cspHeaders());
 app.use(serveStatic(STATIC_PATH, { index: false }));

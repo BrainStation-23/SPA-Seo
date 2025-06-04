@@ -79,6 +79,20 @@ mutation UpdateThemeFiles($files: [OnlineStoreThemeFilesUpsertFileInput!]!, $the
   }
 }`;
 
+// Will think about this a bit later down the line
+export const createStagedUploadUrl = `#graphql
+mutation stagedUploadsCreate($input: [StagedUploadInput!]!) {
+  stagedUploadsCreate(input: $input) {
+    stagedTargets {
+      url
+      resourceUrl
+      parameters {
+        name
+        value
+      }
+    }
+  }
+}`;
 export const GetAllThemeFiles = `#graphql
 query GetAllThemeFiles($count: Int!, $after: String) {
   themes(first: 1, roles: MAIN) {
@@ -110,6 +124,4 @@ query GetAllThemeFiles($count: Int!, $after: String) {
       }
     }
   }
-}`; 
-
-
+}`;
