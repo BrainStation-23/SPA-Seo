@@ -23,6 +23,9 @@ import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import { connectDB } from "./utils/mongoDBConnection.js";
 
+// NEW: Import the HTML Cleaner routes
+// import htmlCleanerRoute from "./routes/htmlCleaner.js"; // We will create this file next
+
 dotenv.config();
 
 const PORT = parseInt(
@@ -96,6 +99,9 @@ app.use("/api/image-compression", imageCompression);
 app.use("/api/products", productsRoute);
 app.use("/api/AI", AIRouter);
 app.use("/api/billing", appBilling);
+
+// NEW: Add the HTML Cleaner routes
+// app.use("/api/html-cleaner", htmlCleanerRoute);
 
 app.use(shopify.cspHeaders());
 app.use(serveStatic(STATIC_PATH, { index: false }));
