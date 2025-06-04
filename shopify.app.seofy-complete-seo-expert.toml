@@ -8,7 +8,7 @@ embedded = true
 
 [build]
 automatically_update_urls_on_dev = true
-dev_store_url = "algorithm-with-shop.myshopify.com"
+dev_store_url = "joy-matubber-store.myshopify.com"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
