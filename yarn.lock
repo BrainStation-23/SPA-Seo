@@ -5221,6 +5221,16 @@ punycode@^2.1.1, punycode@^2.3.1:
   resolved "https://registry.npmjs.org/punycode/-/punycode-2.3.1.tgz"
   integrity sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==
 
+purgecss@^7.0.2:
+  version "7.0.2"
+  resolved "https://registry.npmjs.org/purgecss/-/purgecss-7.0.2.tgz"
+  integrity sha512-4Ku8KoxNhOWi9X1XJ73XY5fv+I+hhTRedKpGs/2gaBKU8ijUiIKF/uyyIyh7Wo713bELSICF5/NswjcuOqYouQ==
+  dependencies:
+    commander "^12.1.0"
+    glob "^11.0.0"
+    postcss "^8.4.47"
+    postcss-selector-parser "^6.1.2"
+
 qs@6.13.0:
   version "6.13.0"
   resolved "https://registry.npmjs.org/qs/-/qs-6.13.0.tgz"
@@ -5819,6 +5829,7 @@ shebang-regex@^3.0.0:
     joi "^17.13.3"
     mongoose "^8.14.2"
     multer "^1.4.5-lts.2"
+    purgecss "^7.0.2"
     serve-static "^1.14.1"
     sharp "^0.33.5"
 

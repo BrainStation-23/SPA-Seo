@@ -45,6 +45,11 @@ app.use(
 
 connectDB();
 
+app.post(
+  shopify.config.webhooks.path,
+  shopify.processWebhooks({ webhookHandlers: GDPRWebhookHandlers })
+);
+
 app.use(express.json());
 app.use(cookieParser());
 
@@ -54,10 +59,6 @@ app.get(
   shopify.config.auth.callbackPath,
   shopify.auth.callback(),
   shopify.redirectToShopifyOrAppRoot()
-);
-app.post(
-  shopify.config.webhooks.path,
-  shopify.processWebhooks({ webhookHandlers: GDPRWebhookHandlers })
 );
 
 // If you are adding routes outside of the /api path, remember to
