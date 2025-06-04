@@ -4,6 +4,7 @@ import {
   toggleInstantPages,
   updateSpeedEffects,
   speedInsightsController,
+  optimizeCssForLiveTheme,
   minificationDeferController,
 } from "../controllers/seoInsights.js";
 import { speedInsightsValidationSchema } from "../validators/seoInsights.js";
@@ -19,6 +20,7 @@ router.post(
   updateSpeedEffects
 );
 router.post("/lazy-loading", speedInsightsController);
+router.post("/optimize-css", optimizeCssForLiveTheme);
 router.post("/minification-defer", minificationDeferController);
 
 export default router;

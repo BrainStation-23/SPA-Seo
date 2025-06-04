@@ -1,0 +1,28 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "4a8105f24e04b6b1e217541b65cb7b16"
+name = "app-testing-bs23"
+handle = "app-testing-bs23"
+application_url = "https://luis-spray-expansion-jpeg.trycloudflare.com"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "algorithm-with-shop.myshopify.com"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products,read_themes,write_products,write_themes"
+
+[auth]
+redirect_urls = [
+  "https://luis-spray-expansion-jpeg.trycloudflare.com/auth/callback",
+  "https://luis-spray-expansion-jpeg.trycloudflare.com/auth/shopify/callback",
+  "https://luis-spray-expansion-jpeg.trycloudflare.com/api/auth/callback"
+]
+
+[webhooks]
+api_version = "2024-07"
+
+[pos]
+embedded = false
