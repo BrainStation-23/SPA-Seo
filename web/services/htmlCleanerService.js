@@ -1,17 +1,253 @@
-import cheerio from "cheerio";
+// File: SPA-Seo/web/services/htmlCleanerService.js
 
-/**
- * @typedef {Object} CleanerReport
- * @property {number} originalLength - Original length of the HTML string.
- * @property {number} cleanedLength - Length of the cleaned HTML string.
- * @property {number} bytesSaved - Bytes saved after cleaning.
- * @property {number} metaTagsRemoved - Count of removed meta tags.
- * @property {number} emptyElementsRemoved - Count of removed empty/redundant elements.
- * @property {number} attributesRemoved - Count of removed attributes.
- * @property {number} commentsRemoved - Count of removed HTML comments.
- * @property {number} elementsWhitelisted - Count of elements explicitly kept.
- * @property {number} attributesWhitelisted - Count of attributes explicitly kept.
- */
+import { load } from "cheerio"; // Corrected Cheerio import
+
+// --- STATIC CONFIGURATION ---
+const STATIC_CLEANER_CONFIG = {
+  enabled: true,
+  metaTagsToRemove: [
+    "seogid",
+    "generator",
+    "shopify-digital-wallet",
+    "x-shopify-theme",
+    "csrf-token",
+  ],
+  emptyElementsToRemove: ["div", "span", "p", "section"],
+  attributesToRemovePatterns: [
+    "^data-shopify-tracking",
+    "^data-mce-",
+    "^data-gramm_id",
+    "^data-gramm",
+    "^data-test-",
+    "debug-id",
+  ],
+  removeAllUncategorizedDataAttributes: false,
+  removeEmptyStyles: true,
+  removeHtmlComments: true,
+  collapseWhitespace: true,
+  whitelist: {
+    tags: new Set([
+      "script",
+      "style",
+      "template",
+      "form",
+      "input",
+      "select",
+      "textarea",
+      "button",
+      "iframe",
+      "link",
+      "meta",
+      "br",
+      "hr",
+      "img",
+      "canvas",
+      "video",
+      "audio",
+      "pre",
+      "code",
+      "svg",
+      "path",
+      "noscript",
+      "source",
+      "track",
+      "figure",
+      "figcaption",
+    ]),
+    attributes: new Set([
+      "id",
+      "class",
+      "style",
+      "href",
+      "src",
+      "action",
+      "method",
+      "type",
+      "value",
+      "name",
+      "rel",
+      "target",
+      "alt",
+      "title",
+      "for",
+      "role",
+      "aria-label",
+      "aria-labelledby",
+      "aria-describedby",
+      "aria-hidden",
+      "aria-expanded",
+      "aria-controls",
+      "aria-live",
+      "aria-pressed",
+      "aria-checked",
+      "aria-selected",
+      "aria-current",
+      "aria-required",
+      "aria-disabled",
+      "aria-invalid",
+      "disabled",
+      "readonly",
+      "required",
+      "checked",
+      "selected",
+      "pattern",
+      "placeholder",
+      "autocomplete",
+      "spellcheck",
+      "contenteditable",
+      "media",
+      "property",
+      "content",
+      "charset",
+      "http-equiv",
+      "itemscope",
+      "itemtype",
+      "itemprop",
+      "datetime",
+      "lang",
+      "dir",
+      "data-section-id",
+      "data-section-type",
+      "data-shopify-editor-section",
+      "data-shopify-editor-block",
+      "data-product-id",
+      "data-product-handle",
+      "data-variant-id",
+      "data-shopify",
+      "data-handle",
+      "data-value",
+      "data-index",
+      "data-filter",
+      "data-filter-type",
+      "data-cart-render",
+      "data-cart-static-render",
+      "data-ajax-cart-section",
+      "data-modal-id",
+      "data-modal-target",
+      "data-bs-toggle",
+      "data-bs-target",
+      "data-toggle",
+      "data-target",
+      "data-component",
+      "data-action",
+      "data-bind",
+      "data-js",
+      "data-module",
+      "data-controller",
+      "onclick",
+      "onsubmit",
+      "onchange",
+      "onkeyup",
+      "onkeydown",
+      "onkeypress",
+      "onfocus",
+      "onblur",
+      "oninput",
+      "onload",
+      "onerror",
+      "onmouseover",
+      "onmouseout",
+      "viewbox",
+      "xmlns",
+      "fill",
+      "stroke",
+      "stroke-width",
+      "d",
+      "preserveaspectratio",
+      "x",
+      "y",
+      "width",
+      "height",
+      "cx",
+      "cy",
+      "r",
+      "rx",
+      "ry",
+      "fx",
+      "fy",
+      "points",
+      "transform",
+      "gradientunits",
+      "spreadmethod",
+      "offset",
+      "stop-color",
+      "stop-opacity",
+    ]),
+    classes: new Set([
+      "shopify-challenge__container",
+      "shopify-payment-button__button",
+      "product-form",
+      "product-form__input",
+      "product-form__submit",
+      "cart-form",
+      "js-",
+      "is-active",
+      "is-visible",
+      "is-hidden",
+      "active",
+      "hidden",
+      "open",
+      "no-js",
+      "lazyload",
+      "lazyloading",
+      "lazyloaded",
+    ]),
+    shopifyRequiredSelectors: [
+      'form[action^="/cart"]',
+      'form[action^="/account"]',
+      'form[action^="/contact"]',
+      'form[action*="product_id"]',
+      'form[action*="/localization"]',
+      'form[action*="/currency"]',
+      '[id^="shopify-section-"]',
+      ".shopify-payment-button",
+      '[data-shopify="payment-button"]',
+      "#shopify-content",
+      ".product-form",
+      "[data-product-form]",
+      "[data-productid]",
+      '[id^="product-form-"]',
+      ".cart-form",
+      'script[src*="shopify_common.js"]',
+      'script[src*="option_selection.js"]',
+      'script[id="shopify-features"]',
+      'script[type="application/json"][data-product-json]',
+      'meta[name="csrf-token"]',
+      'meta[property^="og:"]',
+      'meta[name^="twitter:"]',
+      'link[rel="canonical"]',
+      'link[rel="alternate"]',
+      'link[rel="preconnect"]',
+      "[data-shopify-editor-section]",
+      "[data-shopify-editor-block]",
+      "#MainContent",
+      "#PageContainer",
+      "#cart-drawer",
+      "#CartDrawer",
+      "[data-section-id][data-section-type]",
+      'script[type="application/ld+json"]',
+      "iframe",
+    ],
+    commentPatternsToKeep: [
+      "^\\[if\\s",
+      "^<!\\[endif\\]",
+      "Copyright",
+      "license",
+      "^eslint-",
+      "^stylelint-",
+      "^prettier-",
+      "^webpackChunkName:",
+      "^\\s*global\\s",
+      "^\\s*exported\\s",
+      "NOTE:",
+      "TODO:",
+      "FIXME:",
+    ],
+  },
+};
+// --- END OF STATIC CONFIGURATION ---
+
+/** @typedef {import('./htmlCleanerService').CleanerReport} CleanerReport */ // For JSDoc
 
 const _compileRegexPatterns = (patternsArray, defaultFlags = "i") => {
   if (!patternsArray || !Array.isArray(patternsArray)) return [];
@@ -28,7 +264,7 @@ const _compileRegexPatterns = (patternsArray, defaultFlags = "i") => {
         return new RegExp(escapedPatternStr, defaultFlags);
       } catch (e) {
         console.warn(
-          `Invalid regex pattern string in config: "${patternStr}". Error: ${e.message}`
+          `Invalid regex pattern: "${patternStr}". Error: ${e.message}`
         );
         return null;
       }
@@ -36,18 +272,16 @@ const _compileRegexPatterns = (patternsArray, defaultFlags = "i") => {
     .filter((p) => p instanceof RegExp);
 };
 
-const _removeMetaTags = ($, config, report, isLiquid) => {
-  const metaTagsToRemove = config.metaTagsToRemove || [];
-  metaTagsToRemove.forEach((tagName) => {
+const _removeMetaTags = ($, config, report, isLiquidFile) => {
+  (config.metaTagsToRemove || []).forEach((tagName) => {
     const selector = `meta[name="${tagName}"], meta[property="${tagName}"]`;
     $(selector).each((i, el) => {
       const element = $(el);
-      // For Liquid, ensure the meta tag doesn't contain Liquid output that might make its removal unsafe
       if (
-        isLiquid &&
+        isLiquidFile &&
         (element.html()?.includes("{{") || element.html()?.includes("{%"))
       ) {
-        report.elementsWhitelisted += 1;
+        report.elementsWhitelisted = (report.elementsWhitelisted || 0) + 1;
         return;
       }
       element.remove();
@@ -56,7 +290,7 @@ const _removeMetaTags = ($, config, report, isLiquid) => {
   });
 };
 
-const _removeHtmlComments = ($, config, report, isLiquid) => {
+const _removeHtmlComments = ($, config, report, isLiquidFile) => {
   if (!config.removeHtmlComments) return;
   const patternsToKeep = _compileRegexPatterns(
     config.whitelist?.commentPatternsToKeep || [],
@@ -69,19 +303,15 @@ const _removeHtmlComments = ($, config, report, isLiquid) => {
     .each((i, el) => {
       const commentNode = $(el);
       const commentText = commentNode.text() || "";
-      // Skip if comment contains Liquid - too risky to remove automatically
       if (
-        isLiquid &&
+        isLiquidFile &&
         (commentText.includes("{{") || commentText.includes("{%"))
       ) {
-        report.elementsWhitelisted += 1;
+        report.elementsWhitelisted = (report.elementsWhitelisted || 0) + 1;
         return;
       }
-      let keepComment = patternsToKeep.some((pattern) =>
-        pattern.test(commentText)
-      );
-      if (keepComment) {
-        report.elementsWhitelisted += 1;
+      if (patternsToKeep.some((pattern) => pattern.test(commentText))) {
+        report.elementsWhitelisted = (report.elementsWhitelisted || 0) + 1;
         return;
       }
       commentNode.remove();
@@ -89,46 +319,60 @@ const _removeHtmlComments = ($, config, report, isLiquid) => {
     });
 };
 
-const _removeUnnecessaryAttributes = ($, config, report, isLiquid) => {
+const _removeUnnecessaryAttributes = ($, config, report, isLiquidFile) => {
   const attributesToRemovePatterns = _compileRegexPatterns(
     config.attributesToRemovePatterns || []
   );
-  const whitelistAttributes = config.whitelist?.attributes || new Set();
+  const whitelistAttributes = config.whitelist?.attributes;
 
   $("*").each((i, el) => {
     const element = $(el);
     const attributes = { ...el.attribs };
     for (const attrName in attributes) {
       const attrNameLower = attrName.toLowerCase();
-      let attrValue = attributes[attrName];
+      const attrValue = attributes[attrName];
 
-      // If processing Liquid and attribute value contains Liquid, be very careful or skip.
-      // For now, we'll assume attribute removal patterns are for static parts.
-      if ((isLiquid && attrValue.includes("{{")) || attrValue.includes("{%")) {
+      // ** CRITICAL GUARD FOR LIQUID IN ATTRIBUTE VALUES **
+      if (
+        isLiquidFile &&
+        (attrValue.includes("{{") || attrValue.includes("{%"))
+      ) {
+        // If the attribute value contains Liquid, do not remove it by general patterns or generic data-* removal rules.
+        // Only allow removal if it's an empty style attribute (which is less likely to contain Liquid if truly empty).
+        // Or if it's on a specific "safe to remove even if value is liquid" list (not implemented here).
         if (
           attrNameLower === "style" &&
           config.removeEmptyStyles &&
           attrValue.trim() === ""
         ) {
-          // An empty style attribute with no liquid is safe to remove
-        } else if (
-          attributesToRemovePatterns.some((pattern) => pattern.test(attrName))
-        ) {
-          // If a pattern matches an attribute containing liquid, it's risky.
-          // We might want to log this or have a specific whitelist for such cases.
-          // For now, let's be cautious and potentially skip if pattern matches but value has liquid.
-          // This part needs careful thought on "how smart" it should be.
-          // A simple safe rule: if `isLiquid` and `attrValue` has Liquid, don't remove by pattern unless pattern is VERY specific.
-          // For now, the current logic will proceed, which could be risky.
+          // Ok to remove empty style="" even if isLiquidFile is true, as Liquid is not present in value.
         } else {
-          // If it's a liquid-containing attribute not matching other rules, let it be.
-          report.attributesWhitelisted += 1;
-          continue;
+          // For any other attribute whose value contains Liquid, treat it as whitelisted against general removal.
+          // Check if it would have been removed by a pattern or by removeAllUncategorizedDataAttributes
+          const wouldBeRemovedByPattern = attributesToRemovePatterns.some(
+            (pattern) => pattern.test(attrName)
+          );
+          const wouldBeRemovedByDataRule =
+            config.removeAllUncategorizedDataAttributes &&
+            attrNameLower.startsWith("data-") &&
+            !whitelistAttributes.has(attrNameLower);
+
+          if (wouldBeRemovedByPattern || wouldBeRemovedByDataRule) {
+            console.warn(
+              `[Liquid File] Attribute '${attrName}' with value "${attrValue.substring(
+                0,
+                30
+              )}..." was targeted for removal but kept because its value contains Liquid.`
+            );
+            report.attributesWhitelisted =
+              (report.attributesWhitelisted || 0) + 1;
+          }
+          continue; // Skip all further removal logic for this Liquid-containing attribute
         }
       }
 
       if (whitelistAttributes.has(attrNameLower)) {
-        report.attributesWhitelisted += 1;
+        report.attributesWhitelisted = (report.attributesWhitelisted || 0) + 1;
         continue;
       }
       if (
@@ -137,26 +381,13 @@ const _removeUnnecessaryAttributes = ($, config, report, isLiquid) => {
         attrValue.trim() === ""
       ) {
         element.removeAttr(attrName);
-        report.attributesRemoved += 1;
+        report.attributesRemoved = (report.attributesRemoved || 0) + 1;
         continue;
       }
       let removedByPattern = attributesToRemovePatterns.some((pattern) => {
         if (pattern.test(attrName)) {
-          // If it's a liquid file and the value contains liquid, do not remove by general pattern
-          // unless the pattern is extremely specific and known to be safe with liquid.
-          // This is a safety net.
-          if (
-            isLiquid &&
-            (attrValue.includes("{{") || attrValue.includes("{%"))
-          ) {
-            console.warn(
-              `[Liquid File] Attribute '${attrName}' matches removal pattern but contains Liquid. Skipped removal.`
-            );
-            report.attributesWhitelisted += 1;
-            return false; // Don't remove
-          }
           element.removeAttr(attrName);
-          report.attributesRemoved += 1;
+          report.attributesRemoved = (report.attributesRemoved || 0) + 1;
           return true;
         }
         return false;
@@ -167,33 +398,22 @@ const _removeUnnecessaryAttributes = ($, config, report, isLiquid) => {
         config.removeAllUncategorizedDataAttributes &&
         attrNameLower.startsWith("data-")
       ) {
-        // Add same safety for data attributes with liquid content
-        if (
-          isLiquid &&
-          (attrValue.includes("{{") || attrValue.includes("{%"))
-        ) {
-          console.warn(
-            `[Liquid File] Data attribute '${attrName}' would be removed by removeAllUncategorizedDataAttributes but contains Liquid. Skipped removal.`
-          );
-          report.attributesWhitelisted += 1;
-          continue;
-        }
         element.removeAttr(attrName);
-        report.attributesRemoved += 1;
+        report.attributesRemoved = (report.attributesRemoved || 0) + 1;
       }
     }
   });
 };
 
-const _removeEmptyElements = ($, config, report, isLiquid) => {
+const _removeEmptyElements = ($, config, report, isLiquidFile) => {
   const emptyElementsToRemove = config.emptyElementsToRemove || [];
-  const whitelistTags = config.whitelist?.tags || new Set();
+  const whitelistTags = config.whitelist?.tags;
   const shopifyRequiredSelectors =
     config.whitelist?.shopifyRequiredSelectors || [];
-  // const whitelistAttributes = config.whitelist?.attributes || new Set(); // Already available in calling scope
+  const whitelistAttributes = config.whitelist?.attributes;
 
   let removedInThisPass;
-  let maxPasses = isLiquid ? 1 : 3; // Fewer passes for Liquid to be safer
+  let maxPasses = isLiquidFile ? 1 : 3;
   let currentPass = 0;
   do {
     removedInThisPass = 0;
@@ -209,63 +429,48 @@ const _removeEmptyElements = ($, config, report, isLiquid) => {
           (sel) => element.is(sel) || element.closest(sel).length > 0
         )
       ) {
-        report.elementsWhitelisted += 1;
+        report.elementsWhitelisted = (report.elementsWhitelisted || 0) + 1;
         return;
       }
-
-      // For Liquid, if the element's direct text content (which includes Liquid tags for Cheerio) is not empty, don't remove.
-      if (isLiquid && element.text().trim() !== "") {
-        // Check if text content is ONLY Liquid tags that might render nothing. This is complex.
-        // A safer bet: if it contains '{{' or '{%', assume it might render content.
-        if (element.text().includes("{{") || element.text().includes("{%")) {
-          report.elementsWhitelisted += 1;
-          return;
-        }
+      const elementTextForLiquidCheck = element.text();
+      if (
+        isLiquidFile &&
+        (elementTextForLiquidCheck.includes("{{") ||
+          elementTextForLiquidCheck.includes("{%"))
+      ) {
+        report.elementsWhitelisted = (report.elementsWhitelisted || 0) + 1;
+        return;
       }
-
       let hasNonEmptyTextNode = false;
       element.contents().each((idx, childNode) => {
         if (childNode.type === "text" && childNode.data.trim() !== "") {
-          // If processing liquid, and this text node IS a liquid tag, it's not "empty"
-          if (
-            isLiquid &&
-            (childNode.data.includes("{{") || childNode.data.includes("{%"))
-          ) {
-            hasNonEmptyTextNode = true; // Treat as non-empty
-            return false;
-          }
           hasNonEmptyTextNode = true;
           return false;
         }
       });
-
       if (element.children().length === 0 && !hasNonEmptyTextNode) {
         const attrs = Object.keys(el.attribs);
         if (attrs.length === 0) {
           element.remove();
-          report.emptyElementsRemoved += 1;
+          report.emptyElementsRemoved = (report.emptyElementsRemoved || 0) + 1;
           removedInThisPass++;
         } else {
-          // If it's a liquid file, be more hesitant to remove elements with attributes.
-          // Only remove if attributes are very clearly bloat and not potentially used by Liquid/JS.
-          // For now, if isLiquid and has attributes, let's be cautious and whitelist it.
-          if (isLiquid) {
-            report.elementsWhitelisted += 1;
+          if (isLiquidFile) {
+            report.elementsWhitelisted = (report.elementsWhitelisted || 0) + 1;
             return;
           }
           const hasProtectiveAttribute = attrs.some(
             (attr) =>
               attr.toLowerCase() === "id" ||
-              !(config.whitelist?.attributes || new Set()).has(
-                attr.toLowerCase()
-              )
+              !whitelistAttributes.has(attr.toLowerCase())
           );
           if (!hasProtectiveAttribute) {
             element.remove();
-            report.emptyElementsRemoved += 1;
+            report.emptyElementsRemoved =
+              (report.emptyElementsRemoved || 0) + 1;
             removedInThisPass++;
           } else {
-            report.elementsWhitelisted += 1;
+            report.elementsWhitelisted = (report.elementsWhitelisted || 0) + 1;
           }
         }
       }
@@ -273,17 +478,19 @@ const _removeEmptyElements = ($, config, report, isLiquid) => {
   } while (removedInThisPass > 0 && currentPass < maxPasses);
 };
 
-const _collapseWhitespace = ($, config, report, isLiquid) => {
-  if (!config.collapseWhitespace || isLiquid) {
-    // Disable for liquid files by default, too risky
-    if (isLiquid && config.collapseWhitespace) {
-      console.warn(
-        "[Liquid File] Aggressive whitespace collapsing is enabled but generally unsafe for Liquid. Skipping this step."
-      );
-    }
+const _collapseWhitespace = ($, config, report, isLiquidFile) => {
+  if (!config.collapseWhitespace) return;
+  if (isLiquidFile && config.collapseWhitespace) {
+    console.warn(
+      "[Liquid File] Whitespace collapsing enabled but applied very conservatively: only removing fully empty text nodes."
+    );
+    $.root()
+      .find("*")
+      .contents()
+      .filter((i, el) => el.type === "text" && el.data.trim() === "")
+      .remove();
     return;
   }
-  // ... (keep the previous _collapseWhitespace logic from File 6, but it's now conditional)
   const preserveWhitespaceTags = new Set([
     "pre",
     "textarea",
@@ -294,7 +501,6 @@ const _collapseWhitespace = ($, config, report, isLiquid) => {
     const element = $(el);
     const tagName = el.tagName ? el.tagName.toLowerCase() : "";
     if (preserveWhitespaceTags.has(tagName)) return;
-
     element.contents().each((idx, childNode) => {
       if (childNode.type === "text") {
         const originalText = childNode.data;
@@ -306,13 +512,9 @@ const _collapseWhitespace = ($, config, report, isLiquid) => {
         )
           newText = " ";
         else newText = newText.trim();
-        if (newText !== originalText) {
-          if (newText === "" && originalText.trim() === "") {
-            childNode.data = "";
-          } else {
-            childNode.data = newText;
-          }
-        }
+        if (newText !== originalText)
+          childNode.data =
+            newText === "" && originalText.trim() === "" ? "" : newText;
       }
     });
   });
@@ -323,48 +525,54 @@ const _collapseWhitespace = ($, config, report, isLiquid) => {
     .remove();
 };
 
-/**
- * Main function to clean HTML content based on configuration.
- * @param {string} htmlString - The raw HTML string (can be plain HTML or Liquid-infused HTML).
- * @param {object} config - Configuration object from settingsService.js.
- * @param {boolean} [isLiquidFile=false] - Flag to indicate if the content is primarily a Liquid template.
- * @returns {Promise<{cleanedHtml: string, report: CleanerReport}>}
- */
-const cleanHtml = async (htmlString, config, isLiquidFile = false) => {
+const cleanHtml = async (htmlString, isLiquidFile = false) => {
+  const config = STATIC_CLEANER_CONFIG;
   const report = {
-    /* ... initial report ... */
+    originalLength: htmlString?.length || 0,
+    cleanedLength: 0,
+    bytesSaved: 0,
+    metaTagsRemoved: 0,
+    emptyElementsRemoved: 0,
+    attributesRemoved: 0,
+    commentsRemoved: 0,
+    elementsWhitelisted: 0,
+    attributesWhitelisted: 0,
   };
-  // ... (setup as before) ...
-
-  if (
-    !htmlString ||
-    !config ||
-    typeof config !== "object" ||
-    Object.keys(config).length === 0
-  ) {
-    // ... (return original if no valid input) ...
+  if (!htmlString || typeof htmlString !== "string") {
+    report.cleanedLength = report.originalLength;
+    console.warn(
+      "HTMLCleanerService: cleanHtml called with invalid htmlString."
+    );
+    return { cleanedHtml: htmlString, report };
   }
-
-  config.whitelist = {
-    /* ... (normalize config.whitelist as before) ... */
-  };
-  const $ = cheerio.load(htmlString, { decodeEntities: false, xmlMode: false });
-
-  _removeMetaTags($, config, report, isLiquidFile);
-  _removeHtmlComments($, config, report, isLiquidFile);
-  _removeUnnecessaryAttributes($, config, report, isLiquidFile);
-
-  if (config.collapseWhitespace) {
-    _collapseWhitespace($, config, report, isLiquidFile);
+  if (!config.enabled) {
+    report.cleanedLength = report.originalLength;
+    console.log(
+      "HTMLCleanerService: CleanHTML called but feature is disabled in static config."
+    );
+    return { cleanedHtml: htmlString, report };
   }
+  const activeConfig = config; // Using static config directly, Sets are already initialized in it.
+  const $ = load(htmlString, { decodeEntities: false, xmlMode: false });
 
-  _removeEmptyElements($, config, report, isLiquidFile);
-  _removeEmptyElements($, config, report, isLiquidFile);
-  _removeEmptyElements($, config, report, isLiquidFile);
+  _removeMetaTags($, activeConfig, report, isLiquidFile);
+  _removeHtmlComments($, activeConfig, report, isLiquidFile);
+  _removeUnnecessaryAttributes($, activeConfig, report, isLiquidFile); // Critical change here
+  if (activeConfig.collapseWhitespace)
+    _collapseWhitespace($, activeConfig, report, isLiquidFile);
+  _removeEmptyElements($, activeConfig, report, isLiquidFile);
+  _removeEmptyElements($, activeConfig, report, isLiquidFile);
 
-  const cleanedHtml = $.html();
-  // ... (calculate report.cleanedLength, report.bytesSaved) ...
-  return { cleanedHtml, report };
+  let cleanedHtmlResult = $.html();
+  if (isLiquidFile) {
+    cleanedHtmlResult = cleanedHtmlResult
+      .replace(/&gt;/g, ">")
+      .replace(/&lt;/g, "<")
+      .replace(/&amp;/g, "&");
+  }
+  report.cleanedLength = cleanedHtmlResult.length;
+  report.bytesSaved = report.originalLength - report.cleanedLength;
+  return { cleanedHtml: cleanedHtmlResult, report };
 };
 
 export default { cleanHtml };

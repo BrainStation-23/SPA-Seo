@@ -207,11 +207,9 @@ const updateThemeFilesSequentially = async (res, results, themeId) => {
   try {
     console.log("Starting theme update ...");
 
-    // Process each purged CSS file
     for (const result of results) {
       console.log(`Updating ${result.filename}...`);
 
-      // Execute the theme asset update mutation
       const updateResponse = await queryDataWithVariables(
         res,
         UpdateThemeFiles,
@@ -254,101 +252,9 @@ const updateThemeFilesSequentially = async (res, results, themeId) => {
   }
 };
 
-// /**
-//  * Creates a backup of a theme asset in the specified theme.
-//  * @param {object} res - The Express response object.
-//  * @param {string} themeIdForBackup - The GID of the theme where the backup will be created (typically the MAIN theme's ID).
-//  * @param {string} assetKey - The original asset key.
-//  * @param {string} originalContent - The content of the original asset.
-//  * @returns {Promise<string>} The key of the backed-up asset.
-//  */
-// const createAssetBackup = async (
-//   res,
-//   themeIdForBackup,
-//   assetKey,
-//   originalContent
-// ) => {
-//   const timestamp = new Date()
-//     .toISOString()
-//     .replace(/[.:TZ]/g, "-")
-//     .substring(0, 19); // YYYY-MM-DD-HH-MM-SS
-//   const sanitizedAssetKey = assetKey
-//     .replace(/\//g, "_")
-//     .replace(/\.liquid$/, "");
-//   const backupAssetKey = `assets/html_cleaner_backup_${sanitizedAssetKey}_${timestamp}.liquid.txt`; // .txt to prevent rendering
-
-//   try {
-//     await updateThemeAsset(
-//       res,
-//       themeIdForBackup,
-//       backupAssetKey,
-//       originalContent
-//     );
-//     console.log(
-//       `Backup for ${assetKey} created as ${backupAssetKey} in theme ${themeIdForBackup}`
-//     );
-//     return backupAssetKey;
-//   } catch (error) {
-//     console.error(
-//       `Failed to create backup for asset ${assetKey} in theme ${themeIdForBackup}:`,
-//       error
-//     );
-//     throw error;
-//   }
-// };
-
-// /**
-//  * Restores a theme asset from a specified backup asset.
-//  * The backup asset is fetched from the MAIN theme (as per getThemeAsset's current implementation).
-//  * The restored content is written to the assetKey in the theme specified by `themeIdForRestore`.
-//  * @param {object} res - The Express response object.
-//  * @param {string} mainThemeId - The GID of the current MAIN theme (used to fetch the backup).
-//  * @param {string} themeIdForRestore - The GID of the theme where the asset will be restored.
-//  * @param {string} assetKey - The original asset key to restore.
-//  * @param {string} backupAssetKey - The key of the backup asset.
-//  * @returns {Promise<object>} The result of the update operation.
-//  */
-// const restoreAssetFromBackup = async (
-//   res,
-//   mainThemeId,
-//   themeIdForRestore,
-//   assetKey,
-//   backupAssetKey
-// ) => {
-//   try {
-//     // Fetches backupContent from the MAIN theme, verifying against mainThemeId
-//     const backupContent = await getThemeAsset(res, mainThemeId, backupAssetKey);
-
-//     if (backupContent === null) {
-//       // This implies the backupAssetKey was not found in the theme identified as 'MAIN' and matching mainThemeId.
-//       throw new Error(
-//         `Backup asset ${backupAssetKey} content not found in MAIN theme (ID: ${mainThemeId}). Cannot restore.`
-//       );
-//     }
-//     // Restores the content to the specified themeIdForRestore
-//     const updateResult = await updateThemeAsset(
-//       res,
-//       themeIdForRestore,
-//       assetKey,
-//       backupContent
-//     );
-//     console.log(
-//       `${assetKey} in theme ${themeIdForRestore} restored from backup ${backupAssetKey} (source: MAIN theme ${mainThemeId})`
-//     );
-//     return updateResult;
-//   } catch (error) {
-//     console.error(
-//       `Failed to restore ${assetKey} from backup ${backupAssetKey}:`,
-//       error
-//     );
-//     throw error;
-//   }
-// };
-
 export default {
   getThemeFileByFilename,
   getFilesForLiveTheme,
   updateThemeAsset,
-  // createAssetBackup,
-  // restoreAssetFromBackup,
+  updateThemeFilesSequentially,
 };

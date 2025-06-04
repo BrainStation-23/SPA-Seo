@@ -1,70 +1,18 @@
-import settingsService from "../services/settingsService.js"; //
-import themeService from "../services/themeService.js"; //
-import htmlValidationService from "../services/htmlValidationService.js"; //
-import htmlCleanerService from "../services/htmlCleanerService.js"; // Assumed from previous step
-import HtmlCleanerSettings from "../models/htmlCleanerSettingsModel.js"; // For default structure
+import themeService from "../services/themeService.js"; // Your version with getFilesForLiveTheme & updateThemeFilesSequentially
+import htmlValidationService from "../services/htmlValidationService.js"; // Version with validateUrl
+import htmlCleanerService from "../services/htmlCleanerService.js"; // Version with static config & Liquid awareness
+// Removed GetMainThemeId and queryDataWithVariables if themeService.getFilesForLiveTheme provides the mainThemeId
+// and we get shop domain from session for validateUrl.
 
-// --- Settings Management ---
-export const getStreamlineSettings = async (req, res) => {
-  try {
-    const shop = res.locals.shopify.session.shop;
-    let settings = await settingsService.getSettings(shop); // Uses HtmlCleanerSettingsModel
-    // Ensure a full settings object is returned, applying defaults if necessary
-    if (!settings || !settings.hasOwnProperty("enabled")) {
-      const defaultSettingsDoc = new HtmlCleanerSettings({ shopId: shop });
-      settings = defaultSettingsDoc.toObject();
-      delete settings._id;
-      delete settings.__v;
-      delete settings.createdAt;
-      delete settings.updatedAt;
-    }
-    res.status(200).json({ success: true, settings });
-  } catch (error) {
-    console.error(
-      `Error fetching Streamline Code settings for ${res.locals.shopify.session.shop}:`,
-      error
-    );
-    res.status(500).json({
-      success: false,
-      error: "Failed to fetch settings",
-      message: error.message,
-    });
-  }
-};
-
-export const updateStreamlineSettings = async (req, res) => {
-  try {
-    const shop = res.locals.shopify.session.shop;
-    const settingsData = req.body; // Contains the specific rules for streamlining
-    const savedSettings = await settingsService.saveSettings(
-      shop,
-      settingsData
-    );
-    res.status(200).json({
-      success: true,
-      message: "Streamline Code settings updated",
-      settings: savedSettings,
-    });
-  } catch (error) {
-    console.error(
-      `Error updating Streamline Code settings for ${res.locals.shopify.session.shop}:`,
-      error
-    );
-    res.status(500).json({
-      success: false,
-      error: "Failed to update settings",
-      message: error.message,
-    });
-  }
-};
-
-// --- Main "Streamline Code" Action ---
 /**
- * @desc Applies HTML cleanup ("Streamline Code") to ALL Liquid files of the MAIN theme using sequential updates.
+ * @desc Applies HTML cleanup ("Streamline Code") to ALL Liquid files of the MAIN theme.
+ * After updating, it validates the store's homepage for W3C compliance.
+ * Uses the static configuration within htmlCleanerService.
+ * Backup is currently handled by the user's theme duplication strategy (manual or to-be-implemented service).
  * @route POST /api/html-cleaner/apply-all-streamline
  */
 export const applyStreamlineCodeToLiveTheme = async (req, res) => {
-  const shop = res.locals.shopify.session.shop;
+  const shop = res.locals.shopify.session.shop; // Used for constructing the URL to validate and for logging
   const overallReport = {
     success: true,
     message:
@@ -72,28 +20,26 @@ export const applyStreamlineCodeToLiveTheme = async (req, res) => {
     filesProcessed: 0,
     filesAttemptedToUpdate: 0,
     filesSuccessfullyUpdated: 0,
-    filesFailedValidation: 0,
+    // filesFailedValidation: 0, // This was for per-file validation, changing to page validation
+    filesWithNoChange: 0,
     totalBytesSaved: 0,
+    livePageValidation: null, // To store the result of the live page W3C validation
     details: [],
   };
 
   try {
-    const settings = await settingsService.getSettings(shop);
-    if (!settings.enabled) {
-      overallReport.success = false;
-      overallReport.message =
-        "Streamline Code (HTML Cleanup) is disabled in settings. No files processed.";
-      return res.status(400).json(overallReport);
-    }
+    // htmlCleanerService uses its internal STATIC_CLEANER_CONFIG.enabled.
+    // If that static config has enabled: false, cleanHtml will effectively do nothing.
 
-    const themeFilesData = await themeService.getFilesForLiveTheme(res); //
+    // Get all files and the main theme ID from your themeService
+    const themeFilesData = await themeService.getFilesForLiveTheme(res);
     if (
       !themeFilesData ||
       !themeFilesData.themeId ||
       !themeFilesData.liquidFiles
     ) {
       throw new Error(
-        "Could not retrieve file data or themeId for the MAIN theme."
+        "Could not retrieve file data or themeId for the MAIN theme from themeService.getFilesForLiveTheme."
       );
     }
     const mainThemeId = themeFilesData.themeId;
@@ -106,72 +52,49 @@ export const applyStreamlineCodeToLiveTheme = async (req, res) => {
     }
 
     overallReport.filesProcessed = liquidFilesToProcess.length;
-    const filesToUpdatePayload = []; // Collect files for sequential update
+    const filesToUpdatePayload = [];
+
+    console.log(
+      `[${shop}] Starting Streamline Code process for ${liquidFilesToProcess.length} liquid files in theme ${mainThemeId}.`
+    );
 
     for (const file of liquidFilesToProcess) {
       const assetKey = file.filename;
       const originalHtml = file.content;
+      // Initialize fileDetail with a neutral status, validationStatus is now for the page.
       const fileDetail = {
         assetKey,
-        status: "Skipped",
-        reason: "Not processed",
+        status: "Processed",
+        reason: "",
         bytesSaved: 0,
-        validationStatus: "N/A",
       };
 
       try {
-        console.log(`[${shop}] Processing ${assetKey} for Streamline Code...`);
-
-        // early return
         if (originalHtml === null || typeof originalHtml !== "string") {
+          fileDetail.status = "Skipped";
           fileDetail.reason = "Asset content was null or not a string.";
           console.warn(`[${shop}] ${fileDetail.reason} for ${assetKey}`);
           overallReport.details.push(fileDetail);
           continue;
         }
 
-        // Backup part is ignored for now.
-
         const { cleanedHtml, report: cleanerReport } =
-          await htmlCleanerService.cleanHtml(originalHtml, settings);
-        const validation = await htmlValidationService.validateHtml(
-          cleanedHtml,
-          assetKey
-        );
+          await htmlCleanerService.cleanHtml(originalHtml, true); // isLiquidFile = true
 
         fileDetail.bytesSaved = cleanerReport.bytesSaved || 0;
-        fileDetail.validationStatus = validation.isValid
-          ? "Valid"
-          : `Invalid (${validation.errors.length} errors)`;
 
-        if (!validation.isValid) {
-          fileDetail.status = "Failed Validation";
-          fileDetail.reason = `Cleaned HTML for ${assetKey} is not valid. Changes not applied.`;
-          console.warn(
-            `[${shop}] ${fileDetail.reason}. Errors: ${validation.errors
-              .map((e) => e.message)
-              .join("; ")}`
-          );
-          overallReport.filesFailedValidation++;
+        if (cleanedHtml !== originalHtml) {
+          filesToUpdatePayload.push({
+            filename: assetKey,
+            content: cleanedHtml,
+          });
+          fileDetail.status = "Queued for Update"; // Will be updated in batch
+          overallReport.totalBytesSaved += fileDetail.bytesSaved;
         } else {
-          if (cleanedHtml !== originalHtml) {
-            filesToUpdatePayload.push({
-              filename: assetKey,
-              content: cleanedHtml,
-            });
-            fileDetail.status = "Pending Update"; // Will be updated in batch
-            overallReport.totalBytesSaved += fileDetail.bytesSaved;
-            console.log(
-              `[${shop}] ${assetKey} streamlined and validated. Queued for update.`
-            );
-          } else {
-            fileDetail.status = "No Changes Needed";
-            fileDetail.reason =
-              "Cleaned content is identical to original content.";
-            console.log(
-              `[${shop}] ${assetKey} required no changes after streamlining.`
-            );
-          }
+          fileDetail.status = "No Changes Needed";
+          fileDetail.reason =
+            "Cleaned content is identical to original content.";
+          overallReport.filesWithNoChange++;
         }
       } catch (fileError) {
         console.error(
@@ -191,18 +114,15 @@ export const applyStreamlineCodeToLiveTheme = async (req, res) => {
         console.log(
           `[${shop}] Attempting to update ${filesToUpdatePayload.length} files sequentially...`
         );
-        // Using your sequential update function from themeService.js
         await themeService.updateThemeFilesSequentially(
           res,
           filesToUpdatePayload,
           mainThemeId
-        ); //
-        overallReport.filesSuccessfullyUpdated = filesToUpdatePayload.length; // Assume all succeed if no error from sequential update
-        // Update status for files that were pending
+        );
+        overallReport.filesSuccessfullyUpdated = filesToUpdatePayload.length;
         overallReport.details.forEach((detail) => {
-          if (detail.status === "Pending Update") {
+          if (detail.status === "Queued for Update")
             detail.status = "Updated Successfully";
-          }
         });
         console.log(
           `[${shop}] Successfully updated ${filesToUpdatePayload.length} files.`
@@ -212,11 +132,10 @@ export const applyStreamlineCodeToLiveTheme = async (req, res) => {
           `[${shop}] Error during sequential theme file update:`,
           updateError
         );
-        overallReport.success = false; // Mark overall as not fully successful
-        overallReport.message = `Streamline Code processing completed with errors during file updates. ${updateError.message}`;
-        // Update status for files that were pending but failed in batch
+        overallReport.success = false;
+        overallReport.message = `Streamline Code processing completed but with errors during file updates: ${updateError.message}`;
         overallReport.details.forEach((detail) => {
-          if (detail.status === "Pending Update") {
+          if (detail.status === "Queued for Update") {
             detail.status = "Update Failed in Batch";
             detail.reason = updateError.message;
           }
@@ -224,24 +143,72 @@ export const applyStreamlineCodeToLiveTheme = async (req, res) => {
       }
     }
 
+    // Perform W3C validation on the live homepage AFTER all changes are applied
+    if (
+      overallReport.filesSuccessfullyUpdated > 0 ||
+      (filesToUpdatePayload.length === 0 && overallReport.filesProcessed > 0)
+    ) {
+      // Only validate if updates were attempted or no changes were needed (i.e., process ran)
+      try {
+        const storeUrl = `https://${shop}`;
+        console.log(
+          `[${shop}] Performing W3C validation for live URL: ${storeUrl}`
+        );
+        const validationReport = await htmlValidationService.validateUrl(
+          storeUrl
+        );
+        overallReport.livePageValidation = {
+          url: storeUrl,
+          isValid: validationReport.isValid,
+          errors: validationReport.errors,
+          warnings: validationReport.warnings,
+          errorMessage: validationReport.errorMessage,
+        };
+        if (!validationReport.isValid) {
+          // You might want to flag the overall success differently if live page validation fails
+          // For now, just including it in the report.
+          console.warn(
+            `[${shop}] Live page validation for ${storeUrl} failed.`
+          );
+          overallReport.message += ` Live page validation for ${storeUrl} reported ${validationReport.errors.length} errors.`;
+        } else {
+          overallReport.message += ` Live page validation for ${storeUrl} was successful.`;
+        }
+      } catch (validationError) {
+        console.error(
+          `[${shop}] Error during live page W3C validation:`,
+          validationError
+        );
+        overallReport.livePageValidation = {
+          url: `https://${shop}`,
+          isValid: false,
+          errorMessage: `Failed to perform live page validation: ${validationError.message}`,
+        };
+        overallReport.message += ` Live page W3C validation could not be completed.`;
+      }
+    }
+
     // Finalize overall message
     if (overallReport.filesProcessed === 0) {
-      overallReport.message = "No files were targeted or found for processing.";
+      overallReport.message =
+        "No Liquid files were found or targeted for processing.";
     } else if (overallReport.filesSuccessfullyUpdated > 0) {
-      overallReport.message = `Streamline Code processing completed. ${overallReport.filesSuccessfullyUpdated} of ${overallReport.filesProcessed} Liquid file(s) updated.`;
+      // Message already partially set, just confirm completion
     } else if (
-      overallReport.filesFailedValidation > 0 &&
-      overallReport.filesAttemptedToUpdate === 0
+      overallReport.filesAttemptedToUpdate === 0 &&
+      overallReport.filesWithNoChange === overallReport.filesProcessed
     ) {
-      // No files were even queued for update
-      overallReport.success = false;
-      overallReport.message = `Streamline Code processing completed. No files were updated. ${overallReport.filesFailedValidation} file(s) failed validation.`;
+      overallReport.message = `Streamline Code processing completed. No files required changes.`;
     } else if (
       overallReport.filesProcessed > 0 &&
-      filesToUpdatePayload.length === 0
+      filesToUpdatePayload.length === 0 &&
+      overallReport.filesFailedValidation === 0
     ) {
-      // Processed files, but none needed changes or passed validation
-      overallReport.message = `Streamline Code processing completed. No files required changes or passed validation for update.`;
+      overallReport.message = `Streamline Code processing completed. No files required changes.`;
+    } else if (!overallReport.success) {
+      // Message already set by an error condition
+    } else {
+      overallReport.message = `Streamline Code processing completed. No files were updated. Check details.`;
     }
   } catch (error) {
     console.error(`[${shop}] Overall error applying Streamline Code:`, error);
@@ -251,10 +218,23 @@ export const applyStreamlineCodeToLiveTheme = async (req, res) => {
       "An unexpected error occurred during Streamline Code application.";
   }
 
-  const httpStatus = overallReport.success
-    ? overallReport.filesSuccessfullyUpdated > 0
-      ? 200
-      : 202
-    : 500;
+  // Determine HTTP status based on success and if any updates actually happened
+  let httpStatus = 500;
+  if (overallReport.success) {
+    httpStatus =
+      overallReport.filesSuccessfullyUpdated > 0 ||
+      overallReport.filesWithNoChange === overallReport.filesProcessed
+        ? 200
+        : 202; // 202 if processed but nothing changed or no updates made
+  }
+  if (
+    overallReport.livePageValidation &&
+    !overallReport.livePageValidation.isValid &&
+    overallReport.livePageValidation.errors?.length > 0
+  ) {
+    // If live page validation failed, perhaps return a different status or ensure message reflects it
+    // For now, keeping httpStatus based on file processing success primarily
+  }
+
   return res.status(httpStatus).json(overallReport);
 };
