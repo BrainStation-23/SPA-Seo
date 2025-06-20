@@ -1,3 +1,39 @@
+export const GetThemeFilesPaginated = `#graphql
+query GetThemeFilesPaginated($count: Int!, $role: ThemeRole!, $filename: [String!], $after: String) {
+  shop {
+    id
+    url
+  }
+  themes(first: 1, roles: [$role]) {
+    edges {
+      node {
+        id
+        files(filenames: $filename, first: $count, after: $after) {
+          edges {
+            node {
+              filename
+              size
+              createdAt
+              updatedAt
+              checksumMd5
+              contentType
+              body {
+                ... on OnlineStoreThemeFileBodyText {
+                  content
+                }
+              }
+            }
+          }
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+        }
+      }
+    }
+  }
+}`;
+
 export const GetThemeFile = `#graphql
 query GetThemeFile($count: Int!, $role: ThemeRole!, $filename: String!) {
   themes(first: $count, roles: [$role]) {
@@ -43,6 +79,20 @@ mutation UpdateThemeFiles($files: [OnlineStoreThemeFilesUpsertFileInput!]!, $the
   }
 }`;
 
+// Will think about this a bit later down the line
+export const createStagedUploadUrl = `#graphql
+mutation stagedUploadsCreate($input: [StagedUploadInput!]!) {
+  stagedUploadsCreate(input: $input) {
+    stagedTargets {
+      url
+      resourceUrl
+      parameters {
+        name
+        value
+      }
+    }
+  }
+}`;
 export const GetAllThemeFiles = `#graphql
 query GetAllThemeFiles($count: Int!, $after: String) {
   themes(first: 1, roles: MAIN) {
@@ -74,6 +124,4 @@ query GetAllThemeFiles($count: Int!, $after: String) {
       }
     }
   }
-}`; 
-
-
+}`;

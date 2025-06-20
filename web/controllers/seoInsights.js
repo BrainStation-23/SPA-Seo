@@ -1,7 +1,11 @@
-import shopify from "../shopify.js";
 import SpeedInsights from "../models/speedInsights.js";
-import { GetThemeFile, UpdateThemeFiles , GetAllThemeFiles} from "../graphql/theme.js";
+import {
+  GetThemeFile,
+  UpdateThemeFiles,
+  GetAllThemeFiles,
+} from "../graphql/theme.js";
 import { queryDataWithVariables } from "../utils/getQueryData.js";
+import { optimizeTheme } from "../services/optimizeThemeCode.js";
 
 export const getSeoInsightsController = async (req, res, next) => {
   const { device = "desktop" } = req.query;
@@ -230,27 +234,50 @@ export const speedInsightsController = async (req, res, next) => {
   }
 };
 
+export const optimizeCssForLiveTheme = async (req, res, next) => {
+  try {
+    const bytesSaved = await optimizeTheme(res);
+    return res.status(200).json({
+      success: true,
+      bytesSaved,
+      message: "Optimized CSS for live theme files successfully",
+    });
+  } catch (error) {
+    console.error("Optimize CSS Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to optimize css for theme files",
+      error: error.message,
+    });
+  }
+};
+
 export const minificationDeferController = async (req, res, next) => {
   try {
     const allThemeFiles = [];
     let hasNextPage = true;
     let cursor = null;
-    const PER_PAGE = 250;  
+    const PER_PAGE = 250;
     let themeId;
 
     while (hasNextPage) {
-      const getAllThemeFilesResponse = await queryDataWithVariables(res, GetAllThemeFiles, {
-        count: PER_PAGE,
-        after: cursor
-      });
-      
+      const getAllThemeFilesResponse = await queryDataWithVariables(
+        res,
+        GetAllThemeFiles,
+        {
+          count: PER_PAGE,
+          after: cursor,
+        }
+      );
+
       if (!themeId && getAllThemeFilesResponse.data.themes.edges.length > 0) {
         themeId = getAllThemeFilesResponse.data.themes.edges[0].node.id;
       }
 
-      const themeFiles = getAllThemeFilesResponse.data.themes.edges[0].node.files;
+      const themeFiles =
+        getAllThemeFilesResponse.data.themes.edges[0].node.files;
       const fileEdges = themeFiles.edges;
-      allThemeFiles.push(...fileEdges.map(edge => edge.node));
+      allThemeFiles.push(...fileEdges.map((edge) => edge.node));
 
       const pageInfo = themeFiles.pageInfo;
       hasNextPage = pageInfo.hasNextPage;
@@ -260,14 +287,14 @@ export const minificationDeferController = async (req, res, next) => {
       }
     }
 
-    const liquidFiles = allThemeFiles.filter(file => 
-      file.filename.endsWith('.liquid') && 
-      file.body && 
-      file.body.content && 
-      file.body.content.includes('<script')
+    const liquidFiles = allThemeFiles.filter(
+      (file) =>
+        file.filename.endsWith(".liquid") &&
+        file.body &&
+        file.body.content &&
+        file.body.content.includes("<script")
     );
 
-   
     const updatedFiles = [];
     for (const file of liquidFiles) {
       let content = file.body.content;
@@ -278,54 +305,60 @@ export const minificationDeferController = async (req, res, next) => {
         continue;
       }
 
-      const scriptRegex = /<script([^>](?!defer|async|type=['"]application\/json['"]|type=['"]application\/ld\+json['"]|type=['"]text\/template['"]))*>.*?<\/script>/gs;
-      
+      const scriptRegex =
+        /<script([^>](?!defer|async|type=['"]application\/json['"]|type=['"]application\/ld\+json['"]|type=['"]text\/template['"]))*>.*?<\/script>/gs;
+
       const scriptTags = content.match(scriptRegex) || [];
-      
+
       for (const originalScript of scriptTags) {
-        if (originalScript.includes(' defer') || originalScript.includes(' async')) {
+        if (
+          originalScript.includes(" defer") ||
+          originalScript.includes(" async")
+        ) {
           continue;
         }
-        
-        if (originalScript.includes('document.write') || 
-            originalScript.includes('window.Shopify') ||
-            originalScript.includes('var Shopify') ||
-            originalScript.includes('function loadScript') ||
-            originalScript.includes('"application/json"') || 
-            originalScript.includes('application/ld+json') ||
-            originalScript.includes('jquery') ||
-            originalScript.includes('jQuery') ||
-            (originalScript.includes('<script>') && originalScript.length < 200)) {
+
+        if (
+          originalScript.includes("document.write") ||
+          originalScript.includes("window.Shopify") ||
+          originalScript.includes("var Shopify") ||
+          originalScript.includes("function loadScript") ||
+          originalScript.includes('"application/json"') ||
+          originalScript.includes("application/ld+json") ||
+          originalScript.includes("jquery") ||
+          originalScript.includes("jQuery") ||
+          (originalScript.includes("<script>") && originalScript.length < 200)
+        ) {
           continue;
         }
 
         let modifiedScript = originalScript;
-        
-        if (originalScript.includes('analytics') || 
-            originalScript.includes('tracking') || 
-            originalScript.includes('gtag') || 
-            originalScript.includes('fbq') || 
-            originalScript.includes('pixel')) {
-          modifiedScript = originalScript.replace('<script', '<script async');
-        } 
-        else {
-          modifiedScript = originalScript.replace('<script', '<script defer');
+
+        if (
+          originalScript.includes("analytics") ||
+          originalScript.includes("tracking") ||
+          originalScript.includes("gtag") ||
+          originalScript.includes("fbq") ||
+          originalScript.includes("pixel")
+        ) {
+          modifiedScript = originalScript.replace("<script", "<script async");
+        } else {
+          modifiedScript = originalScript.replace("<script", "<script defer");
         }
-        
+
         if (originalScript !== modifiedScript) {
           content = content.replace(originalScript, modifiedScript);
           wasModified = true;
         }
       }
 
-
       if (wasModified) {
         updatedFiles.push({
           filename: file.filename,
           body: {
             type: "TEXT",
-            value: content
-          }
+            value: content,
+          },
         });
       }
     }
@@ -333,13 +366,13 @@ export const minificationDeferController = async (req, res, next) => {
     if (updatedFiles.length === 0) {
       return res.status(200).json({
         success: true,
-        message: "No script defer optimization needed or already applied"
+        message: "No script defer optimization needed or already applied",
       });
     }
 
     const updateResponse = await queryDataWithVariables(res, UpdateThemeFiles, {
       themeId,
-      files: updatedFiles
+      files: updatedFiles,
     });
 
     if (updateResponse.data.themeFilesUpsert.userErrors.length > 0) {
@@ -349,41 +382,43 @@ export const minificationDeferController = async (req, res, next) => {
     return res.status(200).json({
       success: true,
       message: `Script optimization (defer/async) applied to ${updatedFiles.length} files`,
-      
     });
-    
   } catch (error) {
     console.error("Error in minificationDeferController:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to apply script optimization (defer/async)",
-      error: error.message
+      error: error.message,
     });
   }
 };
-
 
 export const optimizedLoadingController = async (req, res, next) => {
   try {
     const allThemeFiles = [];
     let hasNextPage = true;
     let cursor = null;
-    const PER_PAGE = 250;  
+    const PER_PAGE = 250;
     let themeId;
 
     while (hasNextPage) {
-      const getAllThemeFilesResponse = await queryDataWithVariables(res, GetAllThemeFiles, {
-        count: PER_PAGE,
-        after: cursor
-      });
-      
+      const getAllThemeFilesResponse = await queryDataWithVariables(
+        res,
+        GetAllThemeFiles,
+        {
+          count: PER_PAGE,
+          after: cursor,
+        }
+      );
+
       if (!themeId && getAllThemeFilesResponse.data.themes.edges.length > 0) {
         themeId = getAllThemeFilesResponse.data.themes.edges[0].node.id;
       }
 
-      const themeFiles = getAllThemeFilesResponse.data.themes.edges[0].node.files;
+      const themeFiles =
+        getAllThemeFilesResponse.data.themes.edges[0].node.files;
       const fileEdges = themeFiles.edges;
-      allThemeFiles.push(...fileEdges.map(edge => edge.node));
+      allThemeFiles.push(...fileEdges.map((edge) => edge.node));
 
       const pageInfo = themeFiles.pageInfo;
       hasNextPage = pageInfo.hasNextPage;
@@ -393,27 +428,24 @@ export const optimizedLoadingController = async (req, res, next) => {
       }
     }
 
-
     // const updateResponse = await queryDataWithVariables(res, UpdateThemeFiles, {
     //   themeId,
     //   files: updatedFiles
     // });
-    console.log("🚀 ~ optimizedLoadingController ~ allThemeFiles:", allThemeFiles) ;
+    console.log(
+      "🚀 ~ optimizedLoadingController ~ allThemeFiles:",
+      allThemeFiles
+    );
     return res.status(200).json({
       success: true,
       message: `Script optimization (defer/async) applied to ${updatedFiles.length} files`,
-      
     });
-    
   } catch (error) {
     console.error("Error in minificationDeferController:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to apply script optimization (defer/async)",
-      error: error.message
+      error: error.message,
     });
   }
 };
-
-
-

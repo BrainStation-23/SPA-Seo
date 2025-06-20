@@ -22,6 +22,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import { connectDB } from "./utils/mongoDBConnection.js";
+import htmlCleanerRoute from "./routes/htmlCleanerRoutes.js";
 
 dotenv.config();
 
@@ -44,6 +45,11 @@ app.use(
 
 connectDB();
 
+app.post(
+  shopify.config.webhooks.path,
+  shopify.processWebhooks({ webhookHandlers: GDPRWebhookHandlers })
+);
+
 app.use(express.json());
 app.use(cookieParser());
 
@@ -53,10 +59,6 @@ app.get(
   shopify.config.auth.callbackPath,
   shopify.auth.callback(),
   shopify.redirectToShopifyOrAppRoot()
-);
-app.post(
-  shopify.config.webhooks.path,
-  shopify.processWebhooks({ webhookHandlers: GDPRWebhookHandlers })
 );
 
 // If you are adding routes outside of the /api path, remember to
@@ -96,6 +98,7 @@ app.use("/api/image-compression", imageCompression);
 app.use("/api/products", productsRoute);
 app.use("/api/AI", AIRouter);
 app.use("/api/billing", appBilling);
+app.use("/api/html-cleaner", htmlCleanerRoute);
 
 app.use(shopify.cspHeaders());
 app.use(serveStatic(STATIC_PATH, { index: false }));
