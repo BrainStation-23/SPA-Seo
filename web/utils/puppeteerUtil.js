@@ -1,18 +1,22 @@
 import puppeteer from "puppeteer";
-import { generate } from "critical";
 
-const getAllPageUrls = (shopUrl) => {
-  return [];
+const getAllPageUrls = (
+  shopUrl,
+  productHandle,
+  collectionHandle,
+  articleHandle
+) => {
+  // return [];
   return [
-    `${shopUrl}/collections`,
-    `${shopUrl}/collections/automated-collection`,
-    `${shopUrl}/collections/all`,
+    // `${shopUrl}/collections`,
+    `${shopUrl}/collections/${collectionHandle}`,
+    // `${shopUrl}/collections/all`,
     `${shopUrl}/cart`,
-    `${shopUrl}/products/a-black-shirt`,
-    `${shopUrl}/blogs/news`,
-    `${shopUrl}/blogs/food/ramadan-a-month-of-reflection-fasting-and-community`,
-    `${shopUrl}/search?q=a&options%5Bprefix%5D=last`,
-    `${shopUrl}/pages/contact`,
+    `${shopUrl}/products/${productHandle}`,
+    // `${shopUrl}/blogs/news`,
+    `${shopUrl}/blogs/food/${articleHandle}`,
+    // `${shopUrl}/search?q=a&options%5Bprefix%5D=last`,
+    // `${shopUrl}/pages/contact`,
   ];
 };
 
@@ -68,6 +72,7 @@ const bypassPasswordPage = async (storePassword, page) => {
 export const startPuppeteer = async (
   storefrontPassword,
   urlToCrawl,
+  handles,
   viewport
 ) => {
   let browser;
@@ -107,7 +112,12 @@ export const startPuppeteer = async (
       html: htmlForHomePage,
     });
 
-    const urlsToCrawl = getAllPageUrls(urlToCrawl);
+    const urlsToCrawl = getAllPageUrls(
+      urlToCrawl,
+      handles.productHandle,
+      handles.collectionHandle,
+      handles.articleHandle
+    );
     for (let i = 0; i < urlsToCrawl.length; i++) {
       const url = urlsToCrawl[i];
       try {

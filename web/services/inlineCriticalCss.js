@@ -1,6 +1,8 @@
 import { generate } from "critical";
 import { PurgeCSS } from "purgecss";
 import themeService from "../services/themeService.js";
+import { GetItemHandles } from "../graphql/optimizedLoading.js";
+import { getQueryData } from "../utils/getQueryData.js";
 import { startPuppeteer } from "../utils/puppeteerUtil.js";
 
 const generateCriticalCss = async (htmlContents, baseUrl) => {
@@ -69,8 +71,26 @@ const updateThemeLiquidWithCriticalCss = async (res, criticalCss) => {
   }
 };
 
+const getProductCollectionBlogArticleHandle = async (res) => {
+  try {
+    const queryResponse = await getQueryData(res, GetItemHandles);
+    const productHandle = queryResponse.data.products.edges[0].node.handle;
+    const collectionHandle =
+      queryResponse.data.collections.edges[0].node.handle;
+    const articleHandle = queryResponse.data.articles.edges[0].node.handle;
+    return {
+      productHandle,
+      collectionHandle,
+      articleHandle,
+    };
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const inlineCriticalCss = async (res, baseUrl, storePassword) => {
-  const htmlContents = await startPuppeteer(storePassword, baseUrl, {
+  const handles = await getProductCollectionBlogArticleHandle(res);
+  const htmlContents = await startPuppeteer(storePassword, baseUrl, handles, {
     width: 1280,
     height: 800,
     deviceScaleFactor: 1,
@@ -79,30 +99,30 @@ export const inlineCriticalCss = async (res, baseUrl, storePassword) => {
   const allCriticalCss = criticalCssResults
     .map((result) => result.critical)
     .join("\n");
-  //   const purgedCssResults = await new PurgeCSS().purge({
-  //     content: htmlContents.map((item) => ({
-  //       raw: item.html,
-  //       extension: "html",
-  //     })),
-  //     css: [
-  //       {
-  //         raw: allCriticalCss,
-  //         extension: "css",
-  //       },
-  //     ],
-  //     defaultExtractor: (content) => content.match(/[\w-/:]+(?<!:)/g) || [],
-  //   });
+  const purgedCssResults = await new PurgeCSS().purge({
+    content: htmlContents.map((item) => ({
+      raw: item.html,
+      extension: "html",
+    })),
+    css: [
+      {
+        raw: allCriticalCss,
+        extension: "css",
+      },
+    ],
+    defaultExtractor: (content) => content.match(/[\w-/:]+(?<!:)/g) || [],
+  });
 
-  //   console.log(
-  //     `[CriticalCSS] Purged CSS results: ${purgedCssResults.length} files processed.`
-  //   );
-  //   console.log(
-  //     `[CriticalCSS] Total critical CSS size after purging: ${purgedCssResults
-  //       .map((result) => result.css.length)
-  //       .reduce((a, b) => a + b, 0)} bytes.`
-  //   );
-  //   console.log(purgedCssResults);
-  await updateThemeLiquidWithCriticalCss(res, allCriticalCss);
+  console.log(
+    `[CriticalCSS] Purged CSS results: ${purgedCssResults.length} files processed.`
+  );
+  console.log(
+    `[CriticalCSS] Total critical CSS size before purging: ${allCriticalCss.length} bytes.`
+  );
+  console.log(
+    `[CriticalCSS] Total critical CSS size after purging: ${purgedCssResults[0].css.length} bytes.`
+  );
+  await updateThemeLiquidWithCriticalCss(res, purgedCssResults[0].css);
 
   try {
   } catch (error) {

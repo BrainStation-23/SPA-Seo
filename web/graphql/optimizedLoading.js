@@ -12,3 +12,29 @@ query GetShopDetails {
   }
 }
 `;
+
+export const GetItemHandles = `#graphql
+query GetItemHandles{
+  products(first:1) {
+    edges {
+      node {
+        handle
+      }
+    }
+  }
+  collections(first: 1){
+    edges {
+      node {
+				handle
+      }
+    }
+  }
+  articles(first: 1) {
+    edges {
+      node {
+         handle
+      }
+    }
+  }
+}
+`;

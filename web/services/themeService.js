@@ -1,5 +1,5 @@
 import {
-  GetThemeFile, //
+  GetThemeFile,
   UpdateThemeFiles,
   GetThemeFilesPaginated,
 } from "../graphql/theme.js";
