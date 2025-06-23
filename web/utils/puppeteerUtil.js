@@ -108,6 +108,24 @@ export const startPuppeteer = async (
     });
 
     const urlsToCrawl = getAllPageUrls(urlToCrawl);
+    for (let i = 0; i < urlsToCrawl.length; i++) {
+      const url = urlsToCrawl[i];
+      try {
+        console.log(`[CriticalCSS] Crawling URL: ${url}`);
+        await page.goto(url, {
+          waitUntil: "networkidle0",
+          timeout: 5 * 60000,
+        });
+        const htmlContent = await page.content();
+        htmlContents.push({
+          url,
+          html: htmlContent,
+        });
+      } catch (error) {
+        console.log(`[CriticalCSS] Error while Crawling URL: ${url}`);
+        console.error(`Error crawling URL ${url}:`, error);
+      }
+    }
     urlsToCrawl.forEach(async (url) => {
       try {
         console.log(`[CriticalCSS] Crawling URL: ${url}`);
@@ -134,51 +152,5 @@ export const startPuppeteer = async (
     if (browser) {
       await browser.close();
     }
-  }
-};
-
-export const getHtmlContentForUrls = async (baseUrl, storePassword) => {
-  try {
-    const htmlContents = await startPuppeteer(storePassword, baseUrl, {
-      width: 1280,
-      height: 800,
-      deviceScaleFactor: 1,
-    });
-
-    const criticalCssResults = [];
-    htmlContents.forEach((item) => {
-      const { url, html } = item;
-      const { css, uncritical } = generate({
-        inline: false, // Do not inline critical CSS
-        html: html, // The HTML content collected above
-        width: 1280,
-        height: 800,
-        extract: true, // Extract remaining (uncritical) CSS
-        ignore: [
-          "@font-face", // Font declarations are often deferred
-          /url\(/, // Background images, cursor URLs etc.
-          /::selection/, // Pseudo-elements that aren't critical for initial render
-          /::-webkit-scrollbar/, // Browser-specific scrollbar styling
-        ],
-        // You can add more critical options here as needed:
-        // penthouse: { forceExclude: ['.some-class-to-always-exclude'] },
-      });
-
-      criticalCssResults.push({
-        url,
-        critical: css,
-        uncritical: uncritical,
-      });
-    });
-
-    console.log(
-      `[CriticalCSS] Successfully generated critical CSS for ${criticalCssResults.length} URLs.`
-    );
-    console.log(
-      `[CriticalCSS] Critical CSS for ${baseUrl}:\n`,
-      criticalCssResults
-    );
-  } catch (error) {
-    throw error;
   }
 };

@@ -1,8 +1,5 @@
 import { getQueryData, queryDataWithVariables } from "../utils/getQueryData.js";
-import {
-  startPuppeteer,
-  getHtmlContentForUrls,
-} from "../utils/puppeteerUtil.js";
+import { inlineCriticalCss } from "../services/inlineCriticalCss.js";
 import { getShopDetails } from "../graphql/optimizedLoading.js";
 
 export const optimizedLoading = async (req, res) => {
@@ -10,7 +7,7 @@ export const optimizedLoading = async (req, res) => {
     const queryResponse = await getQueryData(res, getShopDetails);
     const baseUrl = queryResponse.data.shop.url;
     console.log("Home Page URL:", baseUrl);
-    await getHtmlContentForUrls(baseUrl, "bs23");
+    await inlineCriticalCss(res, baseUrl, "bs23");
 
     res.status(200).json({
       success: true,

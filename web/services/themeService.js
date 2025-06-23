@@ -88,11 +88,9 @@ const getFilesForLiveTheme = async (res) => {
 const getThemeFileByFilename = async (res, assetKey) => {
   try {
     const response = await queryDataWithVariables(res, GetThemeFile, {
-      variables: {
-        count: 1,
-        role: "MAIN",
-        filename: assetKey,
-      },
+      count: 1,
+      role: "MAIN",
+      filename: assetKey,
     });
 
     if (
@@ -132,7 +130,7 @@ const getThemeFileByFilename = async (res, assetKey) => {
 
     const assetNode = filesEdges[0].node;
     if (assetNode.body && typeof assetNode.body.content === "string") {
-      return assetNode.body.content;
+      return { id: mainThemeNode.id, content: assetNode.body.content };
     } else {
       console.warn(
         `Asset ${assetKey} in MAIN theme (ID: ${mainThemeNode.id}) has null, undefined, or non-string content. Returning empty string.`
@@ -159,18 +157,16 @@ const getThemeFileByFilename = async (res, assetKey) => {
 const updateThemeAsset = async (res, themeIdToUpdate, assetKey, content) => {
   try {
     const response = await queryDataWithVariables(res, UpdateThemeFiles, {
-      variables: {
-        themeId: themeIdToUpdate,
-        files: [
-          {
-            filename: assetKey,
-            body: {
-              type: "TEXT",
-              value: content,
-            },
+      themeId: themeIdToUpdate,
+      files: [
+        {
+          filename: assetKey,
+          body: {
+            type: "TEXT",
+            value: content,
           },
-        ],
-      },
+        },
+      ],
     });
 
     if (
