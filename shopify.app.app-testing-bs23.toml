@@ -3,7 +3,7 @@
 client_id = "4a8105f24e04b6b1e217541b65cb7b16"
 name = "app-testing-bs23"
 handle = "app-testing-bs23"
-application_url = "https://discussion-reported-marsh-reason.trycloudflare.com"
+application_url = "https://en-meter-weight-malta.trycloudflare.com"
 embedded = true
 
 [build]
@@ -16,9 +16,9 @@ scopes = "read_products,read_themes,write_products,write_themes"
 
 [auth]
 redirect_urls = [
-  "https://discussion-reported-marsh-reason.trycloudflare.com/auth/callback",
-  "https://discussion-reported-marsh-reason.trycloudflare.com/auth/shopify/callback",
-  "https://discussion-reported-marsh-reason.trycloudflare.com/api/auth/callback"
+  "https://en-meter-weight-malta.trycloudflare.com/auth/callback",
+  "https://en-meter-weight-malta.trycloudflare.com/auth/shopify/callback",
+  "https://en-meter-weight-malta.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]

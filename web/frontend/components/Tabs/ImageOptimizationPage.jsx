@@ -3,6 +3,7 @@ import {
   Box,
   Card,
   Text,
+  ButtonGroup,
   Button,
   Link,
   ProgressBar,
@@ -20,7 +21,13 @@ import {
   RangeSlider,
   Badge,
   useBreakpoints,
+  Thumbnail,
+  SkeletonThumbnail,
 } from "@shopify/polaris";
+import { ImageMagicIcon, UndoIcon } from "@shopify/polaris-icons";
+
+import { Redirect } from "@shopify/app-bridge/actions";
+import { Loading, useAppBridge } from "@shopify/app-bridge-react";
 
 export default function ImageOptimizationPage() {
   const [toBeOptimized, setToBeOptimized] = useState(44);
@@ -115,6 +122,8 @@ export default function ImageOptimizationPage() {
 }
 
 function IndexTableWithViewsSearchFilterSorting() {
+  const shopify = useAppBridge();
+  const redirect = Redirect.create(shopify);
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
   const [itemStrings, setItemStrings] = useState([
@@ -124,75 +133,15 @@ function IndexTableWithViewsSearchFilterSorting() {
     "All files",
   ]);
 
-  const deleteView = (index) => {
-    const newItemStrings = [...itemStrings];
-    newItemStrings.splice(index, 1);
-    setItemStrings(newItemStrings);
-    setSelected(0);
-  };
-
-  const duplicateView = async (name) => {
-    setItemStrings([...itemStrings, name]);
-    setSelected(itemStrings.length);
-    await sleep(1);
-    return true;
-  };
-
   const tabs = itemStrings.map((item, index) => ({
     content: item,
     index,
     onAction: () => {},
     id: `${item}-${index}`,
     isLocked: index === 0,
-    actions:
-      index === 0
-        ? []
-        : [
-            {
-              type: "rename",
-              onAction: () => {},
-              onPrimaryAction: async (value) => {
-                const newItemsStrings = tabs.map((item, idx) => {
-                  if (idx === index) {
-                    return value;
-                  }
-                  return item.content;
-                });
-                await sleep(1);
-                setItemStrings(newItemsStrings);
-                return true;
-              },
-            },
-            {
-              type: "duplicate",
-              onPrimaryAction: async (value) => {
-                await sleep(1);
-                duplicateView(value);
-                return true;
-              },
-            },
-            {
-              type: "edit",
-            },
-            {
-              type: "delete",
-              onPrimaryAction: async () => {
-                await sleep(1);
-                deleteView(index);
-                return true;
-              },
-            },
-          ],
   }));
 
   const [selected, setSelected] = useState(0);
-
-  const onCreateNewView = async (value) => {
-    await sleep(500);
-    setItemStrings([...itemStrings, value]);
-    setSelected(itemStrings.length);
-    return true;
-  };
 
   const sortOptions = [
     { label: "Order", value: "order asc", directionLabel: "Ascending" },
@@ -208,26 +157,6 @@ function IndexTableWithViewsSearchFilterSorting() {
   const [sortSelected, setSortSelected] = useState(["order asc"]);
   const { mode, setMode } = useSetIndexFiltersMode();
   const onHandleCancel = () => {};
-
-  const onHandleSave = async () => {
-    await sleep(1);
-    return true;
-  };
-
-  const primaryAction =
-    selected === 0
-      ? {
-          type: "save-as",
-          onAction: onCreateNewView,
-          disabled: false,
-          loading: false,
-        }
-      : {
-          type: "save",
-          onAction: onHandleSave,
-          disabled: false,
-          loading: false,
-        };
 
   const [accountStatus, setAccountStatus] = useState(undefined);
   const [moneySpent, setMoneySpent] = useState(undefined);
@@ -373,60 +302,28 @@ function IndexTableWithViewsSearchFilterSorting() {
     });
   }
 
-  const orders = [
+  const products = [
     {
-      id: "1020",
-      order: (
-        <Text as="span" variant="bodyMd" fontWeight="semibold">
-          #1020
-        </Text>
-      ),
-      date: "Jul 20 at 4:34pm",
-      customer: "Jaydon Stanton",
-      total: "$969.44",
-      paymentStatus: <Badge progress="complete">Paid</Badge>,
-      fulfillmentStatus: <Badge progress="incomplete">Unfulfilled</Badge>,
-    },
-    {
-      id: "1019",
-      order: (
-        <Text as="span" variant="bodyMd" fontWeight="semibold">
-          #1019
-        </Text>
-      ),
-      date: "Jul 20 at 3:46pm",
-      customer: "Ruben Westerfelt",
-      total: "$701.19",
-      paymentStatus: <Badge progress="partiallyComplete">Partially paid</Badge>,
-      fulfillmentStatus: <Badge progress="incomplete">Unfulfilled</Badge>,
-    },
-    {
-      id: "1018",
-      order: (
-        <Text as="span" variant="bodyMd" fontWeight="semibold">
-          #1018
-        </Text>
-      ),
-      date: "Jul 20 at 3.44pm",
-      customer: "Leo Carder",
-      total: "$798.24",
-      paymentStatus: <Badge progress="complete">Paid</Badge>,
-      fulfillmentStatus: <Badge progress="incomplete">Unfulfilled</Badge>,
+      id: "gid://shopify/Product/8192263684330",
+      featuredMediaUrl:
+        "https://cdn.shopify.com/s/files/1/0670/5768/0618/products/The-Hidden-Snowboard-0c552ab6-2f42-4a6d-af65-0289db620216.jpg?v=1730454448",
+      title: "The Hidden Snowboard",
+      status: "Optimized",
+      fileSize: "164 KB",
+      action: "",
     },
   ];
+
   const resourceName = {
-    singular: "order",
-    plural: "orders",
+    singular: "product",
+    plural: "products",
   };
 
   const { selectedResources, allResourcesSelected, handleSelectionChange } =
-    useIndexResourceState(orders);
+    useIndexResourceState(products);
 
-  const rowMarkup = orders.map(
-    (
-      { id, order, date, customer, total, paymentStatus, fulfillmentStatus },
-      index
-    ) => (
+  const rowMarkup = products.map(
+    ({ id, featuredMediaUrl, title, status, fileSize }, index) => (
       <IndexTable.Row
         id={id}
         key={id}
@@ -434,19 +331,90 @@ function IndexTableWithViewsSearchFilterSorting() {
         position={index}
       >
         <IndexTable.Cell>
-          <Text variant="bodyMd" fontWeight="bold" as="span">
-            {order}
-          </Text>
+          {featuredMediaUrl && featuredMediaUrl.length > 0 ? (
+            <Thumbnail size="small" source={featuredMediaUrl} alt="alt" />
+          ) : (
+            <SkeletonThumbnail size="small" />
+          )}
         </IndexTable.Cell>
-        <IndexTable.Cell>{date}</IndexTable.Cell>
-        <IndexTable.Cell>{customer}</IndexTable.Cell>
         <IndexTable.Cell>
-          <Text as="span" alignment="end" numeric>
-            {total}
+          <Text variant="bodyMd" fontWeight="regular">
+            {title}
           </Text>
         </IndexTable.Cell>
-        <IndexTable.Cell>{paymentStatus}</IndexTable.Cell>
-        <IndexTable.Cell>{fulfillmentStatus}</IndexTable.Cell>
+        <IndexTable.Cell>
+          <Badge tone="success">{status}</Badge>
+        </IndexTable.Cell>
+        <IndexTable.Cell>
+          <BlockStack>
+            <Text as="span" textDecorationLine="line-through" tone="critical">
+              200 KB
+            </Text>
+            <Text as="span" tone="success" numeric>
+              {fileSize}
+            </Text>
+          </BlockStack>
+        </IndexTable.Cell>
+        <IndexTable.Cell>
+          <Link
+            onClick={(event) => {
+              event.stopPropagation();
+              console.log(
+                Redirect.Action.ADMIN_PATH,
+                `/admin/products/${id.split("/").pop()}`
+              );
+              redirect.dispatch(
+                Redirect.Action.ADMIN_PATH,
+                `/admin/products/${id.split("/").pop()}`
+              );
+            }}
+          >
+            View
+          </Link>
+        </IndexTable.Cell>
+        <IndexTable.Cell>
+          <div className="action-btn-group">
+            <style>
+              {`
+                .action-btn-group .Polaris-Button {
+                  background-color: var(--p-color-bg-surface-tertiary-hover);
+                }
+                  .action-btn-group .Polaris-Button:hover {
+                  background-color: var(--p-color-bg-surface-secondary-active);
+                }
+                .action-btn-group .Polaris-Button:active {
+                  background-color: var(--p-color-bg-surface-tertiary-active);
+                }
+              `}
+            </style>
+            <ButtonGroup>
+              <Button
+                id="action-btn-group"
+                size="large"
+                variant="tertiary"
+                icon={ImageMagicIcon}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  // TODO: Start image compression event
+                }}
+              >
+                Optimize
+              </Button>
+              <Button
+                id="action-btn-group"
+                size="large"
+                variant="tertiary"
+                icon={UndoIcon}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  // TODO: Start image restoration event
+                }}
+              >
+                Restore
+              </Button>
+            </ButtonGroup>
+          </div>
+        </IndexTable.Cell>
       </IndexTable.Row>
     )
   );
@@ -461,17 +429,15 @@ function IndexTableWithViewsSearchFilterSorting() {
         onQueryChange={handleFiltersQueryChange}
         onQueryClear={() => setQueryValue("")}
         onSort={setSortSelected}
-        primaryAction={primaryAction}
         cancelAction={{
           onAction: onHandleCancel,
           disabled: false,
           loading: false,
         }}
         tabs={tabs}
+        canCreateNewView={false}
         selected={selected}
         onSelect={setSelected}
-        canCreateNewView
-        onCreateNewView={onCreateNewView}
         filters={filters}
         appliedFilters={appliedFilters}
         onClearAll={handleFiltersClearAll}
@@ -481,7 +447,7 @@ function IndexTableWithViewsSearchFilterSorting() {
       <IndexTable
         condensed={useBreakpoints().smDown}
         resourceName={resourceName}
-        itemCount={orders.length}
+        itemCount={products.length}
         selectedItemsCount={
           allResourcesSelected ? "All" : selectedResources.length
         }
