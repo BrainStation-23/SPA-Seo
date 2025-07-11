@@ -20,7 +20,7 @@ export const useProductsQuery = ({
   const fetch = useMemo(() => {
     return async () => {
       const response = await authenticatedFetch(url, fetchInit);
-      return response.json();
+      return await response.json();
     };
   }, [url, afterCursor, beforeCursor, searchTerm]);
 

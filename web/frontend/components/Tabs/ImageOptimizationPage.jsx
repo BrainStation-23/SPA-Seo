@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   Box,
   Card,
@@ -9,6 +9,7 @@ import {
   ProgressBar,
   InlineStack,
   BlockStack,
+  Divider,
 } from "@shopify/polaris";
 import {
   TextField,
@@ -23,17 +24,24 @@ import {
   useBreakpoints,
   Thumbnail,
   SkeletonThumbnail,
+  Pagination,
+  Select,
 } from "@shopify/polaris";
-import { ImageMagicIcon, UndoIcon } from "@shopify/polaris-icons";
+import { ImageMagicIcon, UndoIcon, ImageIcon } from "@shopify/polaris-icons";
 
 import { Redirect } from "@shopify/app-bridge/actions";
 import { Loading, useAppBridge } from "@shopify/app-bridge-react";
+import { useSearchParams } from "react-router-dom";
+
+import { useProductsQuery } from "../../hooks/useProductsQuery";
 
 export default function ImageOptimizationPage() {
+  // State for top analytics cards
   const [toBeOptimized, setToBeOptimized] = useState(44);
   const [avgSaved, setAvgSaved] = useState(92);
   const [totalSaved, setTotalSaved] = useState("14.56MB");
   const [quota, setQuota] = useState(30);
+  // need to make API endpoints for these
 
   return (
     <BlockStack gap={"500"}>
@@ -121,24 +129,59 @@ export default function ImageOptimizationPage() {
   );
 }
 
-function IndexTableWithViewsSearchFilterSorting() {
+function IndexTableWithViewsSearchFilterSorting({}) {
   const shopify = useAppBridge();
   const redirect = Redirect.create(shopify);
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  const [itemStrings, setItemStrings] = useState([
-    "Products",
-    "Collections",
-    "Blogs",
-    "All files",
-  ]);
+  const [resources, setResources] = useState([]);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchTerm, setSearchTerm] = useState("");
 
+  // Extract `after` and `before` from URL
+  const resourceType = searchParams.get("type");
+  const pageLimit = searchParams.get("limit") || 10;
+  const afterCursor = searchParams.get("after");
+  const beforeCursor = searchParams.get("before");
+
+  const { data, isLoading, isError, isSuccess } = useProductsQuery({
+    limit: pageLimit,
+    searchTerm,
+    afterCursor,
+    beforeCursor,
+  });
+
+  useEffect(() => {
+    return () => {
+      setSearchParams({});
+    };
+  }, []);
+
+  // Resource DTO
+  useEffect(() => {
+    if (isSuccess) {
+      const newBatchOfResources = data.products.map(({ node }, index) => {
+        return {
+          id: node.id.split("/").pop(),
+          title: node.title,
+          featuredMediaUrl: node?.featuredImage?.url,
+          status: "Optimized",
+          fileSize: 165.87,
+          fileSizeBefore: 250,
+          sizeUnit: "KB",
+          position: index,
+        };
+      });
+      setResources(newBatchOfResources);
+    }
+  }, [isLoading]);
+
+  const itemStrings = ["Products", "Collections", "Blogs", "All files"];
   const tabs = itemStrings.map((item, index) => ({
     content: item,
     index,
     onAction: () => {},
     id: `${item}-${index}`,
-    isLocked: index === 0,
   }));
 
   const [selected, setSelected] = useState(0);
@@ -302,40 +345,39 @@ function IndexTableWithViewsSearchFilterSorting() {
     });
   }
 
-  const products = [
-    {
-      id: "gid://shopify/Product/8192263684330",
-      featuredMediaUrl:
-        "https://cdn.shopify.com/s/files/1/0670/5768/0618/products/The-Hidden-Snowboard-0c552ab6-2f42-4a6d-af65-0289db620216.jpg?v=1730454448",
-      title: "The Hidden Snowboard",
-      status: "Optimized",
-      fileSize: "164 KB",
-      action: "",
-    },
-  ];
-
   const resourceName = {
-    singular: "product",
-    plural: "products",
+    singular: `product`,
+    plural: `products`,
   };
 
   const { selectedResources, allResourcesSelected, handleSelectionChange } =
-    useIndexResourceState(products);
+    useIndexResourceState(resources);
 
-  const rowMarkup = products.map(
-    ({ id, featuredMediaUrl, title, status, fileSize }, index) => (
+  function generateRowMarkup({
+    id,
+    featuredMediaUrl,
+    title,
+    status,
+    fileSize,
+    position,
+  }) {
+    return (
       <IndexTable.Row
         id={id}
         key={id}
         selected={selectedResources.includes(id)}
-        position={index}
+        position={position}
       >
         <IndexTable.Cell>
-          {featuredMediaUrl && featuredMediaUrl.length > 0 ? (
-            <Thumbnail size="small" source={featuredMediaUrl} alt="alt" />
-          ) : (
-            <SkeletonThumbnail size="small" />
-          )}
+          <Thumbnail
+            size="small"
+            source={
+              featuredMediaUrl && featuredMediaUrl.length > 0
+                ? featuredMediaUrl
+                : ImageIcon
+            }
+            alt="alt"
+          />
         </IndexTable.Cell>
         <IndexTable.Cell>
           <Text variant="bodyMd" fontWeight="regular">
@@ -416,9 +458,19 @@ function IndexTableWithViewsSearchFilterSorting() {
           </div>
         </IndexTable.Cell>
       </IndexTable.Row>
-    )
+    );
+  }
+  const rowMarkup = resources.map(
+    ({ id, featuredMediaUrl, title, status, fileSize }, index) =>
+      generateRowMarkup({
+        id,
+        title,
+        position: index,
+        fileSize,
+        status,
+        featuredMediaUrl,
+      })
   );
-
   return (
     <LegacyCard>
       <IndexFilters
@@ -445,9 +497,10 @@ function IndexTableWithViewsSearchFilterSorting() {
         setMode={setMode}
       />
       <IndexTable
+        loading={isLoading}
         condensed={useBreakpoints().smDown}
         resourceName={resourceName}
-        itemCount={products.length}
+        itemCount={resources.length}
         selectedItemsCount={
           allResourcesSelected ? "All" : selectedResources.length
         }
@@ -463,6 +516,84 @@ function IndexTableWithViewsSearchFilterSorting() {
       >
         {rowMarkup}
       </IndexTable>
+      {isSuccess && (
+        <CustomPagination
+          pageInfo={isSuccess && data.pageInfo}
+          resourcesCount={isSuccess && data.productsCount.count}
+          setSearchParams={setSearchParams}
+        />
+      )}
     </LegacyCard>
+  );
+}
+
+function CustomPagination({ resourcesCount, pageInfo, setSearchParams }) {
+  const [limit, setLimit] = useState(10);
+  const [startIndex, setStartIndex] = useState(1);
+
+  const handleNext = () => {
+    if (pageInfo?.hasNextPage) {
+      const nextCursor = pageInfo?.endCursor;
+      setStartIndex((prev) => Number.parseInt(prev) + Number.parseInt(limit));
+      setSearchParams({ after: nextCursor });
+    }
+  };
+
+  const handlePrevious = () => {
+    if (pageInfo?.hasPreviousPage) {
+      const prevCursor = pageInfo?.startCursor;
+      setStartIndex((prev) => Number.parseInt(prev) - Number.parseInt(limit));
+      setSearchParams({ before: prevCursor });
+    }
+  };
+
+  const handleLimitChange = useCallback((value) => setLimit(value), []);
+
+  return (
+    <>
+      <Divider borderColor="border-brand" />
+      <Box
+        paddingBlockStart="400"
+        paddingBlockEnd="200"
+        paddingInlineStart="400"
+        paddingInlineEnd="400"
+        background="bg-fill-active"
+      >
+        <InlineStack blockAlign="center" align="end" gap="400">
+          <InlineStack gap={"100"}>
+            <Text variant="bodySm" fontWeight="regular">
+              Page limit:
+            </Text>
+            <Select
+              value={limit}
+              onChange={handleLimitChange}
+              options={[
+                { label: 10, value: 10 },
+                { label: 20, value: 20 },
+                { label: 50, value: 50 },
+              ]}
+            />
+          </InlineStack>
+
+          <Pagination
+            hasNext={pageInfo.hasNextPage}
+            hasPrevious={pageInfo.hasPreviousPage}
+            onNext={handleNext}
+            onPrevious={handlePrevious}
+            label={
+              <InlineStack gap={"100"}>
+                <Text variant="bodySm" fontWeight="regular">
+                  {startIndex} -
+                  {Number.parseInt(startIndex) + Number.parseInt(limit) - 1}
+                </Text>
+                <Text variant="bodySm" fontWeight="regular">
+                  out of {resourcesCount}
+                </Text>
+              </InlineStack>
+            }
+          />
+        </InlineStack>
+      </Box>
+    </>
   );
 }

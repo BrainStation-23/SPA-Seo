@@ -3,7 +3,6 @@ import shopify from "../shopify.js";
 
 const fetchAllProducts = async (session, variables) => {
   const query = generateProductQuery(variables);
-  console.log("🚀 ~ fetchAllProducts ~ query:", query);
 
   const client = new shopify.api.clients.Graphql({
     session: session,
@@ -13,8 +12,9 @@ const fetchAllProducts = async (session, variables) => {
 
   const pageInfo = response.data.products.pageInfo;
   const products = response.data.products.edges;
+  const productsCount = response.data.productsCount;
 
-  return { products, pageInfo };
+  return { productsCount, products, pageInfo };
 };
 
 const generateProductQuery = (variables) => {
@@ -22,6 +22,10 @@ const generateProductQuery = (variables) => {
     query ($count: Int!, $cursor: String${
       variables?.searchTerm ? ", $searchTerm: String" : ""
     }) {
+      productsCount {
+        count
+        precision
+      }
       products(first: $count, after: $cursor, ${
         variables?.searchTerm ? "query: $searchTerm," : ""
       } reverse: true, sortKey: CREATED_AT) {
@@ -113,6 +117,7 @@ export const productsController = async (req, res, next) => {
 
     return res.status(200).json(data);
   } catch (err) {
+    console.log(err.body.errors);
     console.log(
       "🚀 ~ file: description.js:73 ~ descriptionController ~ err:",
       err
