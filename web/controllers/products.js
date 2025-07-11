@@ -3,6 +3,7 @@ import shopify from "../shopify.js";
 
 const fetchAllProducts = async (session, variables) => {
   const query = generateProductQuery(variables);
+  console.log(query);
 
   const client = new shopify.api.clients.Graphql({
     session: session,
@@ -18,6 +19,7 @@ const fetchAllProducts = async (session, variables) => {
 };
 
 const generateProductQuery = (variables) => {
+  console.log(variables);
   let query = `
     query ($count: Int!, $cursor: String${
       variables?.searchTerm ? ", $searchTerm: String" : ""

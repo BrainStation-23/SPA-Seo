@@ -26,12 +26,16 @@ import {
   SkeletonThumbnail,
   Pagination,
   Select,
+  SkeletonDisplayText,
+  SkeletonBodyText,
+  EmptyState,
 } from "@shopify/polaris";
 import { ImageMagicIcon, UndoIcon, ImageIcon } from "@shopify/polaris-icons";
 
 import { Redirect } from "@shopify/app-bridge/actions";
-import { Loading, useAppBridge } from "@shopify/app-bridge-react";
+import { useAppBridge } from "@shopify/app-bridge-react";
 import { useSearchParams } from "react-router-dom";
+import { useQueryClient } from "react-query";
 
 import { useProductsQuery } from "../../hooks/useProductsQuery";
 
@@ -134,18 +138,17 @@ function IndexTableWithViewsSearchFilterSorting({}) {
   const redirect = Redirect.create(shopify);
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  const [resources, setResources] = useState([]);
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
 
   // Extract `after` and `before` from URL
-  const resourceType = searchParams.get("type");
+  const resourceType = searchParams.get("type") || "product";
   const pageLimit = searchParams.get("limit") || 10;
   const afterCursor = searchParams.get("after");
   const beforeCursor = searchParams.get("before");
 
-  const { data, isLoading, isError, isSuccess } = useProductsQuery({
-    limit: pageLimit,
+  const { data, isLoading, isSuccess } = useProductsQuery({
+    limit: +pageLimit,
     searchTerm,
     afterCursor,
     beforeCursor,
@@ -156,25 +159,6 @@ function IndexTableWithViewsSearchFilterSorting({}) {
       setSearchParams({});
     };
   }, []);
-
-  // Resource DTO
-  useEffect(() => {
-    if (isSuccess) {
-      const newBatchOfResources = data.products.map(({ node }, index) => {
-        return {
-          id: node.id.split("/").pop(),
-          title: node.title,
-          featuredMediaUrl: node?.featuredImage?.url,
-          status: "Optimized",
-          fileSize: 165.87,
-          fileSizeBefore: 250,
-          sizeUnit: "KB",
-          position: index,
-        };
-      });
-      setResources(newBatchOfResources);
-    }
-  }, [isLoading]);
 
   const itemStrings = ["Products", "Collections", "Blogs", "All files"];
   const tabs = itemStrings.map((item, index) => ({
@@ -351,8 +335,44 @@ function IndexTableWithViewsSearchFilterSorting({}) {
   };
 
   const { selectedResources, allResourcesSelected, handleSelectionChange } =
-    useIndexResourceState(resources);
+    useIndexResourceState(isSuccess ? data.products : []);
 
+  function generateSkeletonRowMarkup() {
+    const rows = [];
+    for (let i = 0; i < pageLimit; i++) {
+      rows.push(
+        <>
+          <InlineStack align="space-around" gap={"200"}>
+            <SkeletonThumbnail size="small" />
+            <Box width="15%">
+              <SkeletonBodyText size="large" lines={2} />
+            </Box>
+            <Box width="15%">
+              <SkeletonBodyText size="large" lines={2} />
+            </Box>
+            <Box width="15%">
+              <SkeletonBodyText size="large" lines={2} />
+            </Box>
+            <Box width="15%">
+              <SkeletonBodyText size="large" lines={2} />
+            </Box>
+            <Box width="15%">
+              <InlineStack gap={"100"}>
+                <Box width="45%">
+                  <SkeletonDisplayText size="large" />
+                </Box>
+                <Box width="45%">
+                  <SkeletonDisplayText size="large" />
+                </Box>
+              </InlineStack>
+            </Box>
+          </InlineStack>
+          {i !== pageLimit - 1 && <Divider />}
+        </>
+      );
+    }
+    return <BlockStack gap={"200"}>{rows.map((r) => r)}</BlockStack>;
+  }
   function generateRowMarkup({
     id,
     featuredMediaUrl,
@@ -460,17 +480,32 @@ function IndexTableWithViewsSearchFilterSorting({}) {
       </IndexTable.Row>
     );
   }
-  const rowMarkup = resources.map(
-    ({ id, featuredMediaUrl, title, status, fileSize }, index) =>
-      generateRowMarkup({
-        id,
-        title,
-        position: index,
-        fileSize,
-        status,
-        featuredMediaUrl,
+  const rowMarkup =
+    isSuccess &&
+    data?.products
+      .map(({ node }, index) => {
+        return {
+          id: node.id.split("/").pop(),
+          title: node.title,
+          featuredMediaUrl: node?.featuredImage?.url,
+          status: "Optimized",
+          fileSize: 165.87,
+          fileSizeBefore: 250,
+          sizeUnit: "KB",
+          position: index,
+        };
       })
-  );
+      .map(({ id, featuredMediaUrl, title, status, fileSize }, index) =>
+        generateRowMarkup({
+          id,
+          title,
+          position: index,
+          fileSize,
+          status,
+          featuredMediaUrl,
+        })
+      );
+
   return (
     <LegacyCard>
       <IndexFilters
@@ -500,10 +535,11 @@ function IndexTableWithViewsSearchFilterSorting({}) {
         loading={isLoading}
         condensed={useBreakpoints().smDown}
         resourceName={resourceName}
-        itemCount={resources.length}
+        itemCount={isSuccess ? data.products.length : 0}
         selectedItemsCount={
           allResourcesSelected ? "All" : selectedResources.length
         }
+        emptyState={isLoading ? generateSkeletonRowMarkup() : <EmptyState />}
         onSelectionChange={handleSelectionChange}
         headings={[
           { title: "" },
@@ -516,38 +552,66 @@ function IndexTableWithViewsSearchFilterSorting({}) {
       >
         {rowMarkup}
       </IndexTable>
-      {isSuccess && (
-        <CustomPagination
-          pageInfo={isSuccess && data.pageInfo}
-          resourcesCount={isSuccess && data.productsCount.count}
-          setSearchParams={setSearchParams}
-        />
-      )}
+      <CustomPagination
+        limit={pageLimit}
+        pageInfo={isSuccess && data.pageInfo}
+        resourcesCount={isSuccess && data.productsCount.count}
+        setSearchParams={setSearchParams}
+      />
     </LegacyCard>
   );
 }
 
-function CustomPagination({ resourcesCount, pageInfo, setSearchParams }) {
-  const [limit, setLimit] = useState(10);
+function CustomPagination({
+  resourcesCount,
+  pageInfo,
+  setSearchParams,
+  limit,
+}) {
   const [startIndex, setStartIndex] = useState(1);
 
   const handleNext = () => {
     if (pageInfo?.hasNextPage) {
       const nextCursor = pageInfo?.endCursor;
-      setStartIndex((prev) => Number.parseInt(prev) + Number.parseInt(limit));
-      setSearchParams({ after: nextCursor });
+      if (
+        Number.parseInt(startIndex) + Number.parseInt(limit) <=
+        Number.parseInt(resourcesCount)
+      )
+        setStartIndex((prev) => Number.parseInt(prev) + Number.parseInt(limit));
+      setSearchParams((prev) => {
+        // ✅ Ensure the limit is always included
+        prev.set("limit", String(limit));
+        prev.set("after", nextCursor);
+        prev.delete("before");
+        return prev;
+      });
     }
   };
 
   const handlePrevious = () => {
     if (pageInfo?.hasPreviousPage) {
       const prevCursor = pageInfo?.startCursor;
-      setStartIndex((prev) => Number.parseInt(prev) - Number.parseInt(limit));
-      setSearchParams({ before: prevCursor });
+      if (Number.parseInt(startIndex) - Number.parseInt(limit) > 0)
+        setStartIndex((prev) => Number.parseInt(prev) - Number.parseInt(limit));
+      setSearchParams((prev) => {
+        // ✅ Ensure the limit is always included
+        prev.set("limit", String(limit));
+        prev.set("before", prevCursor);
+        prev.delete("after");
+        return prev;
+      });
     }
   };
 
-  const handleLimitChange = useCallback((value) => setLimit(value), []);
+  const handleLimitChange = (value) => {
+    setStartIndex(1);
+    setSearchParams((prev) => {
+      prev.set("limit", value);
+      prev.delete("after");
+      prev.delete("before");
+      return prev;
+    });
+  };
 
   return (
     <>
@@ -568,9 +632,9 @@ function CustomPagination({ resourcesCount, pageInfo, setSearchParams }) {
               value={limit}
               onChange={handleLimitChange}
               options={[
-                { label: 10, value: 10 },
-                { label: 20, value: 20 },
-                { label: 50, value: 50 },
+                { label: "10", value: "10" },
+                { label: "20", value: "20" },
+                { label: "50", value: "50" },
               ]}
             />
           </InlineStack>
@@ -584,7 +648,10 @@ function CustomPagination({ resourcesCount, pageInfo, setSearchParams }) {
               <InlineStack gap={"100"}>
                 <Text variant="bodySm" fontWeight="regular">
                   {startIndex} -
-                  {Number.parseInt(startIndex) + Number.parseInt(limit) - 1}
+                  {Number.parseInt(startIndex) + Number.parseInt(limit) - 1 <
+                  Number.parseInt(resourcesCount)
+                    ? Number.parseInt(startIndex) + Number.parseInt(limit) - 1
+                    : Number.parseInt(resourcesCount)}
                 </Text>
                 <Text variant="bodySm" fontWeight="regular">
                   out of {resourcesCount}

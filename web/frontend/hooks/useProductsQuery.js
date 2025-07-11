@@ -25,7 +25,7 @@ export const useProductsQuery = ({
   }, [url, afterCursor, beforeCursor, searchTerm]);
 
   return useQuery(
-    ["productList", afterCursor, beforeCursor, searchTerm],
+    ["productList", afterCursor, beforeCursor, searchTerm, limit],
     fetch,
     {
       onSuccess: (data) => {},
