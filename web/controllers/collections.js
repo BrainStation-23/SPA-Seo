@@ -4,6 +4,10 @@ import shopify from "../shopify.js";
 const collectionQuery = (variables) => {
   let query = `
   query ($count: Int!, $cursor: String) {
+    collectionsCount {
+      count
+      precision
+    }
     collections(first: $count, after: $cursor, reverse: true) {
       edges {
         node {
@@ -44,7 +48,6 @@ const collectionQuery = (variables) => {
 };
 
 const fetchAllCollections = async (session, variables) => {
-  console.log("🚀 ~ fetchAllCollections ~ variables:", variables);
   const client = new shopify.api.clients.Graphql({
     session: session,
   });
@@ -53,11 +56,12 @@ const fetchAllCollections = async (session, variables) => {
     const query = collectionQuery(variables);
     const response = await client.request(query, { variables });
 
+    const collectionsCount = response.data.collectionsCount;
     const collections = response.data.collections.edges.map(
       (edge) => edge.node
     );
     const pageInfo = response.data.collections.pageInfo;
-    return { collections, pageInfo };
+    return { collectionsCount, collections, pageInfo };
   } catch (error) {
     console.error("Error fetching customers:", error);
   }

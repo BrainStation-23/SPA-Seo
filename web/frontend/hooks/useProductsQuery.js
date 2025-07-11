@@ -8,6 +8,7 @@ export const useProductsQuery = ({
   beforeCursor,
   limit,
   searchTerm,
+  resourceType,
   fetchInit = {},
 }) => {
   const authenticatedFetch = useAuthenticatedFetch();
@@ -16,13 +17,12 @@ export const useProductsQuery = ({
   }&beforeCursor=${beforeCursor || ""}&limit=${limit}&searchTerm=${
     searchTerm || ""
   }`;
-  const { modal } = useUI();
   const fetch = useMemo(() => {
     return async () => {
       const response = await authenticatedFetch(url, fetchInit);
       return await response.json();
     };
-  }, [url, afterCursor, beforeCursor, searchTerm]);
+  }, [url, afterCursor, beforeCursor, searchTerm, limit]);
 
   return useQuery(
     ["productList", afterCursor, beforeCursor, searchTerm, limit],
@@ -30,7 +30,7 @@ export const useProductsQuery = ({
     {
       onSuccess: (data) => {},
       refetchOnWindowFocus: false,
-      enabled: !modal?.isOpen,
+      enabled: resourceType === "product",
     }
   );
 };

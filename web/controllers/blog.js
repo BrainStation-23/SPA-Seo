@@ -39,6 +39,43 @@ const blogQuery = (variables) => {
   return query;
 };
 
+const articleQuery = (variables) => {
+  const query = `#graphql
+    query GetArticles ($count: Int!, $cursor: String) {
+      articles(first: $count, after: $cursor, sortKey:BLOG_TITLE) {
+        pageInfo {
+          startCursor
+          endCursor
+          hasNextPage
+          hasPreviousPage
+        }
+        nodes {
+          id
+          title
+          image {
+            url
+          }
+          author {
+            name
+          }
+          blog {
+            title
+            articlesCount {
+              count
+              precision
+            }
+          }
+        }
+      }
+    }
+  `;
+  if (variables?.before) {
+    query = query.replace("first:", "last:");
+    query = query.replace("after:", "before:");
+  }
+  return query;
+};
+
 const fetchAllBlogs = async (session, variables) => {
   const query = blogQuery(variables);
 

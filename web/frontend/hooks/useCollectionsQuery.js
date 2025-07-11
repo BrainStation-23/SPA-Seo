@@ -7,6 +7,7 @@ export const useCollectionsQuery = ({
   afterCursor,
   beforeCursor,
   limit,
+  resourceType,
   fetchInit = {},
 }) => {
   const authenticatedFetch = useAuthenticatedFetch();
@@ -21,10 +22,10 @@ export const useCollectionsQuery = ({
     };
   }, [url]);
 
-  return useQuery(["collectionList", afterCursor, beforeCursor], fetch, {
+  return useQuery(["collectionList", afterCursor, beforeCursor, limit], fetch, {
     onSuccess: (data) => {},
     refetchOnWindowFocus: false,
-    enabled: !modal?.isOpen,
+    enabled: resourceType === "collection",
     // enabled: Object.keys(shop).length === 0,
   });
 };

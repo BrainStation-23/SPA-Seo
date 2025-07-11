@@ -10,8 +10,6 @@ import {
   InlineStack,
   BlockStack,
   Divider,
-} from "@shopify/polaris";
-import {
   TextField,
   IndexTable,
   LegacyCard,
@@ -35,9 +33,10 @@ import { ImageMagicIcon, UndoIcon, ImageIcon } from "@shopify/polaris-icons";
 import { Redirect } from "@shopify/app-bridge/actions";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { useSearchParams } from "react-router-dom";
-import { useQueryClient } from "react-query";
 
 import { useProductsQuery } from "../../hooks/useProductsQuery";
+import { useCollectionsQuery } from "../../hooks/useCollectionsQuery";
+import { useArticlesQuery } from "../../hooks/useBlogsQuery";
 
 export default function ImageOptimizationPage() {
   // State for top analytics cards
@@ -147,12 +146,27 @@ function IndexTableWithViewsSearchFilterSorting({}) {
   const afterCursor = searchParams.get("after");
   const beforeCursor = searchParams.get("before");
 
-  const { data, isLoading, isSuccess } = useProductsQuery({
+  const {
+    data,
+    isLoading: productsLoading,
+    isSuccess,
+  } = useProductsQuery({
     limit: +pageLimit,
     searchTerm,
     afterCursor,
     beforeCursor,
+    resourceType,
   });
+
+  const { isLoading: collectionsLoading } = useCollectionsQuery({
+    limit: +pageLimit,
+    afterCursor,
+    beforeCursor,
+    resourceType,
+  });
+
+  // Combine isLoading states
+  const isLoading = productsLoading || collectionsLoading;
 
   useEffect(() => {
     return () => {
@@ -160,15 +174,53 @@ function IndexTableWithViewsSearchFilterSorting({}) {
     };
   }, []);
 
-  const itemStrings = ["Products", "Collections", "Blogs", "All files"];
-  const tabs = itemStrings.map((item, index) => ({
-    content: item,
-    index,
-    onAction: () => {},
-    id: `${item}-${index}`,
-  }));
-
   const [selected, setSelected] = useState(0);
+  const tabs = [
+    {
+      id: "products",
+      content: "Products",
+      type: "product",
+      onAction: () => {
+        setSearchParams((prev) => {
+          prev.set("type", "product");
+          return prev;
+        });
+      },
+    },
+    {
+      id: "collections",
+      content: "Collections",
+      type: "collection",
+      onAction: () => {
+        setSearchParams((prev) => {
+          prev.set("type", "collection");
+          return prev;
+        });
+      },
+    },
+    {
+      id: "articles",
+      content: "Articles",
+      type: "article",
+      onAction: () => {
+        setSearchParams((prev) => {
+          prev.set("type", "article");
+          return prev;
+        });
+      },
+    },
+    {
+      id: "all-files",
+      content: "All files",
+      type: "file",
+      onAction: () => {
+        setSearchParams((prev) => {
+          prev.set("type", "file");
+          return prev;
+        });
+      },
+    },
+  ];
 
   const sortOptions = [
     { label: "Order", value: "order asc", directionLabel: "Ascending" },
@@ -330,8 +382,8 @@ function IndexTableWithViewsSearchFilterSorting({}) {
   }
 
   const resourceName = {
-    singular: `product`,
-    plural: `products`,
+    singular: `${resourceType}`,
+    plural: `${resourceType}s`,
   };
 
   const { selectedResources, allResourcesSelected, handleSelectionChange } =
@@ -579,7 +631,6 @@ function CustomPagination({
       )
         setStartIndex((prev) => Number.parseInt(prev) + Number.parseInt(limit));
       setSearchParams((prev) => {
-        // ✅ Ensure the limit is always included
         prev.set("limit", String(limit));
         prev.set("after", nextCursor);
         prev.delete("before");
@@ -594,7 +645,6 @@ function CustomPagination({
       if (Number.parseInt(startIndex) - Number.parseInt(limit) > 0)
         setStartIndex((prev) => Number.parseInt(prev) - Number.parseInt(limit));
       setSearchParams((prev) => {
-        // ✅ Ensure the limit is always included
         prev.set("limit", String(limit));
         prev.set("before", prevCursor);
         prev.delete("after");
