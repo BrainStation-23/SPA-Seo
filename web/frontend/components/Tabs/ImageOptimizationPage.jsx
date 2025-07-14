@@ -10,14 +10,11 @@ import {
   InlineStack,
   BlockStack,
   Divider,
-  TextField,
   IndexTable,
   LegacyCard,
   IndexFilters,
   useSetIndexFiltersMode,
   useIndexResourceState,
-  ChoiceList,
-  RangeSlider,
   Badge,
   useBreakpoints,
   Thumbnail,
@@ -33,6 +30,7 @@ import { ImageMagicIcon, UndoIcon, ImageIcon } from "@shopify/polaris-icons";
 import { Redirect } from "@shopify/app-bridge/actions";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { useSearchParams } from "react-router-dom";
+import { useQueryClient } from "react-query";
 
 import { useProductsQuery } from "../../hooks/useProductsQuery";
 import { useCollectionsQuery } from "../../hooks/useCollectionsQuery";
@@ -135,10 +133,11 @@ export default function ImageOptimizationPage() {
 
 function IndexTableWithViewsSearchFilterSorting({}) {
   const shopify = useAppBridge();
+  const queryClient = useQueryClient();
   const redirect = Redirect.create(shopify);
-  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
   const [searchParams, setSearchParams] = useSearchParams();
+  const [startIndex, setStartIndex] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
 
   // Extract `after` and `before` from URL
@@ -214,6 +213,8 @@ function IndexTableWithViewsSearchFilterSorting({}) {
       content: "Products",
       type: "product",
       onAction: () => {
+        setStartIndex(1);
+        // queryClient.invalidateQueries({ queryKey: ["productList"] });
         setSearchParams((prev) => {
           prev.delete("after");
           prev.delete("before");
@@ -227,6 +228,8 @@ function IndexTableWithViewsSearchFilterSorting({}) {
       content: "Collections",
       type: "collection",
       onAction: () => {
+        setStartIndex(1);
+        // queryClient.invalidateQueries({ queryKey: ["collectionList"] });
         setSearchParams((prev) => {
           prev.delete("after");
           prev.delete("before");
@@ -240,6 +243,8 @@ function IndexTableWithViewsSearchFilterSorting({}) {
       content: "Articles",
       type: "article",
       onAction: () => {
+        setStartIndex(1);
+        // queryClient.invalidateQueries({ queryKey: ["articleList"] });
         setSearchParams((prev) => {
           prev.delete("after");
           prev.delete("before");
@@ -253,6 +258,8 @@ function IndexTableWithViewsSearchFilterSorting({}) {
       content: "All files",
       type: "file",
       onAction: () => {
+        setStartIndex(1);
+        // queryClient.invalidateQueries({ queryKey: ["filesList"] });
         setSearchParams((prev) => {
           prev.delete("after");
           prev.delete("before");
@@ -568,6 +575,8 @@ function IndexTableWithViewsSearchFilterSorting({}) {
         pageInfo={isDataFetchingSuccessful && data.pageInfo}
         resourcesCount={isDataFetchingSuccessful && data.count}
         setSearchParams={setSearchParams}
+        startIndex={startIndex}
+        setStartIndex={setStartIndex}
       />
     </LegacyCard>
   );
@@ -578,9 +587,9 @@ function CustomPagination({
   pageInfo,
   setSearchParams,
   limit,
+  startIndex,
+  setStartIndex,
 }) {
-  const [startIndex, setStartIndex] = useState(1);
-
   const handleNext = () => {
     if (pageInfo?.hasNextPage) {
       const nextCursor = pageInfo?.endCursor;

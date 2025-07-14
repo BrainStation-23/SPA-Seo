@@ -20,7 +20,7 @@ export const useCollectionsQuery = ({
       const response = await authenticatedFetch(url, fetchInit);
       return response.json();
     };
-  }, [url]);
+  }, ["collectionList", afterCursor, beforeCursor, limit, resourceType]);
 
   return useQuery(
     ["collectionList", afterCursor, beforeCursor, limit, resourceType],

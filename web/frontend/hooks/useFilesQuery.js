@@ -18,13 +18,17 @@ export const useFilesQuery = ({
       const response = await authenticatedFetch(url, fetchInit);
       return response.json();
     };
-  }, ["filesList", afterCursor, beforeCursor, limit, resourceType]);
+  }, ["fileList", afterCursor, beforeCursor, limit, resourceType]);
 
-  return useQuery("filesList", fetch, {
-    onSuccess: (data) => {
-      console.log("in useFileQuery", data);
-    },
-    refetchOnWindowFocus: false,
-    enabled: resourceType === "file",
-  });
+  return useQuery(
+    ["fileList", afterCursor, beforeCursor, limit, resourceType],
+    fetch,
+    {
+      onSuccess: (data) => {
+        console.log("in useFileQuery", data);
+      },
+      refetchOnWindowFocus: false,
+      enabled: resourceType === "file",
+    }
+  );
 };

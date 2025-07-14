@@ -46,11 +46,15 @@ export const useArticlesQuery = ({
     };
   }, ["articleList", afterCursor, beforeCursor, limit, resourceType]);
 
-  return useQuery("articleList", fetch, {
-    onSuccess: (data) => {},
-    refetchOnWindowFocus: false,
-    enabled: resourceType === "article",
-  });
+  return useQuery(
+    ["articleList", afterCursor, beforeCursor, limit, resourceType],
+    fetch,
+    {
+      onSuccess: (data) => {},
+      refetchOnWindowFocus: false,
+      enabled: resourceType === "article",
+    }
+  );
 };
 
 export const useSingleArticleQuery = ({

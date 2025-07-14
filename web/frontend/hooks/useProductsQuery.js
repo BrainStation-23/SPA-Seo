@@ -22,7 +22,7 @@ export const useProductsQuery = ({
       const response = await authenticatedFetch(url, fetchInit);
       return await response.json();
     };
-  }, [url, afterCursor, beforeCursor, searchTerm, limit]);
+  }, [url, afterCursor, beforeCursor, searchTerm, limit, resourceType]);
 
   return useQuery(
     ["productList", afterCursor, beforeCursor, searchTerm, limit, resourceType],
