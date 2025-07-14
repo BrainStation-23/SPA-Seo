@@ -24,9 +24,7 @@ export const useFilesQuery = ({
     ["fileList", afterCursor, beforeCursor, limit, resourceType],
     fetch,
     {
-      onSuccess: (data) => {
-        console.log("in useFileQuery", data);
-      },
+      onSuccess: (data) => {},
       refetchOnWindowFocus: false,
       enabled: resourceType === "file",
     }

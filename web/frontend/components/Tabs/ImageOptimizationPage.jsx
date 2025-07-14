@@ -214,7 +214,6 @@ function IndexTableWithViewsSearchFilterSorting({}) {
       type: "product",
       onAction: () => {
         setStartIndex(1);
-        // queryClient.invalidateQueries({ queryKey: ["productList"] });
         setSearchParams((prev) => {
           prev.delete("after");
           prev.delete("before");
@@ -229,7 +228,6 @@ function IndexTableWithViewsSearchFilterSorting({}) {
       type: "collection",
       onAction: () => {
         setStartIndex(1);
-        // queryClient.invalidateQueries({ queryKey: ["collectionList"] });
         setSearchParams((prev) => {
           prev.delete("after");
           prev.delete("before");
@@ -244,7 +242,6 @@ function IndexTableWithViewsSearchFilterSorting({}) {
       type: "article",
       onAction: () => {
         setStartIndex(1);
-        // queryClient.invalidateQueries({ queryKey: ["articleList"] });
         setSearchParams((prev) => {
           prev.delete("after");
           prev.delete("before");
@@ -259,7 +256,6 @@ function IndexTableWithViewsSearchFilterSorting({}) {
       type: "file",
       onAction: () => {
         setStartIndex(1);
-        // queryClient.invalidateQueries({ queryKey: ["filesList"] });
         setSearchParams((prev) => {
           prev.delete("after");
           prev.delete("before");
@@ -348,7 +344,7 @@ function IndexTableWithViewsSearchFilterSorting({}) {
     });
   } else if (isFileLoadSuccess && resourceType == "file") {
     data.pageInfo = fileData.pageInfo;
-    data.count = fileData?.filesCount?.count || 100;
+    data.count = null;
     data.items = fileData.files.map(({ node }, index) => {
       return {
         id: node.id.split("/").pop(),
@@ -593,11 +589,7 @@ function CustomPagination({
   const handleNext = () => {
     if (pageInfo?.hasNextPage) {
       const nextCursor = pageInfo?.endCursor;
-      if (
-        Number.parseInt(startIndex) + Number.parseInt(limit) <=
-        Number.parseInt(resourcesCount)
-      )
-        setStartIndex((prev) => Number.parseInt(prev) + Number.parseInt(limit));
+      setStartIndex((prev) => Number.parseInt(prev) + Number.parseInt(limit));
       setSearchParams((prev) => {
         prev.set("limit", String(limit));
         prev.set("after", nextCursor);
@@ -610,8 +602,10 @@ function CustomPagination({
   const handlePrevious = () => {
     if (pageInfo?.hasPreviousPage) {
       const prevCursor = pageInfo?.startCursor;
-      if (Number.parseInt(startIndex) - Number.parseInt(limit) > 0)
+      if (Number.parseInt(startIndex) - Number.parseInt(limit) > 0) {
+        console.log(Number.parseInt(startIndex) - Number.parseInt(limit));
         setStartIndex((prev) => Number.parseInt(prev) - Number.parseInt(limit));
+      }
       setSearchParams((prev) => {
         prev.set("limit", String(limit));
         prev.set("before", prevCursor);
@@ -666,14 +660,13 @@ function CustomPagination({
               <InlineStack gap={"100"}>
                 <Text variant="bodySm" fontWeight="regular">
                   {startIndex} -
-                  {Number.parseInt(startIndex) + Number.parseInt(limit) - 1 <
-                  Number.parseInt(resourcesCount)
-                    ? Number.parseInt(startIndex) + Number.parseInt(limit) - 1
-                    : Number.parseInt(resourcesCount)}
+                  {Number.parseInt(startIndex) + Number.parseInt(limit) - 1}
                 </Text>
-                <Text variant="bodySm" fontWeight="regular">
-                  out of {resourcesCount}
-                </Text>
+                {resourcesCount && (
+                  <Text variant="bodySm" fontWeight="regular">
+                    out of {resourcesCount}
+                  </Text>
+                )}
               </InlineStack>
             }
           />
