@@ -4,9 +4,9 @@ import { useMutation, useQuery, useQueryClient } from "react-query";
 import { useUI } from "../contexts/ui.context";
 
 export const useProductsQuery = ({
+  limit,
   afterCursor,
   beforeCursor,
-  limit,
   searchTerm,
   resourceType,
   fetchInit = {},
@@ -25,7 +25,7 @@ export const useProductsQuery = ({
   }, [url, afterCursor, beforeCursor, searchTerm, limit]);
 
   return useQuery(
-    ["productList", afterCursor, beforeCursor, searchTerm, limit],
+    ["productList", afterCursor, beforeCursor, searchTerm, limit, resourceType],
     fetch,
     {
       onSuccess: (data) => {},

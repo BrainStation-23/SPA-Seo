@@ -37,6 +37,7 @@ import { useSearchParams } from "react-router-dom";
 import { useProductsQuery } from "../../hooks/useProductsQuery";
 import { useCollectionsQuery } from "../../hooks/useCollectionsQuery";
 import { useArticlesQuery } from "../../hooks/useBlogsQuery";
+import { useFilesQuery } from "../../hooks/useFilesQuery";
 
 export default function ImageOptimizationPage() {
   // State for top analytics cards
@@ -147,9 +148,9 @@ function IndexTableWithViewsSearchFilterSorting({}) {
   const beforeCursor = searchParams.get("before");
 
   const {
-    data,
+    data: productData,
     isLoading: productsLoading,
-    isSuccess,
+    isSuccess: isProductLoadSuccess,
   } = useProductsQuery({
     limit: +pageLimit,
     searchTerm,
@@ -158,7 +159,33 @@ function IndexTableWithViewsSearchFilterSorting({}) {
     resourceType,
   });
 
-  const { isLoading: collectionsLoading } = useCollectionsQuery({
+  const {
+    data: collectionData,
+    isLoading: collectionsLoading,
+    isSuccess: isCollectionLoadSuccess,
+  } = useCollectionsQuery({
+    limit: +pageLimit,
+    afterCursor,
+    beforeCursor,
+    resourceType,
+  });
+
+  const {
+    data: articleData,
+    isLoading: articlesLoading,
+    isSuccess: isArticleLoadSuccess,
+  } = useArticlesQuery({
+    limit: +pageLimit,
+    afterCursor,
+    beforeCursor,
+    resourceType,
+  });
+
+  const {
+    data: fileData,
+    isLoading: filesLoading,
+    isSuccess: isFileLoadSuccess,
+  } = useFilesQuery({
     limit: +pageLimit,
     afterCursor,
     beforeCursor,
@@ -166,7 +193,13 @@ function IndexTableWithViewsSearchFilterSorting({}) {
   });
 
   // Combine isLoading states
-  const isLoading = productsLoading || collectionsLoading;
+  const isLoading =
+    productsLoading || collectionsLoading || articlesLoading || filesLoading;
+  const isDataFetchingSuccessful =
+    isProductLoadSuccess ||
+    isCollectionLoadSuccess ||
+    isArticleLoadSuccess ||
+    isFileLoadSuccess;
 
   useEffect(() => {
     return () => {
@@ -182,6 +215,8 @@ function IndexTableWithViewsSearchFilterSorting({}) {
       type: "product",
       onAction: () => {
         setSearchParams((prev) => {
+          prev.delete("after");
+          prev.delete("before");
           prev.set("type", "product");
           return prev;
         });
@@ -193,6 +228,8 @@ function IndexTableWithViewsSearchFilterSorting({}) {
       type: "collection",
       onAction: () => {
         setSearchParams((prev) => {
+          prev.delete("after");
+          prev.delete("before");
           prev.set("type", "collection");
           return prev;
         });
@@ -204,6 +241,8 @@ function IndexTableWithViewsSearchFilterSorting({}) {
       type: "article",
       onAction: () => {
         setSearchParams((prev) => {
+          prev.delete("after");
+          prev.delete("before");
           prev.set("type", "article");
           return prev;
         });
@@ -215,6 +254,8 @@ function IndexTableWithViewsSearchFilterSorting({}) {
       type: "file",
       onAction: () => {
         setSearchParams((prev) => {
+          prev.delete("after");
+          prev.delete("before");
           prev.set("type", "file");
           return prev;
         });
@@ -237,147 +278,81 @@ function IndexTableWithViewsSearchFilterSorting({}) {
   const { mode, setMode } = useSetIndexFiltersMode();
   const onHandleCancel = () => {};
 
-  const [accountStatus, setAccountStatus] = useState(undefined);
-  const [moneySpent, setMoneySpent] = useState(undefined);
-  const [taggedWith, setTaggedWith] = useState("");
   const [queryValue, setQueryValue] = useState("");
-
-  const handleAccountStatusChange = useCallback(
-    (value) => setAccountStatus(value),
-    []
-  );
-  const handleMoneySpentChange = useCallback(
-    (value) => setMoneySpent(value),
-    []
-  );
-  const handleTaggedWithChange = useCallback(
-    (value) => setTaggedWith(value),
-    []
-  );
   const handleFiltersQueryChange = useCallback(
     (value) => setQueryValue(value),
     []
   );
-  const handleAccountStatusRemove = useCallback(
-    () => setAccountStatus(undefined),
-    []
-  );
-  const handleMoneySpentRemove = useCallback(
-    () => setMoneySpent(undefined),
-    []
-  );
-  const handleTaggedWithRemove = useCallback(() => setTaggedWith(""), []);
   const handleQueryValueRemove = useCallback(() => setQueryValue(""), []);
   const handleFiltersClearAll = useCallback(() => {
-    handleAccountStatusRemove();
-    handleMoneySpentRemove();
-    handleTaggedWithRemove();
     handleQueryValueRemove();
-  }, [
-    handleAccountStatusRemove,
-    handleMoneySpentRemove,
-    handleQueryValueRemove,
-    handleTaggedWithRemove,
-  ]);
+  }, [handleQueryValueRemove]);
 
-  const filters = [
-    {
-      key: "accountStatus",
-      label: "Account status",
-      filter: (
-        <ChoiceList
-          title="Account status"
-          titleHidden
-          choices={[
-            { label: "Enabled", value: "enabled" },
-            { label: "Not invited", value: "not invited" },
-            { label: "Invited", value: "invited" },
-            { label: "Declined", value: "declined" },
-          ]}
-          selected={accountStatus || []}
-          onChange={handleAccountStatusChange}
-          allowMultiple
-        />
-      ),
-      shortcut: true,
-    },
-    {
-      key: "taggedWith",
-      label: "Tagged with",
-      filter: (
-        <TextField
-          label="Tagged with"
-          value={taggedWith}
-          onChange={handleTaggedWithChange}
-          autoComplete="off"
-          labelHidden
-        />
-      ),
-      shortcut: true,
-    },
-    {
-      key: "moneySpent",
-      label: "Money spent",
-      filter: (
-        <RangeSlider
-          label="Money spent is between"
-          labelHidden
-          value={moneySpent || [0, 500]}
-          prefix="$"
-          output
-          min={0}
-          max={2000}
-          step={1}
-          onChange={handleMoneySpentChange}
-        />
-      ),
-    },
-  ];
+  const data = {
+    items: [],
+    pageInfo: {},
+    count: 0,
+  };
 
-  function disambiguateLabel(key, value) {
-    switch (key) {
-      case "moneySpent":
-        return `Money spent is between $${value[0]} and $${value[1]}`;
-      case "taggedWith":
-        return `Tagged with ${value}`;
-      case "accountStatus":
-        return value.map((val) => `Customer ${val}`).join(", ");
-      default:
-        return value;
-    }
-  }
-
-  function isEmpty(value) {
-    if (Array.isArray(value)) {
-      return value.length === 0;
-    } else {
-      return value === "" || value == null;
-    }
-  }
-
-  const appliedFilters = [];
-  if (accountStatus && !isEmpty(accountStatus)) {
-    const key = "accountStatus";
-    appliedFilters.push({
-      key,
-      label: disambiguateLabel(key, accountStatus),
-      onRemove: handleAccountStatusRemove,
+  if (isProductLoadSuccess && resourceType == "product") {
+    data.pageInfo = productData.pageInfo;
+    data.count = productData.productsCount.count;
+    data.items = productData.products.map(({ node }, index) => {
+      return {
+        id: node.id.split("/").pop(),
+        title: node.title,
+        featuredMediaUrl: node?.featuredImage?.url,
+        status: "Optimized",
+        fileSize: 165.87,
+        fileSizeBefore: 250,
+        sizeUnit: "KB",
+        position: index,
+      };
     });
-  }
-  if (moneySpent) {
-    const key = "moneySpent";
-    appliedFilters.push({
-      key,
-      label: disambiguateLabel(key, moneySpent),
-      onRemove: handleMoneySpentRemove,
+  } else if (isCollectionLoadSuccess && resourceType == "collection") {
+    data.pageInfo = collectionData.pageInfo;
+    data.count = collectionData.collectionsCount.count;
+    data.items = collectionData.collections.map(({ node }, index) => {
+      return {
+        id: node.id.split("/").pop(),
+        title: node.title,
+        featuredMediaUrl: node?.image?.url,
+        status: "Optimized",
+        fileSize: 165.87,
+        fileSizeBefore: 250,
+        sizeUnit: "KB",
+        position: index,
+      };
     });
-  }
-  if (!isEmpty(taggedWith)) {
-    const key = "taggedWith";
-    appliedFilters.push({
-      key,
-      label: disambiguateLabel(key, taggedWith),
-      onRemove: handleTaggedWithRemove,
+  } else if (isArticleLoadSuccess && resourceType == "article") {
+    data.pageInfo = articleData.pageInfo;
+    data.count = articleData.articlesCount.count;
+    data.items = articleData.articles.map(({ node }, index) => {
+      return {
+        id: node.id.split("/").pop(),
+        title: node.title,
+        featuredMediaUrl: node?.image?.url,
+        status: "Optimized",
+        fileSize: 165.87,
+        fileSizeBefore: 250,
+        sizeUnit: "KB",
+        position: index,
+      };
+    });
+  } else if (isFileLoadSuccess && resourceType == "file") {
+    data.pageInfo = fileData.pageInfo;
+    data.count = fileData?.filesCount?.count || 100;
+    data.items = fileData.files.map(({ node }, index) => {
+      return {
+        id: node.id.split("/").pop(),
+        title: node?.image?.url.split("/").pop().split("?")[0],
+        featuredMediaUrl: node?.image?.url,
+        status: "Optimized",
+        fileSize: 165.87,
+        fileSizeBefore: 250,
+        sizeUnit: "KB",
+        position: index,
+      };
     });
   }
 
@@ -387,7 +362,7 @@ function IndexTableWithViewsSearchFilterSorting({}) {
   };
 
   const { selectedResources, allResourcesSelected, handleSelectionChange } =
-    useIndexResourceState(isSuccess ? data.products : []);
+    useIndexResourceState(isDataFetchingSuccessful ? data.items : []);
 
   function generateSkeletonRowMarkup() {
     const rows = [];
@@ -473,10 +448,6 @@ function IndexTableWithViewsSearchFilterSorting({}) {
           <Link
             onClick={(event) => {
               event.stopPropagation();
-              console.log(
-                Redirect.Action.ADMIN_PATH,
-                `/admin/products/${id.split("/").pop()}`
-              );
               redirect.dispatch(
                 Redirect.Action.ADMIN_PATH,
                 `/admin/products/${id.split("/").pop()}`
@@ -532,31 +503,19 @@ function IndexTableWithViewsSearchFilterSorting({}) {
       </IndexTable.Row>
     );
   }
+
   const rowMarkup =
-    isSuccess &&
-    data?.products
-      .map(({ node }, index) => {
-        return {
-          id: node.id.split("/").pop(),
-          title: node.title,
-          featuredMediaUrl: node?.featuredImage?.url,
-          status: "Optimized",
-          fileSize: 165.87,
-          fileSizeBefore: 250,
-          sizeUnit: "KB",
-          position: index,
-        };
+    isDataFetchingSuccessful &&
+    data.items.map(({ id, featuredMediaUrl, title, status, fileSize }, index) =>
+      generateRowMarkup({
+        id,
+        title,
+        position: index,
+        fileSize,
+        status,
+        featuredMediaUrl,
       })
-      .map(({ id, featuredMediaUrl, title, status, fileSize }, index) =>
-        generateRowMarkup({
-          id,
-          title,
-          position: index,
-          fileSize,
-          status,
-          featuredMediaUrl,
-        })
-      );
+    );
 
   return (
     <LegacyCard>
@@ -577,8 +536,8 @@ function IndexTableWithViewsSearchFilterSorting({}) {
         canCreateNewView={false}
         selected={selected}
         onSelect={setSelected}
-        filters={filters}
-        appliedFilters={appliedFilters}
+        filters={[]}
+        appliedFilters={[]}
         onClearAll={handleFiltersClearAll}
         mode={mode}
         setMode={setMode}
@@ -587,7 +546,7 @@ function IndexTableWithViewsSearchFilterSorting({}) {
         loading={isLoading}
         condensed={useBreakpoints().smDown}
         resourceName={resourceName}
-        itemCount={isSuccess ? data.products.length : 0}
+        itemCount={isDataFetchingSuccessful ? data.items.length : 0}
         selectedItemsCount={
           allResourcesSelected ? "All" : selectedResources.length
         }
@@ -606,8 +565,8 @@ function IndexTableWithViewsSearchFilterSorting({}) {
       </IndexTable>
       <CustomPagination
         limit={pageLimit}
-        pageInfo={isSuccess && data.pageInfo}
-        resourcesCount={isSuccess && data.productsCount.count}
+        pageInfo={isDataFetchingSuccessful && data.pageInfo}
+        resourcesCount={isDataFetchingSuccessful && data.count}
         setSearchParams={setSearchParams}
       />
     </LegacyCard>

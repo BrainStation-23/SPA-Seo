@@ -29,27 +29,27 @@ export const useBlogsQuery = ({
 };
 
 export const useArticlesQuery = ({
-  url,
+  limit,
+  afterCursor,
+  beforeCursor,
+  resourceType,
   fetchInit = {},
-  reactQueryOptions,
 }) => {
+  const url = `/api/blog/articles/list?afterCursor=${
+    afterCursor || ""
+  }&beforeCursor=${beforeCursor || ""}&limit=${limit}`;
   const authenticatedFetch = useAuthenticatedFetch();
   const fetch = useMemo(() => {
     return async () => {
       const response = await authenticatedFetch(url, fetchInit);
       return response.json();
     };
-  }, [url, JSON.stringify(fetchInit)]);
+  }, ["articleList", afterCursor, beforeCursor, limit, resourceType]);
 
   return useQuery("articleList", fetch, {
-    ...reactQueryOptions,
     onSuccess: (data) => {},
     refetchOnWindowFocus: false,
-    // Ensure data is not cached by setting cacheTime to 0
-    cacheTime: 0,
-    // Make data stale immediately after fetching
-    staleTime: 0,
-    // enabled: Object.keys(shop).length === 0,
+    enabled: resourceType === "article",
   });
 };
 

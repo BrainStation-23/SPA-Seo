@@ -22,12 +22,16 @@ export const useCollectionsQuery = ({
     };
   }, [url]);
 
-  return useQuery(["collectionList", afterCursor, beforeCursor, limit], fetch, {
-    onSuccess: (data) => {},
-    refetchOnWindowFocus: false,
-    enabled: resourceType === "collection",
-    // enabled: Object.keys(shop).length === 0,
-  });
+  return useQuery(
+    ["collectionList", afterCursor, beforeCursor, limit, resourceType],
+    fetch,
+    {
+      onSuccess: (data) => {},
+      refetchOnWindowFocus: false,
+      enabled: resourceType === "collection",
+      // enabled: Object.keys(shop).length === 0,
+    }
+  );
 };
 
 export const useProductsQueryByID = ({ url, id }) => {

@@ -42,33 +42,44 @@ const blogQuery = (variables) => {
 const articleQuery = (variables) => {
   const query = `#graphql
     query GetArticles ($count: Int!, $cursor: String) {
-      articles(first: $count, after: $cursor, sortKey:BLOG_TITLE) {
+      blogs(first: 250) {
+        nodes {
+          articlesCount {
+            count
+          }
+        }
+      }
+      articles(first: $count, after: $cursor, sortKey: BLOG_TITLE) {
         pageInfo {
           startCursor
           endCursor
           hasNextPage
           hasPreviousPage
         }
-        nodes {
-          id
-          title
-          image {
-            url
-          }
-          author {
-            name
-          }
-          blog {
+        edges {
+          node {
+            id
             title
-            articlesCount {
-              count
-              precision
+            image {
+              url
+            }
+            author {
+              name
+            }
+            image {
+              url
+            }
+            blog {
+              title
+              articlesCount {
+                count
+                precision
+              }
             }
           }
         }
       }
-    }
-  `;
+    }`;
   if (variables?.before) {
     query = query.replace("first:", "last:");
     query = query.replace("after:", "before:");
@@ -143,6 +154,60 @@ const fetchAllArticles = async (session, id) => {
   }
 
   return allBlogs;
+};
+
+const countArticles = (blogs) => {
+  let count = 0;
+  blogs.nodes.map((node) => {
+    count += Number.parseInt(node.articlesCount.count);
+  });
+  return count;
+};
+
+const fetchAllArticlesGql = async (session, variables) => {
+  const client = new shopify.api.clients.Graphql({
+    session: session,
+  });
+
+  try {
+    const query = articleQuery(variables);
+    const response = await client.request(query, { variables });
+
+    const articlesCount = { count: countArticles(response.data.blogs) };
+    const articles = response.data.articles.edges;
+    const pageInfo = response.data.articles.pageInfo;
+    return { articlesCount, articles, pageInfo };
+  } catch (error) {
+    console.error("Error fetching customers:", error);
+  }
+};
+
+export const getArticlesController = async (req, res, next) => {
+  try {
+    const afterCursor = req?.query?.afterCursor;
+    const beforeCursor = req?.query?.beforeCursor;
+    const limit = req?.query?.limit;
+
+    let variables = {
+      count: +limit,
+      cursor: afterCursor || beforeCursor || null,
+      after: afterCursor || null,
+      before: beforeCursor || null,
+    };
+
+    const articles = await fetchAllArticlesGql(
+      res.locals.shopify.session,
+      variables
+    );
+
+    return res.status(200).json(articles);
+  } catch (err) {
+    console.log(
+      "🚀 ~ file: description.js:73 ~ descriptionController ~ err:",
+      err
+    );
+    res.status(400).json({ err });
+  }
 };
 
 export const getArticleList = async (req, res, next) => {

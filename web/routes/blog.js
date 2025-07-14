@@ -1,6 +1,7 @@
 import express from "express";
 import {
   getArticleList,
+  getArticlesController,
   updateArticleSeo,
   getBlogList,
   getArticleSeoContent,
@@ -17,7 +18,7 @@ const upload = multer({ storage });
 const router = express.Router();
 
 router.get("/list", getBlogList);
-router.get("/articles/:id", getArticleList);
+router.get("/articles/list", getArticlesController);
 router.post("/create-article", createArticleContent);
 router.get("/article-seo/:id", getArticleSeoContent);
 router.get("/articleById/:blogId/:id", getSingleArticle);

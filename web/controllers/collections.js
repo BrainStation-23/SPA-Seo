@@ -2,7 +2,7 @@ import { fetchAllCollectionQuery } from "../graphql/collection.js";
 import shopify from "../shopify.js";
 
 const collectionQuery = (variables) => {
-  let query = `
+  let query = `#graphql
   query ($count: Int!, $cursor: String) {
     collectionsCount {
       count
@@ -57,9 +57,7 @@ const fetchAllCollections = async (session, variables) => {
     const response = await client.request(query, { variables });
 
     const collectionsCount = response.data.collectionsCount;
-    const collections = response.data.collections.edges.map(
-      (edge) => edge.node
-    );
+    const collections = response.data.collections.edges;
     const pageInfo = response.data.collections.pageInfo;
     return { collectionsCount, collections, pageInfo };
   } catch (error) {

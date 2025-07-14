@@ -12,6 +12,7 @@ import homeRoute from "./routes/home.js";
 import blogRoute from "./routes/blog.js";
 import jsonLdRoute from "./routes/Jsonld.js";
 import ImageOptimizerRoute from "./routes/image.optimizer.js";
+import filesRoute from "./routes/files.js";
 import sitemapRoute from "./routes/htmlsitemap.js";
 import appBilling from "./routes/appBilling.js";
 import UninstallCleanupRouter from "./routes/uninstall.js";
@@ -99,6 +100,7 @@ app.use("/api/products", productsRoute);
 app.use("/api/AI", AIRouter);
 app.use("/api/billing", appBilling);
 app.use("/api/html-cleaner", htmlCleanerRoute);
+app.use("/api/files", filesRoute);
 
 app.use(shopify.cspHeaders());
 app.use(serveStatic(STATIC_PATH, { index: false }));
