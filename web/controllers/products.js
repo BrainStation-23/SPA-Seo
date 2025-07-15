@@ -1,9 +1,8 @@
-import { fetchAllProductsQuery } from "../graphql/product.js";
 import shopify from "../shopify.js";
+import { fetchAllProductsQuery } from "../graphql/product.js";
 
 const fetchAllProducts = async (session, variables) => {
   const query = generateProductQuery(variables);
-  console.log(query);
 
   const client = new shopify.api.clients.Graphql({
     session: session,
@@ -19,8 +18,7 @@ const fetchAllProducts = async (session, variables) => {
 };
 
 const generateProductQuery = (variables) => {
-  console.log(variables);
-  let query = `
+  let query = `#graphql
     query ($count: Int!, $cursor: String${
       variables?.searchTerm ? ", $searchTerm: String" : ""
     }) {
@@ -125,6 +123,75 @@ export const productsController = async (req, res, next) => {
       err
     );
     res.status(400).json({ err });
+  }
+};
+
+const generateProductMediaQuery = `#graphql
+    query ($productId: ID!, $cursor: String) {
+      product(id: $productId) {
+        id
+        media (first: 250, after: $cursor, query: "media_type:image") {
+          pageInfo{
+            startCursor
+            endCursor
+            hasNextPage
+            hasPreviousPage
+          }
+          nodes {
+            id
+            ... on MediaImage {
+              image {
+                url
+                height
+                width
+              }
+              originalSource {
+                url
+                fileSize
+              }
+              mimeType
+            }
+          }
+        }
+      }
+    }`;
+
+const fetchAllProductMediaImage = async (productId, session) => {
+  const client = new shopify.api.clients.Graphql({
+    session: session,
+  });
+
+  let productMedia = [];
+  let hasNextPage = true,
+    after = null;
+  while (hasNextPage) {
+    const response = await client.request(generateProductMediaQuery, {
+      variables: {
+        productId,
+        after: null,
+      },
+    });
+
+    productMedia = productMedia.concat(response.data.product.media.nodes);
+    hasNextPage = response.data.product.media.pageInfo.hasNextPage;
+    after = response.data.product.media.pageInfo.endCursor;
+  }
+
+  return productMedia;
+};
+
+export const productMediaController = async (req, res, next) => {
+  try {
+    const data = await fetchAllProductMediaImage(
+      `gid://shopify/Product/${req?.query?.productId}`,
+      res.locals.shopify.session
+    );
+    return res.status(200).json(data);
+  } catch (error) {
+    console.log("🚀 ~ productMediaController ~ error:", error);
+    res.status(400).json({
+      status: "failed",
+    });
   }
 };
 

@@ -6,11 +6,13 @@ import {
   productsController,
   updateProductBulkSeo,
   getProductByID,
+  productMediaController,
 } from "../controllers/products.js";
 
 const router = express.Router();
 
 router.get("/list", productsController);
+router.get("/media/list", productMediaController);
 router.get("/:id", getProductControllerByID);
 router.get("/get/:id", getProductByID);
 router.post("/update-product-seo", updateProductSEO);

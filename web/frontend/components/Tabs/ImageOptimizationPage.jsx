@@ -24,18 +24,20 @@ import {
   SkeletonDisplayText,
   SkeletonBodyText,
   EmptyState,
+  Modal,
 } from "@shopify/polaris";
 import { ImageMagicIcon, UndoIcon, ImageIcon } from "@shopify/polaris-icons";
 
-import { Redirect } from "@shopify/app-bridge/actions";
 import { useAppBridge } from "@shopify/app-bridge-react";
+import { Redirect } from "@shopify/app-bridge/actions";
 import { useSearchParams } from "react-router-dom";
-import { useQueryClient } from "react-query";
 
 import { useProductsQuery } from "../../hooks/useProductsQuery";
 import { useCollectionsQuery } from "../../hooks/useCollectionsQuery";
 import { useArticlesQuery } from "../../hooks/useBlogsQuery";
 import { useFilesQuery } from "../../hooks/useFilesQuery";
+
+import ProductMediaList from "../modal/ProductMediaList";
 
 export default function ImageOptimizationPage() {
   // State for top analytics cards
@@ -124,16 +126,15 @@ export default function ImageOptimizationPage() {
         </Box>
       </InlineStack>
 
-      {/* Products List */}
+      {/* Resource List */}
       <IndexTableWithViewsSearchFilterSorting />
-      {/* Products List */}
+      {/* Resource List */}
     </BlockStack>
   );
 }
 
 function IndexTableWithViewsSearchFilterSorting({}) {
   const shopify = useAppBridge();
-  const queryClient = useQueryClient();
   const redirect = Redirect.create(shopify);
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -278,8 +279,10 @@ function IndexTableWithViewsSearchFilterSorting({}) {
   ];
 
   const [sortSelected, setSortSelected] = useState(["order asc"]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [singleResourceOptimizeProductId, setSingleResourceOptimizeProductId] =
+    useState("");
   const { mode, setMode } = useSetIndexFiltersMode();
-  const onHandleCancel = () => {};
 
   const [queryValue, setQueryValue] = useState("");
   const handleFiltersQueryChange = useCallback(
@@ -453,7 +456,7 @@ function IndexTableWithViewsSearchFilterSorting({}) {
               event.stopPropagation();
               redirect.dispatch(
                 Redirect.Action.ADMIN_PATH,
-                `/admin/products/${id.split("/").pop()}`
+                `/admin/${resourceType}s/${id.split("/").pop()}`
               );
             }}
           >
@@ -484,6 +487,8 @@ function IndexTableWithViewsSearchFilterSorting({}) {
                 onClick={(event) => {
                   event.stopPropagation();
                   // TODO: Start image compression event
+                  setModalOpen(true);
+                  setSingleResourceOptimizeProductId(id);
                 }}
               >
                 Optimize
@@ -496,6 +501,8 @@ function IndexTableWithViewsSearchFilterSorting({}) {
                 onClick={(event) => {
                   event.stopPropagation();
                   // TODO: Start image restoration event
+                  setModalOpen(true);
+                  setSingleResourceOptimizeProductId(id);
                 }}
               >
                 Restore
@@ -522,6 +529,22 @@ function IndexTableWithViewsSearchFilterSorting({}) {
 
   return (
     <LegacyCard>
+      <Modal
+        size="large"
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={
+          <Text variant="headingMd" fontWeight="regular">
+            Select {resourceType} images
+          </Text>
+        }
+        primaryAction={{
+          content: "Optimize",
+          onAction: () => {},
+        }}
+      >
+        <ProductMediaList productId={singleResourceOptimizeProductId} />
+      </Modal>
       <IndexFilters
         sortOptions={sortOptions}
         sortSelected={sortSelected}
@@ -531,7 +554,6 @@ function IndexTableWithViewsSearchFilterSorting({}) {
         onQueryClear={() => setQueryValue("")}
         onSort={setSortSelected}
         cancelAction={{
-          onAction: onHandleCancel,
           disabled: false,
           loading: false,
         }}
@@ -550,6 +572,29 @@ function IndexTableWithViewsSearchFilterSorting({}) {
         condensed={useBreakpoints().smDown}
         resourceName={resourceName}
         itemCount={isDataFetchingSuccessful ? data.items.length : 0}
+        promotedBulkActions={[
+          {
+            content: "Optimize",
+            onAction: () => console.log("Todo: Implement bulk optimization"),
+          },
+          {
+            content: "Restore",
+            onAction: () => console.log("Todo: Implement bulk restore"),
+          },
+          {
+            content: "Settings",
+            onAction: () => console.log("Todo: Implement bulk settings"),
+          },
+          {
+            items: [
+              {
+                content: "Settings",
+                onAction: () =>
+                  console.log("Todo: Implement bulk settings action"),
+              },
+            ],
+          },
+        ]}
         selectedItemsCount={
           allResourcesSelected ? "All" : selectedResources.length
         }

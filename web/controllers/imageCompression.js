@@ -1,9 +1,28 @@
 import sharp from "sharp";
 import fetch from "node-fetch";
 import shopify from "../shopify.js";
+import { compressImageWithSharp } from "../services/imageOptimizationService.js";
+
+export const handleImageCompressionRequest = async (req, res) => {
+  try {
+  } catch (error) {
+    console.error("Error during image compression or update:", err);
+    res.status(500).json({
+      success: false,
+      error: "Image compression or update failed",
+    });
+  }
+};
 
 export const imageCompression = async (req, res) => {
-  const { image, compressionSettings, replaceOrginalImage, imagePosition, altText, fileName } = req.body;
+  const {
+    image,
+    compressionSettings,
+    replaceOrginalImage,
+    imagePosition,
+    altText,
+    fileName,
+  } = req.body;
   const { productId, imageId } = req.params;
   const { width, height, quality, format } = compressionSettings;
 

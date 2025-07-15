@@ -35,6 +35,27 @@ export const useProductsQuery = ({
   );
 };
 
+export const useProductMediaQuery = ({
+  productId,
+  resourceType,
+  fetchInit = {},
+}) => {
+  const authenticatedFetch = useAuthenticatedFetch();
+  const url = `/api/product/media/list?productId=${productId}`;
+  const fetch = useMemo(() => {
+    return async () => {
+      const response = await authenticatedFetch(url, fetchInit);
+      return await response.json();
+    };
+  }, ["productMediaList", productId]);
+
+  return useQuery(["productMediaList", productId], fetch, {
+    onSuccess: (data) => {},
+    refetchOnWindowFocus: false,
+    enabled: resourceType === "product",
+  });
+};
+
 export const useProductsQueryByID = ({ url, id }) => {
   const authenticatedFetch = useAuthenticatedFetch();
   const fetch = useMemo(() => {
