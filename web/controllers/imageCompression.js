@@ -1,10 +1,63 @@
 import sharp from "sharp";
 import fetch from "node-fetch";
 import shopify from "../shopify.js";
+
 import { compressImageWithSharp } from "../services/imageOptimizationService.js";
+import { UploadImage } from "../utils/uploadToShopify.js";
+import { getQueryData, queryDataWithVariables } from "../utils/getQueryData.js";
+
+import { FileUpdate } from "../graphql/fileUpdate.js";
+import { StagedUploadCreate } from "../graphql/stagedUploadsCreate.js";
 
 export const handleImageCompressionRequest = async (req, res) => {
   try {
+    const { imageId, fileName, imageUrl, resourceType, compressionSettings } =
+      req.body;
+    const imageBlob = await compressImageWithSharp({
+      imageSrc: imageUrl,
+      format: compressionSettings.format,
+      height: compressionSettings.height,
+      width: compressionSettings.width,
+      quality: compressionSettings.quality,
+    });
+
+    const variables = {
+      input: [
+        {
+          filename: fileName,
+          mimeType: `image/${compressionSettings.format}`,
+          httpMethod: "POST",
+          resource: "PRODUCT_IMAGE",
+        },
+      ],
+    };
+    const mutationResponse = await queryDataWithVariables(
+      res,
+      StagedUploadCreate,
+      variables
+    );
+
+    const uploadedImgUrl = await UploadImage({
+      imageBlob,
+      statedUploadUrl: mutationResponse.data.stagedUploadsCreate[0].url,
+      parameters: mutationResponse.data.stagedUploadsCreate[0].parameters,
+    });
+
+    const fileUpdateVariables = {
+      files: [
+        {
+          id: imageId,
+          originalSource: uploadedImgUrl,
+        },
+      ],
+    };
+    const fileUpdateResponse = await queryDataWithVariables(
+      res,
+      FileUpdate,
+      fileUpdateVariables
+    );
+
+    return res.status(200).json({ status: "success" });
   } catch (error) {
     console.error("Error during image compression or update:", err);
     res.status(500).json({

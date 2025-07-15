@@ -94,7 +94,7 @@ export default function ProductMediaList({ productId }) {
             />
           </IndexTable.Cell>
           <IndexTable.Cell>
-            <Text variant="bodyMd" fontWeight="regular">
+            <Text variant="bodyMd" breakWord fontWeight="regular">
               {fileName}
             </Text>
           </IndexTable.Cell>

@@ -530,7 +530,6 @@ function IndexTableWithViewsSearchFilterSorting({}) {
   return (
     <LegacyCard>
       <Modal
-        size="large"
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         title={

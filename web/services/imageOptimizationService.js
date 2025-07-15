@@ -1,6 +1,6 @@
 import sharp from "sharp";
 import fetch from "node-fetch";
-// import shopify from "../shopify";
+import shopify from "../shopify.js";
 
 export const compressImageWithSharp = async ({
   imageSrc,
